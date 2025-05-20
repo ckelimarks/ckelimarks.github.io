@@ -1,124 +1,246 @@
-theme: architect
----
-layout: default
----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Name - Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS for subtle animations and font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light gray background */
+            color: #334155; /* Darker text */
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
 
-Text can be **bold**, _italic_, or ~~strikethrough~~.
+        /* Fade-in animation for sections */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-[Link to another page](./another-page.html).
+        /* Project card hover effect */
+        .project-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
 
-There should be whitespace between paragraphs.
+        /* Button hover effect */
+        .btn {
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
 
-There should be whitespace between paragraphs. We recommend including a README, or a file with information about your project.
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="antialiased">
 
-# Header 1
+    <header class="relative min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 overflow-hidden rounded-b-3xl shadow-lg">
+        <div class="absolute inset-0 z-0 opacity-20">
+            <div class="absolute top-1/4 left-1/4 w-48 h-48 bg-white rounded-full mix-blend-overlay animate-pulse-slow"></div>
+            <div class="absolute bottom-1/3 right-1/4 w-64 h-64 bg-white rounded-full mix-blend-overlay animate-pulse-medium"></div>
+            <div class="absolute top-1/2 left-1/2 w-32 h-32 bg-white rounded-full mix-blend-overlay animate-pulse-fast"></div>
+        </div>
 
-This is a normal paragraph following a header. GitHub is a code hosting platform for version control and collaboration. It lets you and others work together on projects from anywhere.
+        <div class="relative z-10 text-center fade-in">
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-4 leading-tight">Hello, I'm <span class="text-yellow-300">Your Name</span>.</h1>
+            <p class="text-xl md:text-2xl font-light mb-8 max-w-2xl mx-auto">A passionate [Your Profession/Role] building [What you build/do].</p>
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <a href="#portfolio" class="btn bg-white text-blue-600 px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 font-semibold text-lg">View My Work</a>
+                <a href="#contact" class="btn border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 font-semibold text-lg">Get In Touch</a>
+            </div>
+        </div>
+    </header>
 
-## Header 2
+    <section id="about" class="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto fade-in">
+        <h2 class="text-4xl font-bold text-center mb-12 text-gray-800">About Me</h2>
+        <div class="flex flex-col md:flex-row items-center md:space-x-12">
+            <div class="md:w-1/3 mb-8 md:mb-0 text-center">
+                <img src="https://placehold.co/300x300/a0c4ff/ffffff?text=Your+Photo" alt="Your Photo" class="rounded-full w-48 h-48 mx-auto object-cover shadow-xl border-4 border-blue-200">
+            </div>
+            <div class="md:w-2/3 text-lg text-gray-700">
+                <p class="mb-4">
+                    Hi there! I'm <strong class="text-blue-600">Your Name</strong>, a [Your Profession/Role] with a passion for [Your interests/niche, e.g., creating intuitive user experiences, solving complex problems with code, designing beautiful interfaces]. I love transforming ideas into tangible products that make a difference.
+                </p>
+                <p class="mb-4">
+                    My journey in [Your Field] began [Year/How it started, e.g., X years ago when I built my first website, during my studies at University Y]. Since then, I've had the opportunity to work on diverse projects, ranging from [Type of project 1] to [Type of project 2], honing my skills in [Key skill 1], [Key skill 2], and [Key skill 3].
+                </p>
+                <p>
+                    I'm always eager to learn new technologies and collaborate on exciting ventures. When I'm not coding or designing, you can find me [Your hobby/interest, e.g., hiking in the mountains, experimenting with new recipes, reading sci-fi novels].
+                </p>
+                <div class="mt-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-gray-800">Skills</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">HTML</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">CSS</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">JavaScript</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">React</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">Python</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">UI/UX Design</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">Git</span>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-> This is a blockquote following a header.
->
-> When something is important enough, you do it even if the odds are not in your favor.
+    <section id="portfolio" class="bg-gray-100 py-16 md:py-24 px-4 sm:px-6 lg:px-8 fade-in rounded-t-3xl shadow-inner">
+        <h2 class="text-4xl font-bold text-center mb-12 text-gray-800">My Portfolio</h2>
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
 
-### Header 3
+            <div class="project-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                <img src="https://placehold.co/600x400/e0e7ff/334155?text=Project+1+Image" alt="Project 1" class="w-full h-56 object-cover">
+                <div class="p-6">
+                    <h3 class="text-2xl font-semibold mb-3 text-gray-800">Project Title One</h3>
+                    <p class="text-gray-600 mb-4">A brief, engaging description of Project One. Highlight its purpose, technologies used, and your role. This project focused on [key feature] and utilized [tech stack].</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">React</span>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Tailwind CSS</span>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Firebase</span>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" target="_blank" class="btn bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 shadow-md">Live Demo</a>
+                        <a href="#" target="_blank" class="btn border border-blue-600 text-blue-600 px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-50 hover:text-blue-700">GitHub Repo</a>
+                    </div>
+                </div>
+            </div>
 
-```js
-// Javascript code with syntax highlighting.
-var fun = function lang(l) {
-  dateformat.i18n = require('./lang/' + l)
-  return true;
-}
-```
+            <div class="project-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                <img src="https://placehold.co/600x400/ffe0e7/334155?text=Project+2+Image" alt="Project 2" class="w-full h-56 object-cover">
+                <div class="p-6">
+                    <h3 class="text-2xl font-semibold mb-3 text-gray-800">Project Title Two</h3>
+                    <p class="text-gray-600 mb-4">This project involved [specific challenge] and demonstrated my ability to [skill showcased]. It was built using [tech stack] and aimed to [project goal].</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Vanilla JS</span>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">HTML/CSS</span>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">API Integration</span>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" target="_blank" class="btn bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 shadow-md">Live Demo</a>
+                        <a href="#" target="_blank" class="btn border border-blue-600 text-blue-600 px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-50 hover:text-blue-700">GitHub Repo</a>
+                    </div>
+                </div>
+            </div>
 
-```ruby
-# Ruby code with syntax highlighting
-GitHubPages::Dependencies.gems.each do |gem, version|
-  s.add_dependency(gem, "= #{version}")
-end
-```
+            <div class="project-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                <img src="https://placehold.co/600x400/e0ffe7/334155?text=Project+3+Image" alt="Project 3" class="w-full h-56 object-cover">
+                <div class="p-6">
+                    <h3 class="text-2xl font-semibold mb-3 text-gray-800">Project Title Three</h3>
+                    <p class="text-gray-600 mb-4">My contribution to this project included [your specific contributions]. It's a [type of project] designed to [project goal] and uses [tech stack].</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Python</span>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Machine Learning</span>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Data Analysis</span>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" target="_blank" class="btn bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 shadow-md">Live Demo</a>
+                        <a href="#" target="_blank" class="btn border border-blue-600 text-blue-600 px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-50 hover:text-blue-700">GitHub Repo</a>
+                    </div>
+                </div>
+            </div>
 
-#### Header 4
+            </div>
+    </section>
 
-*   This is an unordered list following a header.
-*   This is an unordered list following a header.
-*   This is an unordered list following a header.
+    <section id="contact" class="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center fade-in">
+        <h2 class="text-4xl font-bold mb-8 text-gray-800">Get In Touch</h2>
+        <p class="text-lg text-gray-700 mb-8">
+            I'm always open to new opportunities, collaborations, or just a friendly chat! Feel free to reach out.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <a href="mailto:your.email@example.com" class="btn bg-green-600 text-white px-8 py-3 rounded-full shadow-lg hover:bg-green-700 font-semibold text-lg flex items-center justify-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+                Email Me
+            </a>
+            <a href="https://linkedin.com/in/yourprofile" target="_blank" class="btn border border-blue-600 text-blue-600 px-8 py-3 rounded-full hover:bg-blue-50 font-semibold text-lg flex items-center justify-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.3 0H3.7C1.65 0 0 1.65 0 3.7v12.6C0 18.35 1.65 20 3.7 20h12.6c2.05 0 3.7-1.65 3.7-3.7V3.7C20 1.65 18.35 0 16.3 0zM6 17H3V7h3v10zM4.5 5.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM17 17h-3v-5.5c0-1.3-.8-2.5-2-2.5-1.2 0-2 .8-2 2.5V17h-3V7h3v1.5c.8-.7 1.7-1.5 3-1.5 2.2 0 4 1.8 4 4V17z" clip-rule="evenodd"></svg>
+                LinkedIn
+            </a>
+            <a href="https://github.com/yourusername" target="_blank" class="btn border border-gray-600 text-gray-600 px-8 py-3 rounded-full hover:bg-gray-50 font-semibold text-lg flex items-center justify-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 0C4.477 0 0 4.477 0 10c0 4.418 2.865 8.167 6.839 9.488.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.153-1.107-1.462-1.107-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.03 1.532 1.03.89 1.529 2.336 1.088 2.903.832.09-.645.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.09.39-1.984 1.03-2.682-.104-.253-.448-1.27.098-2.65S8.57 3.08 10 3.08c1.43 0 2.684.53 3.32 1.393.546 1.38.202 2.4-.098 2.65.64.698 1.03 1.592 1.03 2.682 0 3.84-2.339 4.686-4.566 4.935.359.308.678.915.678 1.846 0 1.33-.012 2.408-.012 2.73 0 .268.18.579.688.482C17.135 18.164 20 14.418 20 10c0-5.523-4.477-10-10-10z" clip-rule="evenodd"></svg>
+                GitHub
+            </a>
+        </div>
+    </section>
 
-##### Header 5
+    <footer class="bg-gray-800 text-white py-8 px-4 sm:px-6 lg:px-8 text-center rounded-t-3xl">
+        <p>&copy; <span id="current-year"></span> Your Name. All rights reserved.</p>
+        <p class="text-sm mt-2">Built with ❤️ and Tailwind CSS.</p>
+    </footer>
 
-1.  This is an ordered list following a header.
-2.  This is an ordered list following a header.
-3.  This is an ordered list following a header.
+    <script>
+        // Set current year in footer
+        document.getElementById('current-year').textContent = new Date().getFullYear();
 
-###### Header 6
+        // Intersection Observer for fade-in animations
+        const fadeInSections = document.querySelectorAll('.fade-in');
 
-| head1        | head two          | three |
-|:-------------|:------------------|:------|
-| ok           | good swedish fish | nice  |
-| out of stock | good and plenty   | nice  |
-| ok           | good `oreos`      | hmm   |
-| ok           | good `zoute` drop | yumm  |
+        const observerOptions = {
+            root: null, // viewport
+            rootMargin: '0px',
+            threshold: 0.1 // Trigger when 10% of the element is visible
+        };
 
-### There's a horizontal rule below this.
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target); // Stop observing once visible
+                }
+            });
+        }, observerOptions);
 
-* * *
+        fadeInSections.forEach(section => {
+            observer.observe(section);
+        });
 
-### Here is an unordered list:
+        // Simple background animation for hero section
+        const styleSheet = document.createElement('style');
+        document.head.appendChild(styleSheet);
+        styleSheet.sheet.insertRule(`
+            @keyframes pulse-slow {
+                0% { transform: scale(1); opacity: 0.2; }
+                50% { transform: scale(1.1); opacity: 0.3; }
+                100% { transform: scale(1); opacity: 0.2; }
+            }
+        `, 0);
+        styleSheet.sheet.insertRule(`
+            @keyframes pulse-medium {
+                0% { transform: scale(1); opacity: 0.25; }
+                50% { transform: scale(1.05); opacity: 0.35; }
+                100% { transform: scale(1); opacity: 0.25; }
+            }
+        `, 0);
+        styleSheet.sheet.insertRule(`
+            @keyframes pulse-fast {
+                0% { transform: scale(1); opacity: 0.3; }
+                50% { transform: scale(1.15); opacity: 0.4; }
+                100% { transform: scale(1); opacity: 0.3; }
+            }
+        `, 0);
 
-*   Item foo
-*   Item bar
-*   Item baz
-*   Item zip
+        // Apply animations to elements
+        document.querySelector('.animate-pulse-slow').style.animation = 'pulse-slow 8s infinite ease-in-out';
+        document.querySelector('.animate-pulse-medium').style.animation = 'pulse-medium 6s infinite ease-in-out';
+        document.querySelector('.animate-pulse-fast').style.animation = 'pulse-fast 4s infinite ease-in-out';
 
-### And an ordered list:
-
-1.  Item one
-1.  Item two
-1.  Item three
-1.  Item four
-
-### And a nested list:
-
-- level 1 item
-  - level 2 item
-  - level 2 item
-    - level 3 item
-    - level 3 item
-- level 1 item
-  - level 2 item
-  - level 2 item
-  - level 2 item
-- level 1 item
-  - level 2 item
-  - level 2 item
-- level 1 item
-
-### Small image
-
-![Octocat](https://github.githubassets.com/images/icons/emoji/octocat.png)
-
-### Large image
-
-![Branching](https://guides.github.com/activities/hello-world/branching.png)
-
-
-### Definition lists can be used with HTML syntax.
-
-<dl>
-<dt>Name</dt>
-<dd>Godzilla</dd>
-<dt>Born</dt>
-<dd>1952</dd>
-<dt>Birthplace</dt>
-<dd>Japan</dd>
-<dt>Color</dt>
-<dd>Green</dd>
-</dl>
-
-```
-Long, single-line code blocks should not wrap. They should horizontally scroll if they are too long. This line should be long enough to demonstrate this.
-```
-
-```
-The final element.
-```
+    </script>
+</body>
+</html>
