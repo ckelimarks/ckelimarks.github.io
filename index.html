@@ -57,16 +57,39 @@
             z-index: 0;
             display: block; /* Ensure canvas takes up space */
         }
+
+        /* Header background image and overlay */
+        .header-bg-image {
+            background-image: url('https://podcast-farm.com/projects/gitsite/gradient3.jpg'); /* Placeholder image - replace with your actual image URL */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative; /* Needed for pseudo-element */
+            z-index: 0; /* Ensures content is above the overlay */
+        }
+
+        /* Overlay for better text readability on top of the image */
+        .header-bg-image::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.3); /* Subtle dark overlay (30% opacity black) */
+            z-index: -1; /* Places the overlay behind the content */
+            border-radius: inherit; /* Inherits border-radius from the parent div */
+        }
     </style>
 </head>
 <body class="antialiased">
 
-    <header class="relative min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-800 to-purple-900 text-white p-8 overflow-hidden rounded-b-3xl shadow-lg">
+    <header class="header-bg-image min-h-screen flex items-center justify-center text-white p-8 overflow-hidden rounded-b-3xl shadow-lg">
         <canvas id="threeCanvas"></canvas>
 
         <div class="relative z-10 text-center fade-in">
             <h1 class="text-5xl md:text-7xl font-extrabold mb-4 leading-tight">Hello, I'm <span class="text-yellow-300">K-Lee</span>.</h1>
-            <p class="text-xl md:text-2xl font-light mb-8 max-w-2xl mx-auto">A passionate creator focused on developing innovative tools and experiences that inspire, connect, & solve real-world challenges.</p>
+            <p class="text-xl md:text-2xl font-light mb-8 max-w-2xl mx-auto">A passionate creative developing innovative tools and experiences that inspire and solve challenges.</p>
             <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <a href="#portfolio" class="btn bg-white text-blue-600 px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 font-semibold text-lg">View My Work</a>
                 <a href="#contact" class="btn border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 font-semibold text-lg">Get In Touch</a>
@@ -96,10 +119,10 @@
                         <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">HTML</span>
                         <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">CSS</span>
                         <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">JavaScript</span>
-                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">React</span>
-                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">Python</span>
-                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">UI/UX Design</span>
-                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">Git</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full">React</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full">Python</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full">UI/UX Design</span>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full">Git</span>
                     </div>
                 </div>
             </div>
