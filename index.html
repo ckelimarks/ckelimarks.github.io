@@ -6,6 +6,7 @@
     <title>K-Lee Marks - Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         /* Custom CSS for subtle animations and font */
         body {
@@ -48,20 +49,24 @@
         html {
             scroll-behavior: smooth;
         }
+
+        /* Canvas styling to cover the header */
+        #threeCanvas {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            display: block; /* Ensure canvas takes up space */
+        }
     </style>
 </head>
 <body class="antialiased">
 
-    <header class="relative min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 overflow-hidden rounded-b-3xl shadow-lg">
-        <div class="absolute inset-0 z-0 opacity-20">
-            <div class="absolute top-1/4 left-1/4 w-48 h-48 bg-white rounded-full mix-blend-overlay animate-pulse-slow"></div>
-            <div class="absolute bottom-1/3 right-1/4 w-64 h-64 bg-white rounded-full mix-blend-overlay animate-pulse-medium"></div>
-            <div class="absolute top-1/2 left-1/2 w-32 h-32 bg-white rounded-full mix-blend-overlay animate-pulse-fast"></div>
-        </div>
+    <header class="relative min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-800 to-purple-900 text-white p-8 overflow-hidden rounded-b-3xl shadow-lg">
+        <canvas id="threeCanvas"></canvas>
 
         <div class="relative z-10 text-center fade-in">
             <h1 class="text-5xl md:text-7xl font-extrabold mb-4 leading-tight">Hello, I'm <span class="text-yellow-300">K-Lee</span>.</h1>
-            <p class="text-xl md:text-2xl font-light mb-8 max-w-2xl mx-auto">A passionate creative building tools, games, and other expirements.</p>
+            <p class="text-xl md:text-2xl font-light mb-8 max-w-2xl mx-auto">A passionate creative building tools, games, and other experiments.</p>
             <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <a href="#portfolio" class="btn bg-white text-blue-600 px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 font-semibold text-lg">View My Work</a>
                 <a href="#contact" class="btn border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 font-semibold text-lg">Get In Touch</a>
@@ -77,13 +82,14 @@
             </div>
             <div class="md:w-2/3 text-lg text-gray-700">
                 <p class="mb-4">
-                    Hi there! I'm <strong class="text-blue-600">Your Name</strong>, Hi there! I'm Christopher K-Lee Marks, a Founder, Educator, Creative Technologist, and Relationship Coach with a passion for designing tools and experiences that foster human connection, personal growth, and creative expression. I love transforming soulful ideas into tangible products that make a real difference—whether it's through music, apps, coaching, or education. </p>
-
- <p class="mb-4">My journey in creative technology and transformation work began over a decade ago when I built a community recording studio in rural Mexico. Since then, I’ve worked on a wide range of projects—from AI-driven learning platforms to music licensing and podcasting services, honing my skills in product development, digital storytelling, and emotional intelligence coaching.
- </p>
- <p class="mb-4">I'm always exploring new ways to blend science, spirituality, and design—and I love collaborating on projects that have heart. When I'm not building or teaching, you can find me making music, mentoring creatives, or experimenting with tools that bring people closer to themselves and each other.
- </p>
-            
+                    Hi there! I'm <strong class="text-blue-600">Christopher K-Lee Marks</strong>, a Founder, Educator, Creative Technologist, and Relationship Coach with a passion for designing tools and experiences that foster human connection, personal growth, and creative expression. I love transforming soulful ideas into tangible products that make a real difference—whether it's through music, apps, coaching, or education.
+                </p>
+                <p class="mb-4">
+                    My journey in creative technology and transformation work began over a decade ago when I built a community recording studio in rural Mexico. Since then, I’ve worked on a wide range of projects—from AI-driven learning platforms to music licensing and podcasting services, honing my skills in product development, digital storytelling, and emotional intelligence coaching.
+                </p>
+                <p class="mb-4">
+                    I'm always exploring new ways to blend science, spirituality, and design—and I love collaborating on projects that have heart. When I'm not building or teaching, you can find me making music, mentoring creatives, or experimenting with tools that bring people closer to themselves and each other.
+                </p>
                 <div class="mt-8">
                     <h3 class="text-2xl font-semibold mb-4 text-gray-800">Skills</h3>
                     <div class="flex flex-wrap gap-3">
@@ -94,7 +100,7 @@
                         <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">Python</span>
                         <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">UI/UX Design</span>
                         <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">Git</span>
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,7 +111,7 @@
         <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
 
             <div class="project-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-                <img src="http://www.podcast-farm.com/projects/StarSeed/HarmonySync.png" alt="Project 1" class="w-full h-56 object-cover">
+                <img src="http://www.podcast-farm.com/projects/StarSeed/HarmonySync.png" alt="HarmonySync Project" class="w-full h-56 object-cover">
                 <div class="p-6">
                     <h3 class="text-2xl font-semibold mb-3 text-gray-800">HarmonySync</h3>
                     <p class="text-gray-600 mb-4">A biometric conversation tool to help couples navigate conflict. This project focused on monitoring heart rate and using AI to support couples with nervous system regulation and repair, utilizing node.js, OpenAI and AssemblyAI.</p>
@@ -122,9 +128,9 @@
             </div>
 
             <div class="project-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-                <img src="http://www.podcast-farm.com/projects/StarSeed/starseed2.jpg" alt="Project 2" class="w-full h-56 object-cover">
+                <img src="http://www.podcast-farm.com/projects/StarSeed/starseed2.jpg" alt="StarSeed Odyessy Project" class="w-full h-56 object-cover">
                 <div class="p-6">
-                    <h3 class="text-2xl font-semibold mb-3 text-gray-800">StarSeed Odyessy</h3>
+                    <h3 class="text-2xl font-semibold mb-3 text-gray-800">StarSeed Odyssey</h3>
                     <p class="text-gray-600 mb-4">This project involved building a mini solar system simulation, and demonstrated my ability to build a full game demo. It was built using three.js and aimed to tell a short but powerful story.</p>
                     <div class="flex flex-wrap gap-2 mb-4">
                         <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Three.js</span>
@@ -139,10 +145,10 @@
             </div>
 
             <div class="project-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-                <img src="https://placehold.co/600x400/e0ffe7/334155?text=Project+3+Image" alt="Project 3" class="w-full h-56 object-cover">
+                <img src="https://placehold.co/600x400/e0ffe7/334155?text=Project+3+Image" alt="Personal Journal RAG Project" class="w-full h-56 object-cover">
                 <div class="p-6">
                     <h3 class="text-2xl font-semibold mb-3 text-gray-800">Personal Journal RAG</h3>
-                    <p class="text-gray-600 mb-4">My contribution to this project included [your specific contributions]. It's a [type of project] designed to [project goal] and uses [tech stack].</p>
+                    <p class="text-gray-600 mb-4">My contribution to this project included building a Retrieval-Augmented Generation (RAG) system for personal journaling. It's a tool designed to help users gain insights from their journal entries using AI and natural language processing.</p>
                     <div class="flex flex-wrap gap-2 mb-4">
                         <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Python</span>
                         <span class="bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full">Machine Learning</span>
@@ -155,7 +161,7 @@
                 </div>
             </div>
 
-            </div>
+        </div>
     </section>
 
     <section id="contact" class="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center fade-in">
@@ -180,7 +186,7 @@
     </section>
 
     <footer class="bg-gray-800 text-white py-8 px-4 sm:px-6 lg:px-8 text-center rounded-t-3xl">
-        <p>&copy; <span id="current-year"></span> Your Name. All rights reserved.</p>
+        <p>&copy; <span id="current-year"></span> K-Lee Marks. All rights reserved.</p>
         <p class="text-sm mt-2">Built with ❤️ and Tailwind CSS.</p>
     </footer>
 
@@ -210,36 +216,281 @@
             observer.observe(section);
         });
 
-        // Simple background animation for hero section
-        const styleSheet = document.createElement('style');
-        document.head.appendChild(styleSheet);
-        styleSheet.sheet.insertRule(`
-            @keyframes pulse-slow {
-                0% { transform: scale(1); opacity: 0.2; }
-                50% { transform: scale(1.1); opacity: 0.3; }
-                100% { transform: scale(1); opacity: 0.2; }
-            }
-        `, 0);
-        styleSheet.sheet.insertRule(`
-            @keyframes pulse-medium {
-                0% { transform: scale(1); opacity: 0.25; }
-                50% { transform: scale(1.05); opacity: 0.35; }
-                100% { transform: scale(1); opacity: 0.25; }
-            }
-        `, 0);
-        styleSheet.sheet.insertRule(`
-            @keyframes pulse-fast {
-                0% { transform: scale(1); opacity: 0.3; }
-                50% { transform: scale(1.15); opacity: 0.4; }
-                100% { transform: scale(1); opacity: 0.3; }
-            }
-        `, 0);
+        // Three.js 3D Pixel Coalescence Animation
+        window.onload = function() {
+            const canvas = document.getElementById('threeCanvas');
+            const header = document.querySelector('header');
 
-        // Apply animations to elements
-        document.querySelector('.animate-pulse-slow').style.animation = 'pulse-slow 8s infinite ease-in-out';
-        document.querySelector('.animate-pulse-medium').style.animation = 'pulse-medium 6s infinite ease-in-out';
-        document.querySelector('.animate-pulse-fast').style.animation = 'pulse-fast 4s infinite ease-in-out';
+            let scene, camera, renderer, points;
+            let animationFrameId;
 
+            const gridSize = 40; // Size of the 3D grid
+            const particleCount = gridSize * gridSize * gridSize;
+            const particleSize = 1.5; // Visual size of each point on screen (adjusted for better visibility)
+            const spacing = 10; // Spacing between particles in the grid
+            const animationDuration = 2500; // Duration for position animation (ms)
+            const displayDuration = 3500; // Duration a shape stays formed (ms)
+            const baseOpacity = 0.08; // Base opacity for all background particles
+            const shapeOpacity = 0.2; // Max opacity for particles forming shapes
+
+            let currentShapeIndex = -1; // Start at -1 so first call to nextShape increments to 0
+            let animationStartTime = 0;
+            let isAnimating = false; // Flag to indicate if position/opacity interpolation is active
+
+            // Use Float32Array for direct buffer manipulation
+            const positions = new Float32Array(particleCount * 3); // x, y, z for each particle
+            const startPositions = new Float32Array(particleCount * 3);
+            const targetPositions = new Float32Array(particleCount * 3);
+
+            const opacities = new Float32Array(particleCount); // opacity for each particle
+            const startOpacities = new Float32Array(particleCount);
+            const targetOpacities = new Float32Array(particleCount);
+
+            // Easing function for smoother transitions (Ease-in-out Sine)
+            function easeInOutSine(t) {
+                return -(Math.cos(Math.PI * t) - 1) / 2;
+            }
+
+            const shapes = [
+                { name: 'Cube', func: generateCubePositions },
+                { name: 'Sphere', func: generateSpherePositions },
+            ];
+
+            // Initialize Three.js scene, camera, and renderer
+            function initThree() {
+                scene = new THREE.Scene();
+
+                // Camera setup: FOV, Aspect, Near, Far
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                // Calculate initial camera Z to fit the entire grid
+                const fovRad = THREE.MathUtils.degToRad(camera.fov);
+                const gridExtent = gridSize * spacing;
+                camera.position.z = (gridExtent / 2) / Math.tan(fovRad / 2) * 1.1; // Adjust multiplier for padding
+                camera.position.z = Math.max(camera.position.z, 300); // Ensure a minimum distance
+
+                renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); // alpha: true for transparent background
+                renderer.setPixelRatio(window.devicePixelRatio);
+                resizeRenderer(); // Set initial size
+
+                // Create BufferGeometry and set attributes
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1)); // Custom attribute for opacity
+
+                // Create ShaderMaterial for custom rendering of points
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        color: { value: new THREE.Color(0xffffff) }, // White color for particles
+                    },
+                    vertexShader: `
+                        attribute float opacity;
+                        varying float vOpacity;
+                        void main() {
+                            vOpacity = opacity;
+                            gl_PointSize = ${particleSize} * (1.0 / -gl_Position.z); // Scale point size based on depth
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying float vOpacity;
+                        uniform vec3 color;
+                        void main() {
+                            gl_FragColor = vec4(color, vOpacity);
+                        }
+                    `,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending // Good for glowing particle effects
+                });
+
+                points = new THREE.Points(geometry, material); // Use THREE.Points
+                scene.add(points);
+
+                // Initial grid formation and populate initial buffer data
+                setParticlesToGrid();
+                // Copy initial state to start arrays
+                for (let i = 0; i < particleCount * 3; i++) {
+                    startPositions[i] = positions[i];
+                }
+                for (let i = 0; i < particleCount; i++) {
+                    startOpacities[i] = opacities[i];
+                }
+
+                // Start the first animation cycle after a short delay
+                setTimeout(startTransitionToNextShape, 1000); // Give a moment for initial grid to render
+            }
+
+            // Set particles to a uniform 3D grid and populate buffers
+            function setParticlesToGrid() {
+                const offset = (gridSize - 1) * spacing / 2; // Center the grid
+
+                let idx = 0;
+                for (let z = 0; z < gridSize; z++) {
+                    for (let y = 0; y < gridSize; y++) {
+                        for (let x = 0; x < gridSize; x++) {
+                            positions[idx * 3] = x * spacing - offset;
+                            positions[idx * 3 + 1] = y * spacing - offset;
+                            positions[idx * 3 + 2] = z * spacing - offset;
+                            opacities[idx] = baseOpacity;
+                            idx++;
+                        }
+                    }
+                }
+                // Mark attributes as needing update
+                points.geometry.attributes.position.needsUpdate = true;
+                points.geometry.attributes.opacity.needsUpdate = true;
+            }
+
+            // Generate positions for a 3D cube
+            function generateCubePositions() {
+                const positions = new Float32Array(particleCount * 3);
+                const cubeSize = gridSize * spacing * 0.7; // Scale cube to fit
+                const halfCubeSize = cubeSize / 2;
+
+                // Simple cube outline by picking points on its edges/faces
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = Math.random() * cubeSize - halfCubeSize;
+                    positions[i * 3 + 1] = Math.random() * cubeSize - halfCubeSize;
+                    positions[i * 3 + 2] = Math.random() * cubeSize - halfCubeSize;
+                }
+                return positions;
+            }
+
+            // Generate positions for a 3D sphere
+            function generateSpherePositions() {
+                const positions = new Float32Array(particleCount * 3);
+                const sphereRadius = gridSize * spacing * 0.35; // Scale sphere to fit
+
+                for (let i = 0; i < particleCount; i++) {
+                    // Random point on a sphere surface
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = 2 * Math.PI * u;
+                    const phi = Math.acos(2 * v - 1);
+
+                    positions[i * 3] = sphereRadius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = sphereRadius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = sphereRadius * Math.cos(phi);
+                }
+                return positions;
+            }
+
+            // Function to generate the target positions and opacities for the next shape
+            function generateNextShapeTargets() {
+                currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
+                const newShapeFunc = shapes[currentShapeIndex].func;
+                const newShapePositions = newShapeFunc(); // Positions for the new shape
+
+                const offset = (gridSize - 1) * spacing / 2; // For grid positions
+
+                for (let i = 0; i < particleCount; i++) {
+                    // Determine target position: either from the shape or back to grid
+                    if (newShapePositions[i * 3] !== undefined) { // Check if position exists in shape
+                        targetPositions[i * 3] = newShapePositions[i * 3];
+                        targetPositions[i * 3 + 1] = newShapePositions[i * 3 + 1];
+                        targetPositions[i * 3 + 2] = newShapePositions[i * 3 + 2];
+                        targetOpacities[i] = shapeOpacity;
+                    } else {
+                        // If particle is not part of the new shape, send it back to its grid position
+                        targetPositions[i * 3] = (i % gridSize) * spacing - offset;
+                        targetPositions[i * 3 + 1] = (Math.floor(i / gridSize) % gridSize) * spacing - offset;
+                        targetPositions[i * 3 + 2] = Math.floor(i / (gridSize * gridSize)) * spacing - offset;
+                        targetOpacities[i] = baseOpacity;
+                    }
+                }
+            }
+
+            // Starts the transition to the next shape
+            function startTransitionToNextShape() {
+                isAnimating = true;
+                animationStartTime = performance.now();
+
+                // Store current states as start states for interpolation
+                for (let i = 0; i < particleCount * 3; i++) {
+                    startPositions[i] = positions[i];
+                }
+                for (let i = 0; i < particleCount; i++) {
+                    startOpacities[i] = opacities[i];
+                }
+
+                // Generate targets for the next shape
+                generateNextShapeTargets();
+
+                // Schedule the end of the animation
+                setTimeout(() => {
+                    isAnimating = false;
+                    // Ensure final state is set precisely after animation
+                    for (let i = 0; i < particleCount * 3; i++) {
+                        positions[i] = targetPositions[i];
+                    }
+                    for (let i = 0; i < particleCount; i++) {
+                        opacities[i] = targetOpacities[i];
+                    }
+                    points.geometry.attributes.position.needsUpdate = true;
+                    points.geometry.attributes.opacity.needsUpdate = true;
+
+                    // Schedule the next transition after display duration
+                    setTimeout(startTransitionToNextShape, displayDuration);
+                }, animationDuration);
+            }
+
+            // Main animation loop
+            function animate() {
+                animationFrameId = requestAnimationFrame(animate);
+
+                const elapsed = performance.now() - animationStartTime;
+                let progress = isAnimating ? Math.min(1, elapsed / animationDuration) : 1; // If not animating, progress is 1
+
+                // Apply easing to the progress if animating
+                if (isAnimating) {
+                    progress = easeInOutSine(progress);
+                }
+
+                // Interpolate positions and opacities directly in the buffers
+                for (let i = 0; i < particleCount; i++) {
+                    // Position interpolation
+                    positions[i * 3] = startPositions[i * 3] + (targetPositions[i * 3] - startPositions[i * 3]) * progress;
+                    positions[i * 3 + 1] = startPositions[i * 3 + 1] + (targetPositions[i * 3 + 1] - startPositions[i * 3 + 1]) * progress;
+                    positions[i * 3 + 2] = startPositions[i * 3 + 2] + (targetPositions[i * 3 + 2] - startPositions[i * 3 + 2]) * progress;
+
+                    // Opacity interpolation
+                    opacities[i] = startOpacities[i] + (targetOpacities[i] - startOpacities[i]) * progress;
+                }
+
+                // Mark attributes as needing update once per frame
+                points.geometry.attributes.position.needsUpdate = true;
+                points.geometry.attributes.opacity.needsUpdate = true;
+
+                // Rotate the entire particle group slightly for visual interest
+                points.rotation.y += 0.001;
+                points.rotation.x += 0.0005;
+
+                renderer.render(scene, camera);
+            }
+
+            // Handles canvas resizing
+            function resizeRenderer() {
+                const width = header.clientWidth;
+                const height = header.clientHeight;
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                // Re-position camera based on new dimensions to keep grid visible
+                const fovRad = THREE.MathUtils.degToRad(camera.fov);
+                const gridExtent = gridSize * spacing;
+                // Calculate Z to fit the grid, adding some padding
+                let newCameraZ = (gridExtent / 2) / Math.tan(fovRad / 2) * 1.1;
+                // Ensure it's not too close for very small screens, or too far for large ones
+                newCameraZ = Math.max(newCameraZ, 300); // Minimum Z distance
+                camera.position.z = newCameraZ;
+            }
+
+            // Event listeners
+            window.addEventListener('resize', resizeRenderer);
+
+            // Start the animation when the window finishes loading
+            initThree();
+            animate();
+        };
     </script>
 </body>
 </html>
