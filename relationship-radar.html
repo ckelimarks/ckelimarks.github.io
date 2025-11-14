@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Relationship Radar Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f5f5f8;
+      --card-bg: #ffffff;
+      --primary: #4b7bec;
+      --danger: #d63031;
+      --warning: #f39c12;
+      --safe: #27ae60;
+      --text: #333333;
+      --muted: #777777;
+      --border: #e0e0e7;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      border-radius: 999px;
+      background: #eef1ff;
+      color: var(--primary);
+      margin-left: 6px;
+    }
+
+    p.lead {
+      margin-top: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .question-group {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed #e0e0e7;
+    }
+
+    .question-group:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .question-label {
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .question-help {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .options-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .option-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .option-pill input[type="radio"] {
+      accent-color: var(--primary);
+    }
+
+    .small-select,
+    .small-radio-group {
+      margin-top: 6px;
+    }
+
+    select, button {
+      font-size: 0.9rem;
+    }
+
+    select {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      min-width: 180px;
+    }
+
+    .small-radio-group label {
+      font-size: 0.85rem;
+      margin-right: 12px;
+      color: var(--muted);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--muted);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 8px;
+      margin-left: 8px;
+    }
+
+    .result {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .result.visible {
+      display: block;
+    }
+
+    .result-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .tag-safe {
+      background: #eafaf1;
+      color: var(--safe);
+    }
+
+    .tag-caution {
+      background: #fff7e6;
+      color: var(--warning);
+    }
+
+    .tag-elevated {
+      background: #fff1e6;
+      color: #e67e22;
+    }
+
+    .tag-danger {
+      background: #ffecec;
+      color: var(--danger);
+    }
+
+    .result h3 {
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+
+    .result p {
+      margin-top: 0;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .score-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 10px;
+      border-top: 1px dashed var(--border);
+      padding-top: 8px;
+    }
+
+    .score-pill {
+      background: #f2f3fa;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .alert {
+      font-size: 0.8rem;
+      color: var(--danger);
+      margin-top: 4px;
+      display: none;
+    }
+
+    .alert.visible {
+      display: block;
+    }
+
+    .safety-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 16px 14px;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <h1>Relationship Radar Quiz<span class="badge">Prototype</span></h1>
+      <p class="lead">
+        This quiz helps you notice patterns in your relationship that research
+        has linked to future relationship harm or health. It is for awareness
+        only and is not a diagnosis.
+      </p>
+      <p class="safety-note">
+        If you feel you may be in danger, consider reaching out to a trusted
+        friend, professional, or local support line. If you are in immediate
+        danger, contact your local emergency number.
+      </p>
+    </div>
+
+    <form id="quizForm">
+      <div class="card">
+        <div class="section-title">1. Relationship Context</div>
+
+        <div class="question-group">
+          <label class="question-label" for="relationshipLength">
+            How long have you been in this relationship?
+          </label>
+          <div class="small-select">
+            <select id="relationshipLength" name="relationshipLength">
+              <option value="">Select one...</option>
+              <option value="0-3m">0–3 months</option>
+              <option value="3-9m">3–9 months</option>
+              <option value="9-18m">9–18 months</option>
+              <option value="18m+">More than 18 months</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="question-group">
+          <span class="question-label">Do you currently live together?</span>
+          <div class="small-radio-group">
+            <label>
+              <input type="radio" name="livingTogether" value="yes" />
+              Yes
+            </label>
+            <label>
+              <input type="radio" name="livingTogether" value="no" />
+              No
+            </label>
+          </div>
+        </div>
+
+        <div class="question-group">
+          <span class="question-label">
+            In the last three months, have conflicts generally:
+          </span>
+          <div class="small-radio-group">
+            <label>
+              <input type="radio" name="conflictTrend" value="no-change" />
+              Stayed about the same
+            </label>
+            <label>
+              <input type="radio" name="conflictTrend" value="slight-up" />
+              Increased a little
+            </label>
+            <label>
+              <input type="radio" name="conflictTrend" value="big-up" />
+              Increased a lot
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          2. Warning Signs
+        </div>
+        <p class="question-help">
+          For each statement, think about the last three months and choose how
+          often it has happened.
+        </p>
+        <div id="warningQuestionsContainer"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          3. Protective Factors
+        </div>
+        <p class="question-help">
+          These items reflect strengths. They often buffer against harm.
+        </p>
+        <div id="protectiveQuestionsContainer"></div>
+      </div>
+
+      <div class="card">
+        <button type="button" class="btn-primary" id="submitBtn">
+          Calculate My Results
+        </button>
+        <button type="button" class="btn-secondary" id="resetBtn">
+          Reset Form
+        </button>
+        <div id="validationAlert" class="alert">
+          Please answer all questions before viewing your results.
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <p class="safety-note">
+          This tool is informational and cannot tell you what to do. You know
+          your situation best. Consider using these results as one piece of
+          information alongside your intuition and support network.
+        </p>
+      
+        <p class="safety-note" style="font-size:0.75rem; color:var(--muted); margin-top:20px;">
+          <strong>Method note:</strong> This quiz is based on the research by Charlot, Joel & Campbell (2023) “<em>The Predictive Validity of Intimate Partner Violence Warning Signs</em>” (doi:10.1177/19485506231209076). The scoring logic is a simplified-educational tool: it maps frequency of empirically-identified warning signs and protective factors into a composite risk index, but it is not a clinical diagnostic instrument.
+          <br>
+          Read the full paper here: <a href="https://doi.org/10.1177/19485506231209076" target="_blank" rel="noopener">doi:10.1177/19485506231209076</a>
+        </p>
+      
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // --- Question Definitions ---
+    const warningQuestions = [
+      { id: 1, text: "My partner acted arrogant or entitled." },
+      {
+        id: 2,
+        text: "My partner and I disagreed about something sexual."
+      },
+      {
+        id: 3,
+        text: "My partner and I had sex even though I wasn\u2019t in the mood."
+      },
+      {
+        id: 4,
+        text: "My partner created an uncomfortable situation in public."
+      },
+      {
+        id: 5,
+        text: "My partner disregarded my reasoning or logic because it didn\u2019t agree with theirs."
+      },
+      {
+        id: 6,
+        text: "My partner reacted negatively when I said \u201cno\u201d to something they wanted."
+      },
+      {
+        id: 7,
+        text: "My partner resented being questioned about how they treat me."
+      },
+      {
+        id: 8,
+        text: "I felt nervous bringing up topics with my partner."
+      },
+      {
+        id: 9,
+        text: "My partner minimized or dismissed my feelings."
+      },
+      {
+        id: 10,
+        text: "My partner made comments about what I \u201cshould\u201d wear, say, or do."
+      },
+      {
+        id: 11,
+        text: "My partner pressured me to respond quickly to texts or calls."
+      },
+      {
+        id: 12,
+        text: "I felt watched or monitored by my partner."
+      },
+      {
+        id: 13,
+        text: "My partner made me feel guilty for seeing friends or family."
+      },
+      {
+        id: 14,
+        text: "My partner joked in ways that felt belittling or disrespectful."
+      },
+      {
+        id: 15,
+        text: "I felt like I was \u201cwalking on eggshells\u201d around my partner."
+      },
+      {
+        id: 16,
+        text: "My partner became irritated or jealous without a clear reason."
+      },
+      {
+        id: 17,
+        text: "My partner blamed me for their bad moods."
+      },
+      {
+        id: 18,
+        text: "When we argued, the situation escalated quickly."
+      },
+      {
+        id: 19,
+        text: "My partner made decisions for us without asking me."
+      },
+      {
+        id: 20,
+        text: "I have felt physically tense or unsafe around my partner."
+      }
+    ];
+
+    const protectiveQuestions = [
+      {
+        id: 21,
+        text: "My partner values my abilities and opinions."
+      },
+      {
+        id: 22,
+        text: "My partner listens when I speak, even during disagreements."
+      },
+      {
+        id: 23,
+        text: "My partner apologizes sincerely when they have hurt me."
+      },
+      {
+        id: 24,
+        text: "My partner respects my boundaries."
+      },
+      {
+        id: 25,
+        text: "My partner encourages my outside friendships and interests."
+      },
+      {
+        id: 26,
+        text: "My partner takes responsibility for their own emotions."
+      },
+      {
+        id: 27,
+        text: "I feel emotionally safe expressing disagreement with my partner."
+      }
+    ];
+
+    const likertOptions = [
+      { value: 0, label: "Never" },
+      { value: 1, label: "Rarely" },
+      { value: 2, label: "Sometimes" },
+      { value: 3, label: "Often" },
+      { value: 4, label: "Very often" }
+    ];
+
+    // IDs of questions that trigger an override if >= 3 (Often / Very often)
+    const severeWarningIds = [3, 4, 6, 20];
+
+    // --- Render Questions ---
+    function renderQuestions() {
+      const warningContainer = document.getElementById(
+        "warningQuestionsContainer"
+      );
+      const protectiveContainer = document.getElementById(
+        "protectiveQuestionsContainer"
+      );
+
+      warningQuestions.forEach((q) => {
+        warningContainer.appendChild(createQuestionElement(q, "warning"));
+      });
+
+      protectiveQuestions.forEach((q) => {
+        protectiveContainer.appendChild(createQuestionElement(q, "protective"));
+      });
+    }
+
+    function createQuestionElement(question, type) {
+      const group = document.createElement("div");
+      group.className = "question-group";
+
+      const label = document.createElement("span");
+      label.className = "question-label";
+      label.textContent = `${question.id}. ${question.text}`;
+      group.appendChild(label);
+
+      const optionsRow = document.createElement("div");
+      optionsRow.className = "options-row";
+
+      likertOptions.forEach((opt) => {
+        const pill = document.createElement("label");
+        pill.className = "option-pill";
+
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = `${type}-${question.id}`;
+        input.value = opt.value;
+
+        pill.appendChild(input);
+        pill.appendChild(document.createTextNode(opt.label));
+
+        optionsRow.appendChild(pill);
+      });
+
+      group.appendChild(optionsRow);
+      return group;
+    }
+
+    // --- Scoring ---
+    function collectAnswers() {
+      let warningScore = 0;
+      let protectiveScore = 0;
+      let severeOverride = false;
+
+      // Check all warning questions
+      for (const q of warningQuestions) {
+        const value = getRadioValue(`warning-${q.id}`);
+        if (value === null) return null;
+        const numeric = Number(value);
+        warningScore += numeric;
+
+        if (severeWarningIds.includes(q.id) && numeric >= 3) {
+          severeOverride = true;
+        }
+      }
+
+      // Protective questions
+      for (const q of protectiveQuestions) {
+        const value = getRadioValue(`protective-${q.id}`);
+        if (value === null) return null;
+        const numeric = Number(value);
+        protectiveScore += numeric;
+      }
+
+      const composite = warningScore - 0.5 * protectiveScore;
+
+      return {
+        warningScore,
+        protectiveScore,
+        composite,
+        severeOverride
+      };
+    }
+
+    function getRadioValue(name) {
+      const nodes = document.querySelectorAll(`input[name="${name}"]`);
+      for (const n of nodes) {
+        if (n.checked) return n.value;
+      }
+      return null;
+    }
+
+    function getRiskCategory(scores) {
+      const { composite, severeOverride } = scores;
+
+      if (severeOverride) {
+        if (composite >= 36) {
+          return "high";
+        }
+        return "elevated";
+      }
+
+      if (composite <= 10) return "low";
+      if (composite <= 20) return "caution";
+      if (composite <= 35) return "elevated";
+      return "high";
+    }
+
+    function buildResultHtml(scores) {
+      const { warningScore, protectiveScore, composite, severeOverride } =
+        scores;
+      const category = getRiskCategory(scores);
+
+      let tagClass = "tag-safe";
+      let tagText = "Stable / Healthy";
+      let title = "Your relationship shows strong signs of health.";
+      let summary =
+        "Your responses suggest low levels of research-identified warning signs and good protective qualities such as respect, listening, and emotional safety. Continue nurturing what is working well.";
+      let actions = `
+        <ul>
+          <li>Share appreciations with your partner this week.</li>
+          <li>Ask each other: “What has felt good between us lately?”</li>
+          <li>Keep practicing open, honest conversations about needs and boundaries.</li>
+        </ul>
+      `;
+
+      if (category === "caution") {
+        tagClass = "tag-caution";
+        tagText = "Caution";
+        title = "There are a few warning signs worth paying attention to.";
+        summary =
+          "You reported some patterns that researchers link with relationship strain or emerging unhealthy dynamics. This does not automatically mean your relationship is unsafe, but these areas may benefit from honest reflection and conversation.";
+        actions = `
+          <ul>
+            <li>Pick one item that stood out and journal about how it feels for you.</li>
+            <li>Consider a gentle check-in with your partner about that pattern.</li>
+            <li>Notice over the next month whether the pattern softens, stays the same, or intensifies.</li>
+          </ul>
+        `;
+      } else if (category === "elevated") {
+        tagClass = "tag-elevated";
+        tagText = "Elevated Risk";
+        title =
+          "Your answers indicate several patterns linked to future relationship harm.";
+        summary =
+          "These patterns often intensify over time if they are not addressed. This is a moment to take your own feelings seriously, seek clarity, and consider getting support from people you trust.";
+        actions = `
+          <ul>
+            <li>Talk with a trusted friend, therapist, or coach about what you’re experiencing.</li>
+            <li>Experiment with one clear boundary and observe how your partner responds.</li>
+            <li>Write down specific situations that feel concerning so you have a clear record.</li>
+          </ul>
+        `;
+      } else if (category === "high") {
+        tagClass = "tag-danger";
+        tagText = "High Concern";
+        title =
+          "These responses match patterns that research associates with emotional or physical risk.";
+        summary =
+          "You indicated multiple severe warning signs. This quiz cannot diagnose your relationship, but it can signal that something may be unsafe or harmful. You deserve safety, respect, and support.";
+        actions = `
+          <ul>
+            <li>Consider speaking with a counselor, advocate, or support hotline if you can do so safely.</li>
+            <li>Think about a safety plan: where you could go and who you could contact if you felt at risk.</li>
+            <li>Avoid confronting your partner about this quiz if you fear it could escalate conflict.</li>
+          </ul>
+        `;
+      }
+
+      const validationNote = severeOverride
+        ? `<p><strong>Note:</strong> Your result was elevated in part because you marked “Often” or “Very often” on one or more items involving pressure, public intimidation, or feeling unsafe. Research suggests these patterns deserve serious attention.</p>`
+        : "";
+
+      return `
+        <div class="result-tag ${tagClass}">${tagText}</div>
+        <h3>${title}</h3>
+        <p>${summary}</p>
+        ${validationNote}
+        <h4>Suggested next steps</h4>
+        ${actions}
+        <div class="score-row">
+          <div class="score-pill">Warning signs score: <strong>${warningScore}</strong> (max 80)</div>
+          <div class="score-pill">Protective score: <strong>${protectiveScore}</strong> (max 28)</div>
+          <div class="score-pill">Composite score: <strong>${composite.toFixed(
+            1
+          )}</strong></div>
+        </div>
+      `;
+    }
+
+    // --- Event Handlers ---
+    document.addEventListener("DOMContentLoaded", () => {
+      renderQuestions();
+
+      const submitBtn = document.getElementById("submitBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const validationAlert = document.getElementById("validationAlert");
+      const resultContainer = document.getElementById("result");
+      const form = document.getElementById("quizForm");
+
+      submitBtn.addEventListener("click", () => {
+        const scores = collectAnswers();
+        if (!scores) {
+          validationAlert.classList.add("visible");
+          resultContainer.classList.remove("visible");
+          resultContainer.innerHTML = "";
+          return;
+        }
+        validationAlert.classList.remove("visible");
+        const html = buildResultHtml(scores);
+        resultContainer.innerHTML = html;
+        resultContainer.classList.add("visible");
+        resultContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      resetBtn.addEventListener("click", () => {
+        form.reset();
+        validationAlert.classList.remove("visible");
+        resultContainer.classList.remove("visible");
+        resultContainer.innerHTML = "";
+      });
+    });
+  </script>
+</body>
+</html>
