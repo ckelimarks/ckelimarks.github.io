@@ -18,7 +18,6 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            max-width: 100vw;
             overflow-x: hidden; /* Prevent horizontal scroll */
             position: relative;
         }
@@ -28,12 +27,6 @@
             background-color: #f8fafc; /* Light gray background */
             color: #334155; /* Darker text */
             line-height: 1.6;
-        }
-        
-        /* Prevent any child from causing overflow */
-        body > * {
-            max-width: 100vw;
-            overflow-x: hidden;
         }
 
         /* Fade-in animation for sections */
@@ -75,10 +68,8 @@
             inset: 0;
             z-index: 0;
             display: block;
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100vw !important;
-            overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
 
         /* Header background image and overlay */
@@ -90,8 +81,6 @@
             position: relative;
             z-index: 0;
             width: 100%;
-            max-width: 100vw;
-            overflow: hidden;
         }
 
         /* Overlay for better text readability on top of the image */
@@ -126,13 +115,26 @@
             overflow-x: hidden;
         }
         
-        /* Container constraints */
-        .max-w-6xl, .max-w-4xl, .max-w-3xl, .max-w-2xl {
-            max-width: 100% !important;
-        }
-        
-        /* Ensure grid doesn't cause overflow on mobile */
+        /* Mobile-specific overflow fixes */
         @media (max-width: 768px) {
+            html, body {
+                max-width: 100vw;
+            }
+            
+            body > * {
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+            
+            .header-bg-image {
+                max-width: 100vw;
+                overflow: hidden;
+            }
+            
+            #threeCanvas {
+                max-width: 100vw !important;
+            }
+            
             .grid {
                 grid-template-columns: 1fr !important;
                 gap: 2rem !important;
@@ -140,6 +142,12 @@
             
             /* Reduce padding on mobile to prevent overflow */
             section {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            /* Container constraints - mobile only */
+            .max-w-6xl, .max-w-4xl, .max-w-3xl, .max-w-2xl {
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
             }
@@ -807,12 +815,15 @@
 
             // Handles canvas resizing
             function resizeRenderer() {
-                // Ensure width never exceeds viewport
-                const width = Math.min(header.clientWidth, window.innerWidth);
+                // Ensure width never exceeds viewport on mobile
+                const isMobile = window.innerWidth <= 768;
+                const width = isMobile ? Math.min(header.clientWidth, window.innerWidth) : header.clientWidth;
                 const height = header.clientHeight;
                 renderer.setSize(width, height);
-                canvas.style.width = width + 'px';
-                canvas.style.height = height + 'px';
+                if (isMobile) {
+                    canvas.style.width = width + 'px';
+                    canvas.style.height = height + 'px';
+                }
                 camera.aspect = width / height;
                 camera.updateProjectionMatrix();
                 // Re-position camera based on new dimensions to keep grid visible
