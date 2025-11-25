@@ -676,6 +676,7 @@
                 { name: 'Sphere', func: generateSpherePositions },
                 { name: 'DNA', func: generateDNAPositions },
                 { name: 'Torus', func: generateTorusPositions },
+                { name: 'Wave', func: generateSineWavePositions },
                 { name: 'Cube', func: generateCubePositions },
             ];
 
@@ -833,6 +834,31 @@
                     positions[i * 3] += (Math.random() - 0.5) * 20;
                     positions[i * 3 + 1] += (Math.random() - 0.5) * 5;
                     positions[i * 3 + 2] += (Math.random() - 0.5) * 20;
+                }
+                return positions;
+            }
+
+            function generateSineWavePositions() {
+                const positions = new Float32Array(particleCount * 3);
+                const offset = (gridSize - 1) * spacing / 2; 
+                let idx = 0;
+                for (let z = 0; z < gridSize; z++) {
+                    for (let y = 0; y < gridSize; y++) {
+                        for (let x = 0; x < gridSize; x++) {
+                            const px = x * spacing - offset;
+                            const py = y * spacing - offset;
+                            const pz = z * spacing - offset;
+                            
+                            // Create a ripple/interference pattern
+                            const d = Math.sqrt(px * px + pz * pz);
+                            const wave = Math.sin(d * 0.05) * 40 + Math.sin(px * 0.03 + pz * 0.03) * 20;
+                            
+                            positions[idx * 3] = px;
+                            positions[idx * 3 + 1] = py + wave; // Add wave to Y
+                            positions[idx * 3 + 2] = pz;
+                            idx++;
+                        }
+                    }
                 }
                 return positions;
             }
