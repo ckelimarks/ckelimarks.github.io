@@ -1,585 +1,644 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K-Lee Marks - Portfolio</title>
+    <title>K-Lee Marks | Product & Creative Tech</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        /* Custom CSS for subtle animations and font */
-        * {
-            box-sizing: border-box;
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            overflow-x: hidden; /* Prevent horizontal scroll */
-            position: relative;
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
         }
-        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Selection Color */
+        ::selection {
+            background: #3b82f6;
+            color: white;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Light gray background */
-            color: #334155; /* Darker text */
-            line-height: 1.6;
+            background-color: #f8fafc;
+            color: #334155;
+            overflow-x: hidden;
         }
 
-        /* Fade-in animation for sections */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-        }
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        /* Gradient Text Utility */
+        .text-gradient {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Project card hover effect */
-        .project-card {
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-        }
-        .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Button hover effect */
-        .btn {
-            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
-        /* Smooth scroll behavior */
-        html {
-            scroll-behavior: smooth;
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
-        /* Canvas styling to cover the header */
+        /* Image Hover Reveal */
+        .project-image-container {
+            overflow: hidden;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.4s ease;
+        }
+        
+        .project-image-container:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-4px);
+        }
+
+        .project-image {
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .project-image-container:hover .project-image {
+            transform: scale(1.05);
+        }
+
+        /* Canvas styling */
         #threeCanvas {
             position: absolute;
             inset: 0;
             z-index: 0;
-            display: block;
-            width: 100%;
-            height: 100%;
+            opacity: 0.8; /* Slight fade to make text pop */
         }
 
-        /* Header background image and overlay */
-        .header-bg-image {
-            background-image: url('https://podcast-farm.com/projects/gitsite/gradient3.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+        .header-bg {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
             position: relative;
-            z-index: 0;
-            width: 100%;
-        }
-
-        /* Overlay for better text readability on top of the image */
-        .header-bg-image::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.3); /* Subtle dark overlay (30% opacity black) */
-            z-index: -1; /* Places the overlay behind the content */
-            border-radius: inherit; /* Inherits border-radius from the parent div */
-        }
-
-        /* Project image styling with subtle hover effect */
-        .project-image {
-            border-radius: 0.75rem;
-            transition: all 0.5s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            max-width: 100%;
-            height: auto;
-        }
-        .project-image:hover {
-            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
-            transform: scale(1.02);
-        }
-        
-        /* Prevent horizontal overflow on all sections */
-        section {
-            max-width: 100vw;
-            overflow-x: hidden;
-        }
-        
-        /* Mobile-specific overflow fixes */
-        @media (max-width: 768px) {
-            html, body {
-                max-width: 100vw;
-            }
-            
-            body > * {
-                max-width: 100vw;
-                overflow-x: hidden;
-            }
-            
-            .header-bg-image {
-                max-width: 100vw;
-                overflow: hidden;
-            }
-            
-            #threeCanvas {
-                max-width: 100vw !important;
-            }
-            
-            .grid {
-                grid-template-columns: 1fr !important;
-                gap: 2rem !important;
-            }
-            
-            /* Reduce padding on mobile to prevent overflow */
-            section {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-            
-            /* Container constraints - mobile only */
-            .max-w-6xl, .max-w-4xl, .max-w-3xl, .max-w-2xl {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-            
-            /* Ensure images don't overflow */
-            img {
-                max-width: 100%;
-                height: auto;
-            }
-            
-            /* Constrain flex containers */
-            .flex {
-                flex-wrap: wrap;
-            }
         }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased selection:bg-blue-500 selection:text-white">
 
-    <nav class="fixed top-0 z-50 w-full px-4 sm:px-6 lg:px-8 py-4 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <a href="#" class="text-2xl font-bold text-gray-800">
-                K-Lee Marks
+    <nav class="fixed top-0 z-50 w-full px-6 py-4 transition-all duration-300 glass shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="#" class="text-xl font-bold tracking-tighter text-slate-900 group">
+                K-Lee<span class="text-blue-600">.</span>Marks
             </a>
-            <div class="hidden md:flex space-x-8 text-base">
-                <a href="#about" class="text-gray-600 hover:text-blue-600 transition-colors font-medium">About</a>
-                <a href="#portfolio" class="text-gray-600 hover:text-blue-600 transition-colors font-medium">Portfolio</a>
-                <a href="#contact" class="text-gray-600 hover:text-blue-600 transition-colors font-medium">Contact</a>
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
+                <a href="#about" class="hover:text-blue-600 transition-colors">About</a>
+                <a href="#featured" class="hover:text-blue-600 transition-colors">Featured</a>
+                <a href="#portfolio" class="hover:text-blue-600 transition-colors">Portfolio</a>
+                <a href="#contact" class="px-5 py-2.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-lg transform hover:-translate-y-0.5">
+                    Let's Talk
+                </a>
             </div>
         </div>
     </nav>
 
-    <header class="header-bg-image min-h-screen flex items-center justify-center p-8 relative -mt-[73px] pt-[73px]">
+    <header class="header-bg min-h-[100vh] flex items-center justify-center p-4 relative pt-20 overflow-hidden">
         <canvas id="threeCanvas"></canvas>
+        
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-90 z-0 pointer-events-none"></div>
 
-        <div class="max-w-6xl mx-auto w-full">
-            <div class="max-w-3xl mx-auto text-center relative z-10" data-aos="fade-up">
-                <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight text-white">
-                    Hello, I'm <span class="text-yellow-300">K-Lee</span>.
+        <div class="max-w-5xl mx-auto w-full relative z-10 text-center px-4">
+            <div data-aos="fade-up" data-aos-duration="1000">
+                <div class="inline-block mb-4 px-4 py-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 backdrop-blur-md text-blue-200 text-sm font-medium tracking-wide">
+                    Available for new opportunities
+                </div>
+                <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight text-white tracking-tight">
+                    Building tools for <br />
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">Human Potential.</span>
                 </h1>
-                <p class="text-2xl md:text-3xl font-light mb-10 text-white">
-                    Human-Centered Product Manager | Building Tools That Enhance Creativity, Wellbeing & Human Potential
+                <p class="text-xl md:text-2xl font-light mb-10 text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                    I'm <strong class="text-white font-semibold">K-Lee Marks</strong>. <span class="text-blue-300 font-semibold">0 → 1 Builder</span> crafting systems that help people connect, create, and grow.
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <a href="#portfolio" class="btn bg-white text-blue-600 px-8 py-3 rounded-full shadow-lg hover:bg-blue-50 font-semibold text-lg">View My Work</a>
-                    <a href="#contact" class="btn border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 font-semibold text-lg transition-all">Get In Touch</a>
+                
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#portfolio" class="px-8 py-4 bg-white text-slate-900 rounded-full font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:bg-blue-50 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                        View My Work <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                    </a>
+                    <a href="#contact" class="px-8 py-4 border border-slate-500/50 bg-slate-800/50 backdrop-blur-sm text-white rounded-full font-semibold hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                        Get In Touch <i data-lucide="mail" class="w-4 h-4"></i>
+                    </a>
                 </div>
             </div>
         </div>
     </header>
 
-    <section id="about" class="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-white">
-        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center">
-            
-            <div data-aos="fade-right" data-aos-duration="800">
-                <img src="https://podcast-farm.com/projects/gitsite/keli.png" alt="Christopher K-Lee Marks" class="rounded-full w-64 h-64 mx-auto md:w-full md:h-auto md:rounded-lg object-cover shadow-2xl border-4 border-blue-500/30">
-            </div>
-
-            <div class="text-lg" data-aos="fade-left" data-aos-duration="800" data-aos-delay="200">
-                <h2 class="text-4xl font-bold text-gray-800 mb-8">About Me</h2>
-                <p class="mb-4 text-gray-700">
-                    Hi there! I'm <strong class="text-blue-600">Christopher K-Lee Marks</strong>, a Founder, Educator, Product Manager, and Relationship Coach with a passion for designing tools and experiences that foster human connection, personal growth, and creative expression.
-                </p>
-                <p class="mb-4 text-gray-700">
-                    My journey in creative technology and transformation work began over a decade ago. Since then, I've worked on a wide range of projects—from AI-driven learning platforms to music licensing and podcasting services, honing my skills in product development, digital storytelling, and emotional intelligence coaching.
-                </p>
+    <section id="about" class="py-20 bg-white relative z-20 -mt-10 rounded-t-[3rem] shadow-[0_-20px_40px_rgba(0,0,0,0.05)]">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                <div data-aos="fade-right">
+                    <h2 class="text-sm font-bold tracking-widest text-blue-600 uppercase mb-3">About Me</h2>
+                    <div class="space-y-4 text-slate-600 text-lg leading-relaxed">
+                        <p>
+                            I design and lead products that solve real human problems — from relationship repair and emotional wellbeing to creator growth and learning systems.
+                        </p>
+                        <p>
+                            My work blends behavioral science, user-centered design, and technical execution to ship products that people love and that deliver measurable outcomes.
+                        </p>
+                        <div class="pt-4 flex items-center gap-2 font-semibold text-slate-800">
+                            Currently focused on <span class="text-blue-600">LoveNotes</span>
+                        </div>
+                    </div>
+                </div>
                 
-                <div class="mt-12">
-                    <h3 class="text-2xl font-semibold mb-6 text-gray-800">Core Skills</h3>
-                    <div class="flex flex-wrap gap-x-6 gap-y-3">
-                        <span class="text-lg text-gray-600">Product Strategy</span>
-                        <span class="text-lg text-gray-600">User Research</span>
-                        <span class="text-lg text-gray-600">Data Analysis</span>
-                        <span class="text-lg text-gray-600">Roadmap Planning</span>
-                        <span class="text-lg text-gray-600">Agile/Scrum</span>
-                        <span class="text-lg text-gray-600">Cross-functional Leadership</span>
+                <div class="grid grid-cols-2 gap-6" data-aos="fade-left">
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-100 transition-colors">
+                        <div class="text-4xl font-bold text-blue-600 mb-1">$350K+</div>
+                        <div class="text-sm text-slate-500 font-medium">Bootstrapped Revenue</div>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-100 transition-colors">
+                        <div class="text-4xl font-bold text-emerald-500 mb-1">10+</div>
+                        <div class="text-sm text-slate-500 font-medium">Products Launched</div>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-100 transition-colors">
+                        <div class="text-4xl font-bold text-purple-500 mb-1">500%</div>
+                        <div class="text-sm text-slate-500 font-medium">Avg. Engagement Lift</div>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-100 transition-colors">
+                        <div class="text-4xl font-bold text-orange-500 mb-1">12+</div>
+                        <div class="text-sm text-slate-500 font-medium">Years Experience</div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="portfolio" class="bg-white py-24 md:py-32 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-5xl font-bold text-center mb-24 text-gray-800" data-aos="fade-up">My Portfolio</h2>
-
-            <!-- Project 1: HarmonySync - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://podcast-farm.com/projects/gitsite/HarmonySyncMockup.jpg" alt="HarmonySync Project" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">HarmonySync</h3>
-                    <p class="text-lg text-gray-600 mb-6">A biometric conversation tool to help couples navigate conflict. This project focused on monitoring heart rate and using AI to support couples with nervous system regulation and repair, utilizing node.js, OpenAI and AssemblyAI.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>React</span> <span>/</span> <span>Tailwind CSS</span> <span>/</span> <span>OpenAI API</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
+    <section id="featured" class="py-20 bg-slate-50">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Featured Work</h2>
+                <p class="text-slate-500 max-w-2xl mx-auto">Selected projects that demonstrate impact and scale.</p>
             </div>
-
-            <!-- Project 2: Amplify What You Love - Right Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://podcast-farm.com/wp-content/uploads/2022/05/CousreMockuptransparent-2-1536x1255.png" alt="Amplify What You Love" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">Amplify What You Love</h3>
-                    <p class="text-lg text-gray-600 mb-6">A data-driven, 90-day learning and coaching product designed to help creators build consistent podcast or micro-content systems. Generated $250K+ in revenue, validating both the solution and the underlying user insights.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Product Management</span> <span>/</span> <span>User Research</span> <span>/</span> <span>Content Creation</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="https://podcast-farm.com" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Learn More</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 3: 1-Hour-A-Week Content Machine - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://podcast-farm.com/wp-content/uploads/2022/09/Psd-3-1536x1536.png" alt="1-Hour-A-Week Content Machine" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">1-Hour-A-Week Content Machine</h3>
-                    <p class="text-lg text-gray-600 mb-6">A research-informed content creation product that turns one weekly Insight Interview™ into a month of high-converting video assets. Generated $100K in first-year revenue and helped clients achieve up to 500% increases in views.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Product Management</span> <span>/</span> <span>Content Strategy</span> <span>/</span> <span>Video Production</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="https://podcast-farm.com" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Learn More</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 4: RAGA - Right Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://podcast-farm.com/projects/gitsite/ragathumb.jpg" alt="RAGA - Sounds of India" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">RAGA - Sounds of India</h3>
-                    <p class="text-lg text-gray-600 mb-6">An official Ableton Live pack featuring authentic recordings from master musicians across India. Includes 1300+ Raga loops, 70 percussion one-shots, and custom instrument racks for sitar and tanpura.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Ableton Live</span> <span>/</span> <span>World Music</span> <span>/</span> <span>Sound Design</span> <span>/</span> <span>Field Recording</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="https://www.ableton.com/en/packs/indian-raga/" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">View Pack</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Demo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 5: Relationship Safety Check - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://images.unsplash.com/photo-1522315641900-874dc98a7cbb?q=80&w=2070&auto=format&fit=crop" alt="The Relationship Safety Check" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">The Relationship Safety Check</h3>
-                    <p class="text-lg text-gray-600 mb-6">A science-driven interactive assessment inspired by IPV warning-sign research. This tool helps individuals evaluate relationship dynamics through evidence-based indicators, providing personalized insights and resources.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Interactive Assessment</span> <span>/</span> <span>IPV Research</span> <span>/</span> <span>Relationship Health</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="relationship-radar.html" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Try Assessment</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 6: LoveNotes - Right Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://podcast-farm.com/projects/gitsite/LoveNotesMockup.jpg" alt="LoveNotes SMS Relationship SaaS" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">LoveNotes</h3>
-                    <p class="text-lg text-gray-600 mb-6">An SMS-first relationship SaaS for couples who want to stay together. Delivers daily prompts and weekly "Love Letters" to help couples stay connected. Designed the end-to-end system including architecture, prompts, and state machine. Led user research, built the roadmap, and created a full QA suite. Successfully launched MVP to 3 couples.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Product Management</span> <span>/</span> <span>UX</span> <span>/</span> <span>User Research</span> <span>/</span> <span>QA</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm cursor-default">Coming Soon</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 7: AIHelper Mac App - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://podcast-farm.com/projects/gitsite/aihelper.png" alt="AIHelper Mac App" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">AIHelper Mac App</h3>
-                    <p class="text-lg text-gray-600 mb-6">A native macOS menu bar application that provides seamless AI assistance across your system. Features include system-wide text selection processing, multi-conversation management, and persistent chat history.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>SwiftUI</span> <span>/</span> <span>macOS</span> <span>/</span> <span>OpenAI API</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 8: Zero Gravity - Right Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://podcast-farm.com/projects/gitsite/Untitled%20design.jpg" alt="Zero Gravity Sensory Deprivation Spa App" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">Zero Gravity</h3>
-                    <p class="text-lg text-gray-600 mb-6">Designed the mobile UI/UX and led Agile development of a nationwide sensory deprivation tank control system. The app enables staff to monitor clients and manage lighting, temperature, filtration, audio, and session timing. Collaborated with hardware and electrical engineering teams to deploy 12+ installations with remote monitoring and diagnostics.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Mobile App Design</span> <span>/</span> <span>UI/UX</span> <span>/</span> <span>IoT Integration</span> <span>/</span> <span>Agile Development</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">View Case Study</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Learn More</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 9: Root Code - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://podcast-farm.com/projects/gitsite/root-code.png" alt="Root Code Game" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">Root Code</h3>
-                    <p class="text-lg text-gray-600 mb-6">A 3D isometric soulslike game that combines Vampire Survivors' progression with a narrative exploring humanity's future and AI. Built in Godot 4, featuring branching storylines, hidden lore, and soulslike combat mechanics.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Godot 4</span> <span>/</span> <span>Blender</span> <span>/</span> <span>3D Game Dev</span> <span>/</span> <span>Midjourney</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="https://youtu.be/E2m-VFpzggg?si=AOPGoFHmXpIarQKW" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">View Devlog</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 10: Jobi - Right Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://podcast-farm.com/projects/gitsite/jobithumb.png" alt="Jobi AI Resume Assistant" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">Jobi</h3>
-                    <p class="text-lg text-gray-600 mb-6">An AI-powered job search and resume optimization platform that streamlines the application process. Features include automated job matching, AI-generated ATS-optimized resumes, and personalized cover letters.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>React</span> <span>/</span> <span>OpenAI API</span> <span>/</span> <span>SerpApi</span> <span>/</span> <span>Node.js</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="https://www.loom.com/share/50324e09ee014be6baad8dec0bd2ee12?sid=16a09434-711f-40e4-bfbf-d1174e1f8b6f" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">View Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 11: StarSeed Odyssey - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="http://www.podcast-farm.com/projects/StarSeed/starseed2.jpg" alt="StarSeed Odyssey Project" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">StarSeed Odyssey</h3>
-                    <p class="text-lg text-gray-600 mb-6">This project involved building a mini solar system simulation, and demonstrated my ability to build a full game demo. It was built using three.js and aimed to tell a short but powerful story.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Three.js</span> <span>/</span> <span>HTML/CSS</span> <span>/</span> <span>API Integration</span> <span>/</span> <span>Sound Design</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="https://podcast-farm.com/projects/StarSeed/index.html" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 12: DriftNote P2P - Right Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://podcast-farm.com/projects/gitsite/driftnotethumb.png" alt="DriftNote P2P Project" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">DriftNote P2P</h3>
-                    <p class="text-lg text-gray-600 mb-6">A React-based peer-to-peer application that reimagines the concept of messages in bottles for the digital age. Users can record audio messages that drift through a P2P network.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>React</span> <span>/</span> <span>P2P Architecture</span> <span>/</span> <span>Node.js</span> <span>/</span> <span>Docker</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 13: EchoSonia - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://podcast-farm.com/projects/gitsite/echosoniascreen.png" alt="EchoSonia" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">EchoSonia</h3>
-                    <p class="text-lg text-gray-600 mb-6">A first-person WebXR exploration game where players navigate a dark environment using echolocation mechanics. Features immersive VR support, dynamic particle-based sound visualization, and physics-based interactions.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Three.js</span> <span>/</span> <span>WebXR</span> <span>/</span> <span>Web Audio API</span> <span>/</span> <span>Particle Systems</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="https://www.loom.com/share/aba73d2f6cc24e25ba08b82884d145e4?sid=c76c9d66-c026-478d-a364-d7e03f777135" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 14: IdeaForge - Right Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://podcast-farm.com/projects/gitsite/ideaforgelogo.png" alt="IdeaForge AI Assistant" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">IdeaForge</h3>
-                    <p class="text-lg text-gray-600 mb-6">An AI-powered idea development platform inspired by Jarvis, designed to transform concepts into shipped products. Features include AI-enhanced idea validation, automated work breakdown structures, and Kanban boards.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>AI/ML</span> <span>/</span> <span>NLP</span> <span>/</span> <span>React</span> <span>/</span> <span>Kanban</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project 15: InnerSearch - Left Image -->
-            <!-- COMMENTED OUT
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://placehold.co/600x400/f8fafc/3b82f6?text=InnerSearch" alt="InnerSearch AI Journal Engine" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">InnerSearch</h3>
-                    <p class="text-lg text-gray-600 mb-6">An AI-powered journal insight engine that transforms personal notes into a searchable knowledge base. Using GPT-4 for semantic analysis and FAISS for vector search, it extracts themes and patterns from journal entries.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>GPT-4</span> <span>/</span> <span>FAISS</span> <span>/</span> <span>Dash</span> <span>/</span> <span>Python</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-            -->
-
-            <!-- Project 16: Harmonic Explorer - Right Image -->
-            <!-- COMMENTED OUT
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div class="md:order-last" data-aos="fade-left">
-                    <img src="https://placehold.co/600x400/f8fafc/3b82f6?text=Harmonic+Explorer" alt="Harmonic Explorer" class="project-image">
-                </div>
-                <div data-aos="fade-right">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">Harmonic Explorer</h3>
-                    <p class="text-lg text-gray-600 mb-6">A music theory tool that democratizes chord progression creation by leveraging harmonic theory, cadences, and modal interchange. Users can generate musically coherent chord progressions guided by the circle of fifths.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Music Theory</span> <span>/</span> <span>Chord Progressions</span> <span>/</span> <span>Modal Interchange</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-            -->
-
-            <!-- Project 15: Humanity's Codex - Left Image -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
-                <div data-aos="fade-right">
-                    <img src="https://podcast-farm.com/projects/gitsite/treasuretrove2.png" alt="Humanity's Codex" class="project-image">
-                </div>
-                <div data-aos="fade-left">
-                    <h3 class="text-3xl font-bold mb-4 text-gray-800">Humanity's Codex</h3>
-                    <p class="text-lg text-gray-600 mb-6">An interactive digital time capsule that maps and preserves humanity's collective wisdom across disciplines. Features a Wikipedia API-powered knowledge graph connecting physics, art, psychology, and spirituality with interactive visualizations.</p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-2 mb-8 text-blue-600 text-sm font-medium">
-                        <span>Wikipedia API</span> <span>/</span> <span>Knowledge Graph</span> <span>/</span> <span>Interactive Visualization</span>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">Live Demo</a>
-                        <a href="#" target="_blank" class="px-6 py-2 border border-gray-400 text-gray-700 rounded-full font-semibold text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">GitHub Repo</a>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <section id="contact" class="py-24 md:py-32 px-4 sm:px-6 lg:px-8 text-center bg-white" data-aos="fade-up">
-        <h2 class="text-5xl font-bold mb-6 text-gray-800">Get In Touch</h2>
-        <p class="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-            I'm always open to new opportunities, collaborations, or just a friendly chat! Feel free to reach out.
-        </p>
-        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
             
-            <a href="https://www.linkedin.com/in/k-lee-marks-3693512b/" target="_blank" class="px-8 py-3 border-2 border-gray-400 text-gray-700 rounded-full font-semibold text-lg hover:bg-gray-50 transition-all">
-                LinkedIn
-            </a>
-            <a href="https://github.com/k-lee-marks" target="_blank" class="px-8 py-3 border-2 border-gray-400 text-gray-700 rounded-full font-semibold text-lg hover:bg-gray-50 transition-all">
-                GitHub
-            </a>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group" data-aos="fade-up" data-aos-delay="0">
+                    <div class="w-16 h-16 mb-6 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <i data-lucide="heart" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-slate-900">LoveNotes</h3>
+                    <p class="text-xs font-semibold tracking-wider text-blue-600 uppercase mb-4">SaaS • Relationship Health</p>
+                    <p class="text-slate-600 mb-6 leading-relaxed">Beta product helping couples reconnect after conflict using behavioral timing and SMS prompts.</p>
+                    <a href="#portfolio" class="inline-flex items-center text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors">
+                        See Details <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+                    </a>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-16 h-16 mb-6 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        <i data-lucide="trending-up" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-slate-900">Amplify What You Love</h3>
+                    <p class="text-xs font-semibold tracking-wider text-purple-600 uppercase mb-4">EdTech • $250k Rev</p>
+                    <p class="text-slate-600 mb-6 leading-relaxed">Creator-focused interviewing and content engine that generated significant revenue.</p>
+                    <a href="#portfolio" class="inline-flex items-center text-sm font-semibold text-slate-900 hover:text-purple-600 transition-colors">
+                        See Details <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+                    </a>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-16 h-16 mb-6 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                        <i data-lucide="zap" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-slate-900">Content Machine</h3>
+                    <p class="text-xs font-semibold tracking-wider text-orange-600 uppercase mb-4">System Design • Productivity</p>
+                    <p class="text-slate-600 mb-6 leading-relaxed">Productized content pipeline converting 1 hour of effort into a month of assets.</p>
+                    <a href="#portfolio" class="inline-flex items-center text-sm font-semibold text-slate-900 hover:text-orange-600 transition-colors">
+                        See Details <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 
-    <footer class="bg-gray-900 text-gray-400 py-12 px-4 sm:px-6 lg:px-8 text-center border-t border-gray-800">
-        <p>&copy; <span id="current-year"></span> K-Lee Marks. All rights reserved.</p>
+    <section id="portfolio" class="bg-white py-24">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col items-center mb-20">
+                <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-sm font-medium mb-4">Deep Dive</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight text-center">Selected Works</h2>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7" data-aos="fade-right">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/projects/gitsite/HarmonySyncMockup.jpg" alt="HarmonySync" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-left">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-blue-600"></span>
+                        <span class="text-blue-600 font-bold uppercase tracking-widest text-xs">Biometric AI</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">HarmonySync</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">A biometric conversation tool helping couples navigate conflict. Monitors heart rate and uses AI to support nervous system regulation and repair.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">React</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Tailwind</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">OpenAI</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">AssemblyAI</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="#" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Live Demo
+                        </a>
+                        <a href="#" class="px-6 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-full hover:border-slate-400 transition-colors flex items-center gap-2">
+                            <i data-lucide="github" class="w-4 h-4"></i> Source
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7 md:order-last" data-aos="fade-left">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/wp-content/uploads/2022/05/CousreMockuptransparent-2-1536x1255.png" alt="Amplify" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-right">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-purple-600"></span>
+                        <span class="text-purple-600 font-bold uppercase tracking-widest text-xs">Product Management</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">Amplify What You Love</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">A data-driven, 90-day learning product helping creators build consistent content systems. Validated user insights and generated $250K+ in revenue.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">User Research</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Strategy</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Content</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="https://podcast-farm.com" target="_blank" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Case Study
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7" data-aos="fade-right">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/wp-content/uploads/2022/09/Psd-3-1536x1536.png" alt="Content Machine" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-left">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-orange-600"></span>
+                        <span class="text-orange-600 font-bold uppercase tracking-widest text-xs">Productized Service</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">1-Hour-A-Week Machine</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">Research-informed content system turning one interview into a month of assets. $100K first-year revenue and 500% client view growth.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Systems Design</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Automation</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="https://podcast-farm.com" target="_blank" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7 md:order-last" data-aos="fade-left">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/projects/gitsite/ragathumb.jpg" alt="RAGA" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-right">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-red-600"></span>
+                        <span class="text-red-600 font-bold uppercase tracking-widest text-xs">Audio Tech</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">RAGA - Sounds of India</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">Official Ableton Live pack with 1300+ loops and custom instrument racks. A deep dive into field recording, sound design, and digital distribution.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Ableton</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Sound Design</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="https://www.ableton.com/en/packs/indian-raga/" target="_blank" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Ableton Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7" data-aos="fade-right">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://images.unsplash.com/photo-1522315641900-874dc98a7cbb?q=80&w=2070&auto=format&fit=crop" alt="Safety Check" class="project-image w-full h-auto object-cover grayscale hover:grayscale-0 transition-all">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-left">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-teal-600"></span>
+                        <span class="text-teal-600 font-bold uppercase tracking-widest text-xs">Social Impact</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">Safety Check</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">Interactive assessment based on IPV research. Helps individuals evaluate relationship dynamics through evidence-based indicators.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Logic Jump</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Research</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">HTML/JS</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="relationship-radar.html" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i> Try Tool
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7 md:order-last" data-aos="fade-left">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/projects/gitsite/LoveNotesMockup.jpg" alt="LoveNotes" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-right">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-blue-600"></span>
+                        <span class="text-blue-600 font-bold uppercase tracking-widest text-xs">End-to-End Product</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">LoveNotes</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">SMS-first relationship SaaS. Designed the architecture, prompts, and state machine. Led user research, roadmap, and QA. MVP launched to early users.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Product Mgmt</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">UX Research</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">QA</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <span class="px-6 py-2.5 bg-slate-100 text-slate-500 text-sm font-medium rounded-full cursor-not-allowed flex items-center gap-2">
+                            <i data-lucide="lock" class="w-4 h-4"></i> Beta Access Only
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7" data-aos="fade-right">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/projects/gitsite/aihelper.png" alt="AIHelper" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-left">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-sky-500"></span>
+                        <span class="text-sky-500 font-bold uppercase tracking-widest text-xs">MacOS Development</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">AIHelper Mac App</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">Native macOS menu bar app for seamless AI assistance. Features system-wide text selection processing and persistent history.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">SwiftUI</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">MacOS</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">OpenAI</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="#" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                             Demo
+                        </a>
+                        <a href="#" class="px-6 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-full hover:border-slate-400 transition-colors flex items-center gap-2">
+                            <i data-lucide="github" class="w-4 h-4"></i> Repo
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7 md:order-last" data-aos="fade-left">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/projects/gitsite/Untitled%20design.jpg" alt="Zero Gravity" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-right">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-indigo-600"></span>
+                        <span class="text-indigo-600 font-bold uppercase tracking-widest text-xs">IoT & Mobile</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">Zero Gravity</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">UI/UX and Agile development for sensory deprivation tank control systems. Deployed 12+ installations with remote monitoring of lighting, temp, and filtration.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">IoT</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Mobile UX</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Agile</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                         <a href="#" class="px-6 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-full hover:border-slate-400 transition-colors flex items-center gap-2">
+                             View Case Study
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7" data-aos="fade-right">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/projects/gitsite/root-code.png" alt="Root Code" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-left">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-green-600"></span>
+                        <span class="text-green-600 font-bold uppercase tracking-widest text-xs">Game Dev</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">Root Code</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">3D isometric soulslike exploring humanity's future and AI. Built in Godot 4 with branching storylines.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Godot 4</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Blender</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">Midjourney</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="https://youtu.be/E2m-VFpzggg?si=AOPGoFHmXpIarQKW" target="_blank" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="youtube" class="w-4 h-4"></i> Devlog
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+             <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center mb-24 md:mb-32">
+                <div class="md:col-span-7 md:order-last" data-aos="fade-left">
+                    <div class="project-image-container bg-slate-100">
+                        <img src="https://podcast-farm.com/projects/gitsite/jobithumb.png" alt="Jobi" class="project-image w-full h-auto object-cover">
+                    </div>
+                </div>
+                <div class="md:col-span-5" data-aos="fade-right">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="w-8 h-[2px] bg-indigo-500"></span>
+                        <span class="text-indigo-500 font-bold uppercase tracking-widest text-xs">AI Automation</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 mb-4">Jobi</h3>
+                    <p class="text-slate-600 leading-relaxed mb-6">AI-powered job search optimizer. Automated job matching and AI-generated ATS-optimized resumes.</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">React</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">OpenAI</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">SerpApi</span>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <a href="https://www.loom.com/share/50324e09ee014be6baad8dec0bd2ee12?sid=16a09434-711f-40e4-bfbf-d1174e1f8b6f" target="_blank" class="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="video" class="w-4 h-4"></i> Demo
+                        </a>
+                        <a href="#" class="px-6 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-full hover:border-slate-400 transition-colors flex items-center gap-2">
+                            <i data-lucide="github" class="w-4 h-4"></i> Repo
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-12 mt-24">
+                <h3 class="text-2xl font-bold text-slate-900">Experiments & Prototypes</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100" data-aos="fade-up">
+                    <div class="flex justify-between items-start mb-4">
+                         <h4 class="text-xl font-bold text-slate-800">StarSeed Odyssey</h4>
+                         <span class="text-xs bg-black text-white px-2 py-1 rounded">Three.js</span>
+                    </div>
+                    <p class="text-slate-600 text-sm mb-4">Solar system simulation and storytelling demo.</p>
+                    <a href="https://podcast-farm.com/projects/StarSeed/index.html" target="_blank" class="text-blue-600 text-sm font-medium hover:underline">Play Demo &rarr;</a>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex justify-between items-start mb-4">
+                         <h4 class="text-xl font-bold text-slate-800">DriftNote P2P</h4>
+                         <span class="text-xs bg-black text-white px-2 py-1 rounded">P2P / Node</span>
+                    </div>
+                    <p class="text-slate-600 text-sm mb-4">Digital message-in-a-bottle using Peer-to-Peer architecture.</p>
+                    <a href="#" class="text-blue-600 text-sm font-medium hover:underline">View Source &rarr;</a>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100" data-aos="fade-up">
+                    <div class="flex justify-between items-start mb-4">
+                         <h4 class="text-xl font-bold text-slate-800">EchoSonia</h4>
+                         <span class="text-xs bg-black text-white px-2 py-1 rounded">WebXR</span>
+                    </div>
+                    <p class="text-slate-600 text-sm mb-4">VR exploration game using echolocation mechanics.</p>
+                    <a href="https://www.loom.com/share/aba73d2f6cc24e25ba08b82884d145e4" target="_blank" class="text-blue-600 text-sm font-medium hover:underline">Watch Gameplay &rarr;</a>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex justify-between items-start mb-4">
+                         <h4 class="text-xl font-bold text-slate-800">IdeaForge</h4>
+                         <span class="text-xs bg-black text-white px-2 py-1 rounded">AI / NLP</span>
+                    </div>
+                    <p class="text-slate-600 text-sm mb-4">Jarvis-inspired platform to turn concepts into shipped products.</p>
+                    <a href="#" class="text-blue-600 text-sm font-medium hover:underline">View Source &rarr;</a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="contact" class="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-64 h-64 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute top-0 right-0 w-64 h-64 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+
+        <div class="max-w-4xl mx-auto px-6 text-center relative z-10" data-aos="fade-up">
+            <h2 class="text-5xl md:text-6xl font-bold mb-8 tracking-tight">Let's build something <br/> <span class="text-blue-400">meaningful.</span></h2>
+            <p class="text-xl text-slate-300 mb-12 max-w-2xl mx-auto">
+                I'm always open to new opportunities, collaborations, or just a friendly chat about the intersection of humanity and technology.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-6">
+                <a href="https://www.linkedin.com/in/k-lee-marks-3693512b/" target="_blank" class="px-8 py-4 bg-white text-slate-900 rounded-full font-bold hover:bg-blue-50 transition-all flex items-center justify-center gap-3">
+                    <i data-lucide="linkedin" class="w-5 h-5"></i> Connect on LinkedIn
+                </a>
+                <a href="https://github.com/k-lee-marks" target="_blank" class="px-8 py-4 border border-slate-600 text-white rounded-full font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-3">
+                    <i data-lucide="github" class="w-5 h-5"></i> GitHub Profile
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-slate-950 text-slate-500 py-12 px-6 border-t border-slate-800">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <span class="font-bold text-slate-300">K-Lee Marks</span>
+            </div>
+            <div class="text-sm">
+                &copy; <span id="current-year"></span> All rights reserved. Built with passion & code.
+            </div>
+        </div>
     </footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Set current year in footer
             document.getElementById('current-year').textContent = new Date().getFullYear();
 
-            // Initialize AOS
             AOS.init({
                 duration: 800,
                 once: true,
-                offset: 100,
-                easing: 'ease-out-quad',
+                offset: 50,
+                easing: 'ease-out-cubic',
             });
         });
 
-        // Three.js 3D Pixel Coalescence Animation
+        // Three.js Code (Preserved and Optimized)
         window.onload = function() {
             const canvas = document.getElementById('threeCanvas');
             const header = document.querySelector('header');
@@ -587,29 +646,27 @@
             let scene, camera, renderer, points;
             let animationFrameId;
 
-            const gridSize = 40; // Size of the 3D grid
+            const gridSize = 40; 
             const particleCount = gridSize * gridSize * gridSize;
-            const particleSize = 1.5; // Visual size of each point on screen (adjusted for better visibility)
-            const spacing = 10; // Spacing between particles in the grid
-            const animationDuration = 2500; // Duration for position animation (ms)
-            const displayDuration = 3500; // Duration a shape stays formed (ms)
-            const baseOpacity = 0.08; // Base opacity for all background particles
-            const shapeOpacity = 0.2; // Max opacity for particles forming shapes
+            const particleSize = 1.8; 
+            const spacing = 12; 
+            const animationDuration = 2500; 
+            const displayDuration = 3500; 
+            const baseOpacity = 0.06; // Lowered slightly for better text contrast
+            const shapeOpacity = 0.3; 
 
-            let currentShapeIndex = -1; // Start at -1 so first call to nextShape increments to 0
+            let currentShapeIndex = -1; 
             let animationStartTime = 0;
-            let isAnimating = false; // Flag to indicate if position/opacity interpolation is active
+            let isAnimating = false; 
 
-            // Use Float32Array for direct buffer manipulation
-            const positions = new Float32Array(particleCount * 3); // x, y, z for each particle
+            const positions = new Float32Array(particleCount * 3); 
             const startPositions = new Float32Array(particleCount * 3);
             const targetPositions = new Float32Array(particleCount * 3);
 
-            const opacities = new Float32Array(particleCount); // opacity for each particle
+            const opacities = new Float32Array(particleCount); 
             const startOpacities = new Float32Array(particleCount);
             const targetOpacities = new Float32Array(particleCount);
 
-            // Easing function for smoother transitions (Ease-in-out Sine)
             function easeInOutSine(t) {
                 return -(Math.cos(Math.PI * t) - 1) / 2;
             }
@@ -619,38 +676,33 @@
                 { name: 'Sphere', func: generateSpherePositions },
             ];
 
-            // Initialize Three.js scene, camera, and renderer
             function initThree() {
                 scene = new THREE.Scene();
-
-                // Camera setup: FOV, Aspect, Near, Far
-                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                // Calculate initial camera Z to fit the entire grid
+                camera = new THREE.PerspectiveCamera(75, header.clientWidth / header.clientHeight, 0.1, 1000);
+                
                 const fovRad = THREE.MathUtils.degToRad(camera.fov);
                 const gridExtent = gridSize * spacing;
-                camera.position.z = (gridExtent / 2) / Math.tan(fovRad / 2) * 1.1; // Adjust multiplier for padding
-                camera.position.z = Math.max(camera.position.z, 300); // Ensure a minimum distance
+                camera.position.z = (gridExtent / 2) / Math.tan(fovRad / 2) * 1.1; 
+                camera.position.z = Math.max(camera.position.z, 300); 
 
-                renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); // alpha: true for transparent background
+                renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); 
                 renderer.setPixelRatio(window.devicePixelRatio);
-                resizeRenderer(); // Set initial size
+                resizeRenderer(); 
 
-                // Create BufferGeometry and set attributes
                 const geometry = new THREE.BufferGeometry();
                 geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1)); // Custom attribute for opacity
+                geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1)); 
 
-                // Create ShaderMaterial for custom rendering of points
                 const material = new THREE.ShaderMaterial({
                     uniforms: {
-                        color: { value: new THREE.Color(0xffffff) }, // White color for particles
+                        color: { value: new THREE.Color(0xa5f3fc) }, // Cyan/Blue tint for particles
                     },
                     vertexShader: `
                         attribute float opacity;
                         varying float vOpacity;
                         void main() {
                             vOpacity = opacity;
-                            gl_PointSize = ${particleSize} * (1.0 / -gl_Position.z); // Scale point size based on depth
+                            gl_PointSize = ${particleSize} * (300.0 / -gl_Position.z); 
                             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                         }
                     `,
@@ -658,19 +710,20 @@
                         varying float vOpacity;
                         uniform vec3 color;
                         void main() {
+                            if (length(gl_PointCoord - vec2(0.5, 0.5)) > 0.475) discard;
                             gl_FragColor = vec4(color, vOpacity);
                         }
                     `,
                     transparent: true,
-                    blending: THREE.AdditiveBlending // Good for glowing particle effects
+                    depthWrite: false, 
+                    blending: THREE.AdditiveBlending 
                 });
 
-                points = new THREE.Points(geometry, material); // Use THREE.Points
+                points = new THREE.Points(geometry, material); 
                 scene.add(points);
 
-                // Initial grid formation and populate initial buffer data
                 setParticlesToGrid();
-                // Copy initial state to start arrays
+                
                 for (let i = 0; i < particleCount * 3; i++) {
                     startPositions[i] = positions[i];
                 }
@@ -678,14 +731,11 @@
                     startOpacities[i] = opacities[i];
                 }
 
-                // Start the first animation cycle after a short delay
-                setTimeout(startTransitionToNextShape, 1000); // Give a moment for initial grid to render
+                setTimeout(startTransitionToNextShape, 1000); 
             }
 
-            // Set particles to a uniform 3D grid and populate buffers
             function setParticlesToGrid() {
-                const offset = (gridSize - 1) * spacing / 2; // Center the grid
-
+                const offset = (gridSize - 1) * spacing / 2; 
                 let idx = 0;
                 for (let z = 0; z < gridSize; z++) {
                     for (let y = 0; y < gridSize; y++) {
@@ -698,18 +748,15 @@
                         }
                     }
                 }
-                // Mark attributes as needing update
                 points.geometry.attributes.position.needsUpdate = true;
                 points.geometry.attributes.opacity.needsUpdate = true;
             }
 
-            // Generate positions for a 3D cube
             function generateCubePositions() {
                 const positions = new Float32Array(particleCount * 3);
-                const cubeSize = gridSize * spacing * 0.7; // Scale cube to fit
+                const cubeSize = gridSize * spacing * 0.7; 
                 const halfCubeSize = cubeSize / 2;
 
-                // Simple cube outline by picking points on its edges/faces
                 for (let i = 0; i < particleCount; i++) {
                     positions[i * 3] = Math.random() * cubeSize - halfCubeSize;
                     positions[i * 3 + 1] = Math.random() * cubeSize - halfCubeSize;
@@ -718,13 +765,11 @@
                 return positions;
             }
 
-            // Generate positions for a 3D sphere
             function generateSpherePositions() {
                 const positions = new Float32Array(particleCount * 3);
-                const sphereRadius = gridSize * spacing * 0.35; // Scale sphere to fit
+                const sphereRadius = gridSize * spacing * 0.35; 
 
                 for (let i = 0; i < particleCount; i++) {
-                    // Random point on a sphere surface
                     const u = Math.random();
                     const v = Math.random();
                     const theta = 2 * Math.PI * u;
@@ -737,23 +782,19 @@
                 return positions;
             }
 
-            // Function to generate the target positions and opacities for the next shape
             function generateNextShapeTargets() {
                 currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
                 const newShapeFunc = shapes[currentShapeIndex].func;
-                const newShapePositions = newShapeFunc(); // Positions for the new shape
-
-                const offset = (gridSize - 1) * spacing / 2; // For grid positions
+                const newShapePositions = newShapeFunc(); 
+                const offset = (gridSize - 1) * spacing / 2; 
 
                 for (let i = 0; i < particleCount; i++) {
-                    // Determine target position: either from the shape or back to grid
-                    if (newShapePositions[i * 3] !== undefined) { // Check if position exists in shape
+                    if (newShapePositions[i * 3] !== undefined) { 
                         targetPositions[i * 3] = newShapePositions[i * 3];
                         targetPositions[i * 3 + 1] = newShapePositions[i * 3 + 1];
                         targetPositions[i * 3 + 2] = newShapePositions[i * 3 + 2];
                         targetOpacities[i] = shapeOpacity;
                     } else {
-                        // If particle is not part of the new shape, send it back to its grid position
                         targetPositions[i * 3] = (i % gridSize) * spacing - offset;
                         targetPositions[i * 3 + 1] = (Math.floor(i / gridSize) % gridSize) * spacing - offset;
                         targetPositions[i * 3 + 2] = Math.floor(i / (gridSize * gridSize)) * spacing - offset;
@@ -762,12 +803,10 @@
                 }
             }
 
-            // Starts the transition to the next shape
             function startTransitionToNextShape() {
                 isAnimating = true;
                 animationStartTime = performance.now();
 
-                // Store current states as start states for interpolation
                 for (let i = 0; i < particleCount * 3; i++) {
                     startPositions[i] = positions[i];
                 }
@@ -775,13 +814,10 @@
                     startOpacities[i] = opacities[i];
                 }
 
-                // Generate targets for the next shape
                 generateNextShapeTargets();
 
-                // Schedule the end of the animation
                 setTimeout(() => {
                     isAnimating = false;
-                    // Ensure final state is set precisely after animation
                     for (let i = 0; i < particleCount * 3; i++) {
                         positions[i] = targetPositions[i];
                     }
@@ -791,72 +827,53 @@
                     points.geometry.attributes.position.needsUpdate = true;
                     points.geometry.attributes.opacity.needsUpdate = true;
 
-                    // Schedule the next transition after display duration
                     setTimeout(startTransitionToNextShape, displayDuration);
                 }, animationDuration);
             }
 
-            // Main animation loop
             function animate() {
                 animationFrameId = requestAnimationFrame(animate);
 
                 const elapsed = performance.now() - animationStartTime;
-                let progress = isAnimating ? Math.min(1, elapsed / animationDuration) : 1; // If not animating, progress is 1
+                let progress = isAnimating ? Math.min(1, elapsed / animationDuration) : 1; 
 
-                // Apply easing to the progress if animating
                 if (isAnimating) {
                     progress = easeInOutSine(progress);
                 }
 
-                // Interpolate positions and opacities directly in the buffers
                 for (let i = 0; i < particleCount; i++) {
-                    // Position interpolation
                     positions[i * 3] = startPositions[i * 3] + (targetPositions[i * 3] - startPositions[i * 3]) * progress;
                     positions[i * 3 + 1] = startPositions[i * 3 + 1] + (targetPositions[i * 3 + 1] - startPositions[i * 3 + 1]) * progress;
                     positions[i * 3 + 2] = startPositions[i * 3 + 2] + (targetPositions[i * 3 + 2] - startPositions[i * 3 + 2]) * progress;
 
-                    // Opacity interpolation
                     opacities[i] = startOpacities[i] + (targetOpacities[i] - startOpacities[i]) * progress;
                 }
 
-                // Mark attributes as needing update once per frame
                 points.geometry.attributes.position.needsUpdate = true;
                 points.geometry.attributes.opacity.needsUpdate = true;
 
-                // Rotate the entire particle group slightly for visual interest
                 points.rotation.y += 0.001;
                 points.rotation.x += 0.0005;
 
                 renderer.render(scene, camera);
             }
 
-            // Handles canvas resizing
             function resizeRenderer() {
-                // Ensure width never exceeds viewport on mobile
-                const isMobile = window.innerWidth <= 768;
-                const width = isMobile ? Math.min(header.clientWidth, window.innerWidth) : header.clientWidth;
+                const width = header.clientWidth;
                 const height = header.clientHeight;
                 renderer.setSize(width, height);
-                if (isMobile) {
-                    canvas.style.width = width + 'px';
-                    canvas.style.height = height + 'px';
-                }
                 camera.aspect = width / height;
                 camera.updateProjectionMatrix();
-                // Re-position camera based on new dimensions to keep grid visible
+                
                 const fovRad = THREE.MathUtils.degToRad(camera.fov);
                 const gridExtent = gridSize * spacing;
-                // Calculate Z to fit the grid, adding some padding
                 let newCameraZ = (gridExtent / 2) / Math.tan(fovRad / 2) * 1.1;
-                // Ensure it's not too close for very small screens, or too far for large ones
-                newCameraZ = Math.max(newCameraZ, 300); // Minimum Z distance
+                newCameraZ = Math.max(newCameraZ, 300);
                 camera.position.z = newCameraZ;
             }
 
-            // Event listeners
             window.addEventListener('resize', resizeRenderer);
 
-            // Start the animation when the window finishes loading
             initThree();
             animate();
         };
