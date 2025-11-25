@@ -673,8 +673,10 @@
             }
 
             const shapes = [
-                { name: 'Cube', func: generateCubePositions },
                 { name: 'Sphere', func: generateSpherePositions },
+                { name: 'DNA', func: generateDNAPositions },
+                { name: 'Torus', func: generateTorusPositions },
+                { name: 'Cube', func: generateCubePositions },
             ];
 
             function initThree() {
@@ -696,15 +698,21 @@
 
                 const material = new THREE.ShaderMaterial({
                     uniforms: {
-                        color: { value: new THREE.Color(0xa5f3fc) }, // Cyan/Blue tint for particles
+                        color: { value: new THREE.Color(0xa5f3fc) }, // Cyan/Blue tint
+                        time: { value: 0 }
                     },
                     vertexShader: `
                         attribute float opacity;
                         varying float vOpacity;
+                        uniform float time;
                         void main() {
                             vOpacity = opacity;
+                            vec3 pos = position;
+                            // Add a subtle breathing effect
+                            pos.x += sin(time * 0.5 + position.y * 0.05) * 2.0;
+                            pos.y += cos(time * 0.5 + position.x * 0.05) * 2.0;
                             gl_PointSize = ${particleSize} * (300.0 / -gl_Position.z); 
-                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
                         }
                     `,
                     fragmentShader: `
@@ -768,7 +776,7 @@
 
             function generateSpherePositions() {
                 const positions = new Float32Array(particleCount * 3);
-                const sphereRadius = gridSize * spacing * 0.35; 
+                const sphereRadius = gridSize * spacing * 0.4; 
 
                 for (let i = 0; i < particleCount; i++) {
                     const u = Math.random();
@@ -779,6 +787,52 @@
                     positions[i * 3] = sphereRadius * Math.sin(phi) * Math.cos(theta);
                     positions[i * 3 + 1] = sphereRadius * Math.sin(phi) * Math.sin(theta);
                     positions[i * 3 + 2] = sphereRadius * Math.cos(phi);
+                }
+                return positions;
+            }
+
+            function generateTorusPositions() {
+                const positions = new Float32Array(particleCount * 3);
+                const majorRadius = gridSize * spacing * 0.3;
+                const minorRadius = gridSize * spacing * 0.15;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const u = Math.random() * Math.PI * 2;
+                    const v = Math.random() * Math.PI * 2;
+
+                    positions[i * 3] = (majorRadius + minorRadius * Math.cos(v)) * Math.cos(u);
+                    positions[i * 3 + 1] = (majorRadius + minorRadius * Math.cos(v)) * Math.sin(u);
+                    positions[i * 3 + 2] = minorRadius * Math.sin(v);
+                    
+                    // Add some random scatter
+                    positions[i * 3] += (Math.random() - 0.5) * 10;
+                    positions[i * 3 + 1] += (Math.random() - 0.5) * 10;
+                    positions[i * 3 + 2] += (Math.random() - 0.5) * 10;
+                }
+                return positions;
+            }
+
+            function generateDNAPositions() {
+                const positions = new Float32Array(particleCount * 3);
+                const radius = gridSize * spacing * 0.2;
+                const height = gridSize * spacing * 1.2;
+                const turns = 3;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const t = Math.random() * height - height / 2;
+                    const angle = (t / height) * Math.PI * 2 * turns;
+                    
+                    // Two strands
+                    const strand = Math.random() > 0.5 ? 0 : Math.PI;
+                    
+                    positions[i * 3] = radius * Math.cos(angle + strand);
+                    positions[i * 3 + 1] = t;
+                    positions[i * 3 + 2] = radius * Math.sin(angle + strand);
+                    
+                    // Add thickness/scatter
+                    positions[i * 3] += (Math.random() - 0.5) * 20;
+                    positions[i * 3 + 1] += (Math.random() - 0.5) * 5;
+                    positions[i * 3 + 2] += (Math.random() - 0.5) * 20;
                 }
                 return positions;
             }
@@ -831,9 +885,21 @@
                     setTimeout(startTransitionToNextShape, displayDuration);
                 }, animationDuration);
             }
+            
+            // Mouse Interaction
+            let mouseX = 0;
+            let mouseY = 0;
+            
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - window.innerWidth / 2) * 0.0005;
+                mouseY = (event.clientY - window.innerHeight / 2) * 0.0005;
+            });
 
             function animate() {
                 animationFrameId = requestAnimationFrame(animate);
+
+                const time = performance.now() * 0.001;
+                points.material.uniforms.time.value = time;
 
                 const elapsed = performance.now() - animationStartTime;
                 let progress = isAnimating ? Math.min(1, elapsed / animationDuration) : 1; 
@@ -853,8 +919,10 @@
                 points.geometry.attributes.position.needsUpdate = true;
                 points.geometry.attributes.opacity.needsUpdate = true;
 
+                // Subtle rotation + Mouse Parallax
                 points.rotation.y += 0.001;
-                points.rotation.x += 0.0005;
+                points.rotation.x += (mouseY - points.rotation.x) * 0.05;
+                points.rotation.z += (mouseX - points.rotation.z) * 0.05;
 
                 renderer.render(scene, camera);
             }
