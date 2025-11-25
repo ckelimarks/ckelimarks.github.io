@@ -653,8 +653,8 @@
             const spacing = 12; 
             const animationDuration = 2500; 
             const displayDuration = 3500; 
-            const baseOpacity = 0.06; // Lowered slightly for better text contrast
-            const shapeOpacity = 0.3; 
+            const baseOpacity = 0.12; // Increased opacity
+            const shapeOpacity = 0.45; // Increased opacity
 
             let currentShapeIndex = -1; 
             let animationStartTime = 0;
@@ -919,10 +919,20 @@
                 points.geometry.attributes.position.needsUpdate = true;
                 points.geometry.attributes.opacity.needsUpdate = true;
 
-                // Subtle rotation + Mouse Parallax
+                // Auto-rotation + Mouse Parallax
+                // Constant rotation on Y
                 points.rotation.y += 0.001;
-                points.rotation.x += (mouseY - points.rotation.x) * 0.05;
-                points.rotation.z += (mouseX - points.rotation.z) * 0.05;
+                
+                // Gentle floating sine-wave rotation on X and Z (independent of mouse)
+                const autoTiltX = Math.sin(time * 0.5) * 0.15;
+                const autoTiltZ = Math.cos(time * 0.3) * 0.08;
+
+                // Blend mouse interaction with auto-animation
+                const targetX = mouseY + autoTiltX;
+                const targetZ = mouseX + autoTiltZ;
+
+                points.rotation.x += (targetX - points.rotation.x) * 0.05;
+                points.rotation.z += (targetZ - points.rotation.z) * 0.05;
 
                 renderer.render(scene, camera);
             }
