@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoveStory 2026: Sam & Riley</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        :root {
+            /* Palette Definition */
+            --c-cream: #FDFBF7;
+            --c-peach: #FCECE4;
+            --c-terra: #C26D6D; 
+            --c-dark: #1A1A1A;
+            --c-text-dark: #2C2C2C;
+            --c-text-light: #FDFBF7;
+            
+            --font-head: 'Playfair Display', serif;
+            --font-body: 'DM Sans', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--c-cream);
+            color: var(--c-text-dark);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            transition: color 0.5s ease;
+        }
+
+        /* --- Global Texture Overlay --- */
+        .grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- Typography --- */
+        h1, h2, h3, .big-text {
+            font-family: var(--font-head);
+            font-weight: 400;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: 14vw;
+            text-align: center;
+            letter-spacing: -0.04em;
+            color: var(--c-terra);
+            opacity: 0; 
+            transform: translateY(30px);
+        }
+
+        h2 {
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.8rem;
+            margin-bottom: 1.5rem;
+            display: block;
+            font-weight: 700;
+            opacity: 0.7;
+        }
+
+        /* --- Layout --- */
+        section {
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 6rem 2rem;
+        }
+
+        .full-width {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- Specific Section Styles --- */
+
+        /* Hero */
+        #hero .hero-names {
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            font-family: var(--font-body);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Stats */
+        .big-stat-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4rem;
+            text-align: center;
+            width: 100%;
+        }
+        .huge-number {
+            font-family: var(--font-head);
+            font-size: 8rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Themes - CLOUD STYLES */
+        .theme-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem; 
+            max-width: 1000px;
+            margin-top: 3rem;
+            perspective: 1000px; /* Adds depth for 3d transforms if needed */
+        }
+        
+        .theme-word {
+            font-family: var(--font-head);
+            color: var(--c-terra); 
+            display: inline-block;
+            cursor: pointer; /* Interaction hint */
+            line-height: 1;
+            
+            /* Initial state for animation logic is handled by GSAP, 
+               but we set transition for the HOVER effect here */
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        /* HOVER EFFECT */
+        .theme-word:hover {
+            transform: scale(1.15) translateY(-5px); /* Pop up and grow */
+            text-shadow: 0 10px 20px rgba(194, 109, 109, 0.2);
+            z-index: 10;
+        }
+
+        /* Hierarchy via Size */
+        .theme-word.size-xl { font-size: 6rem; }
+        .theme-word.size-l  { font-size: 4.5rem; }
+        .theme-word.size-m  { font-size: 3rem; }
+        .theme-word.size-s  { font-size: 2rem; opacity: 0.8; } 
+
+        /* Chart */
+        .chart-wrapper {
+            width: 100%;
+            height: 40vh;
+            max-width: 800px;
+            position: relative;
+            margin-top: 4rem;
+        }
+
+        /* Highlights */
+        .highlight-container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .quote-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 2rem;
+            fill: var(--c-terra);
+        }
+        .highlight-body {
+            font-size: 2.2rem;
+            font-family: var(--font-head);
+            line-height: 1.4;
+            font-style: italic;
+        }
+        .highlight-meta {
+            margin-top: 2rem;
+            font-family: var(--font-body);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        /* Footer */
+        footer button {
+            background: #fff; 
+            color: var(--c-terra); 
+            border: none; 
+            padding: 1.5rem 3rem; 
+            font-size: 1.2rem; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            font-family: var(--font-body); 
+            font-weight: 700;
+            transition: transform 0.2s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        footer button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Media Queries */
+        @media (min-width: 768px) {
+            .big-stat-grid { grid-template-columns: 1fr 1fr 1fr; gap: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grain-overlay"></div>
+
+    <section id="hero" data-bg="#FDFBF7" data-text="dark">
+        <span class="subtitle">Your 2026 In Review</span>
+        <h1 class="hero-title">Love<br>Story</h1>
+        <div class="hero-names">Sam & Riley</div>
+        
+        <div style="position: absolute; bottom: 3rem; opacity: 0.5;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 13L12 18L17 13M7 6L12 11L17 6" />
+            </svg>
+        </div>
+    </section>
+
+    <section id="stats" data-bg="#C26D6D" data-text="light">
+        <div class="full-width">
+            <span class="subtitle" style="text-align: center; opacity: 0.8;">By The Numbers</span>
+            <div class="big-stat-grid">
+                <div class="big-stat-item">
+                    <span class="huge-number counter" data-target="365">0</span>
+                    <span class="lead">Prompts Sent</span>
+                </div>
+                <div class="big-stat-item">
+                    <span class="huge-number counter" data-target="568">0</span>
+                    <span class="lead">Responses Shared</span>
+                </div>
+                <div class="big-stat-item">
+                    <span class="huge-number counter" data-target="27">0</span>
+                    <span class="lead">Day Streak</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="themes" data-bg="#FCECE4" data-text="dark">
+        <span class="subtitle" style="color: var(--c-terra);">What defined you</span>
+        <h2 style="text-align: center; max-width: 600px;">While life got busy, your themes stayed grounded.</h2>
+        
+        <div class="theme-cloud">
+            <span class="theme-word size-xl">Appreciation</span>
+            <span class="theme-word size-l">Laughter</span>
+            <span class="theme-word size-m">Support</span>
+            <span class="theme-word size-l">Dreams</span>
+            <span class="theme-word size-m">Repair</span>
+            <span class="theme-word size-s">Intimacy</span>
+        </div>
+    </section>
+
+    <section id="arc" data-bg="#FDFBF7" data-text="dark">
+        <span class="subtitle" style="color: var(--c-terra);">The Journey</span>
+        <h2 style="text-align: center;">Growing closer, season by season.</h2>
+        
+        <div class="chart-wrapper">
+            <svg viewBox="0 0 800 400" width="100%" height="100%" preserveAspectRatio="none" style="overflow: visible;">
+                <path id="trendLine" d="M0,300 C200,320 300,280 400,150 S600,80 800,40" 
+                      fill="none" stroke="#C26D6D" stroke-width="6" stroke-linecap="round"/>
+                
+                <path d="M0,300 C200,320 300,280 400,150 S600,80 800,40 V400 H0 Z" 
+                      fill="url(#gradient)" opacity="0.15"/>
+                
+                <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#C26D6D;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#fff;stop-opacity:0" />
+                    </linearGradient>
+                </defs>
+
+                <circle cx="150" cy="305" r="6" fill="#C26D6D" opacity="0.6"/>
+                <text x="150" y="340" text-anchor="middle" font-family="DM Sans" font-size="14" fill="#C26D6D" font-weight="bold">Mar (Quiet)</text>
+
+                <circle cx="400" cy="150" r="6" fill="#C26D6D" opacity="0.6"/>
+                <text x="400" y="120" text-anchor="middle" font-family="DM Sans" font-size="14" fill="#C26D6D" font-weight="bold">Aug (Vacation)</text>
+
+                <circle cx="750" cy="45" r="6" fill="#C26D6D" opacity="0.6"/>
+                <text x="750" y="80" text-anchor="middle" font-family="DM Sans" font-size="14" fill="#C26D6D" font-weight="bold">Dec (Peak)</text>
+            </svg>
+        </div>
+    </section>
+
+    <section id="highlights-intro" data-bg="#1A1A1A" data-text="light">
+        <svg class="icon-svg" style="width: 64px; height: 64px; fill:none; stroke: #fff; margin-bottom: 2rem;" viewBox="0 0 24 24" stroke-width="1.5">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <h2 style="color: #fff;">The Moments That Mattered</h2>
+        <p class="lead" style="opacity: 0.8; text-align: center;">Three times you chose each other this year.</p>
+    </section>
+
+    <section class="highlight-block" data-bg="#1A1A1A" data-text="light">
+        <div class="highlight-container">
+            <svg class="quote-icon" viewBox="0 0 24 24" style="fill: #fff; opacity: 0.3;">
+                <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z"/>
+            </svg>
+            <h3 style="color: #fff; margin-bottom: 1rem;">Letting Each Other In</h3>
+            <p class="highlight-body">
+                "Your notes described sharing fears and hopes more openly. You moved past the logistics of the day and started talking about how you really felt."
+            </p>
+            <div class="highlight-meta" style="color: #fff;">Week 7 • Intimacy & Vulnerability</div>
+        </div>
+    </section>
+
+    <section class="highlight-block" data-bg="#C26D6D" data-text="light">
+        <div class="highlight-container">
+            <h3 style="color: #fff; margin-bottom: 1rem;">Midyear Clarity</h3>
+            <p class="highlight-body">
+                "You stopped just managing the household and started dreaming again. Your notes focused on trips you want to take and projects you want to build together."
+            </p>
+            <div class="highlight-meta" style="color: #fff;">Week 26 • Shared Dreams</div>
+        </div>
+    </section>
+
+    <section id="footer" data-bg="#C26D6D" data-text="light">
+        <h2 style="font-size: 3rem; margin-bottom: 2rem;">Here's to 2027.</h2>
+        <p class="lead" style="margin-bottom: 3rem; text-align: center;">Keep writing your story.</p>
+        <button>Save Memory</button>
+    </section>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // --- 1. DYNAMIC BACKGROUND COLOR ENGINE ---
+        const sections = document.querySelectorAll("[data-bg]");
+
+        sections.forEach((section) => {
+            const bgColor = section.getAttribute("data-bg");
+            const textColor = section.getAttribute("data-text");
+
+            ScrollTrigger.create({
+                trigger: section,
+                start: "top 50%", 
+                end: "bottom 50%", 
+                onEnter: () => updateColors(bgColor, textColor),
+                onEnterBack: () => updateColors(bgColor, textColor),
+                scrub: 1 
+            });
+        });
+
+        function updateColors(bg, textType) {
+            gsap.to("body", {
+                backgroundColor: bg,
+                duration: 1.0, 
+                ease: "power2.inOut",
+                overwrite: "auto"
+            });
+
+            const isDark = textType === "light";
+            gsap.to("body", {
+                color: isDark ? "#FDFBF7" : "#2C2C2C",
+                duration: 0.5
+            });
+            
+            gsap.to(".icon-svg, .quote-icon", {
+                stroke: isDark ? "#fff" : "#2C2C2C",
+                fill: isDark ? "#fff" : "#C26D6D",
+                duration: 0.5
+            });
+        }
+
+        // --- 2. ANIMATION LOGIC ---
+
+        // Hero Reveal
+        gsap.to(".hero-title", {
+            opacity: 1,
+            y: 0,
+            duration: 1.8,
+            ease: "power4.out"
+        });
+
+        // Stats Counting
+        ScrollTrigger.create({
+            trigger: "#stats",
+            start: "top 75%",
+            onEnter: () => {
+                const counters = document.querySelectorAll('.counter');
+                counters.forEach(counter => {
+                    const target = +counter.getAttribute('data-target');
+                    gsap.to(counter, {
+                        innerHTML: target,
+                        duration: 2,
+                        ease: "power2.out",
+                        snap: { innerHTML: 1 }
+                    });
+                });
+            }
+        });
+
+        // Themes Stagger: SLOW FADE IN
+        gsap.utils.toArray(".theme-word").forEach((word, i) => {
+            gsap.fromTo(word, 
+                { opacity: 0, y: 30, scale: 0.9 }, // Start slightly smaller and lower
+                { 
+                    opacity: word.classList.contains('size-s') ? 0.8 : 1, 
+                    y: 0,
+                    scale: 1,
+                    duration: 1.5, // Slow fade
+                    ease: "power2.out",
+                    scrollTrigger: {
+                        trigger: "#themes",
+                        start: "top 65%", // Trigger earlier
+                    },
+                    delay: i * 0.2 // Stagger delay (one by one)
+                }
+            );
+        });
+
+        // Chart Drawing
+        gsap.to("#trendLine", {
+            scrollTrigger: {
+                trigger: "#arc",
+                start: "top 60%",
+                end: "center center",
+                scrub: 2
+            },
+            strokeDashoffset: 0
+        });
+
+        // Highlight Text Reveal
+        document.querySelectorAll(".highlight-block").forEach(block => {
+            gsap.from(block.querySelectorAll("h3, p"), {
+                scrollTrigger: {
+                    trigger: block,
+                    start: "top 80%"
+                },
+                y: 30,
+                opacity: 0,
+                duration: 1,
+                stagger: 0.1,
+                ease: "power2.out"
+            });
+        });
+
+        const path = document.querySelector("#trendLine");
+        const length = path.getTotalLength();
+        gsap.set(path, { strokeDasharray: length, strokeDashoffset: length });
+
+    </script>
+</body>
+</html>
