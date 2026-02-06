@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoveNotes: PM Case Study - Christopher Marks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --slate-100: #f1f5f9;
+            --white: #ffffff;
+            --accent: #0ea5e9; /* sky blue */
+            --accent-dark: #0284c7;
+            --warm: #f59e0b; /* amber for metrics */
+            --success: #10b981;
+            --gradient-1: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-800) 100%);
+            --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--slate-900);
+            color: var(--white);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        .slide {
+            height: 100vh;
+            max-height: 100vh;
+            padding: 3vh 6vw;
+            display: none;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 1rem;
+            color: var(--slate-300);
+            margin-bottom: 0.75rem;
+            max-width: 70ch;
+            line-height: 1.5;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--slate-400);
+            font-weight: 400;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 0.9rem;
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        /* Grid Layouts */
+        .two-col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--warm);
+            line-height: 1;
+            margin-bottom: 0.4rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-context {
+            font-size: 0.75rem;
+            color: var(--slate-500);
+            margin-top: 0.4rem;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin: 0.75rem 0;
+        }
+
+        .card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--white);
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            color: var(--slate-400);
+            line-height: 1.5;
+        }
+
+        /* Problem Cards */
+        .problem-layer {
+            margin: 0.75rem 0;
+            padding-left: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .problem-layer h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 0.25rem;
+        }
+
+        .problem-layer p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        /* Timeline - Horizontal Layout */
+        .timeline {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem 0;
+            justify-content: space-between;
+        }
+
+        .timeline-item {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+            padding-left: 1.25rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--gradient-accent);
+            border-radius: 2px;
+        }
+
+        .timeline-phase {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .timeline-item p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--slate-300);
+        }
+
+        @media (max-width: 900px) {
+            .timeline {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+        }
+
+        /* Persona Cards */
+        .personas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .persona {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+
+        .persona-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .persona-type {
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .persona p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .persona ul {
+            margin: 0.75rem 0;
+        }
+
+        .persona li {
+            font-size: 0.85rem;
+            margin: 0.25rem 0;
+        }
+
+        /* Bento Grid for Challenges */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .bento-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .bento-number {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: var(--gradient-accent);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .bento-box h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+            padding-right: 2.5rem;
+        }
+
+        .bento-challenge {
+            font-size: 0.85rem;
+            color: var(--slate-400);
+            line-height: 1.4;
+            margin-bottom: 0.25rem;
+        }
+
+        .bento-solution {
+            font-size: 0.85rem;
+            color: var(--accent);
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Learning Items */
+        .learning-item {
+            margin: 0.75rem 0;
+            padding: 0.9rem 1rem;
+            background: rgba(14, 165, 233, 0.05);
+            border-left: 3px solid var(--accent);
+            border-radius: 0.4rem;
+        }
+
+        .learning-item h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.3rem;
+        }
+
+        .learning-item p {
+            font-size: 0.85rem;
+            color: var(--slate-300);
+            line-height: 1.4;
+            margin-bottom: 0;
+        }
+
+        /* Navigation */
+        .nav-controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            color: var(--accent);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            background: rgba(14, 165, 233, 0.25);
+            transform: scale(1.1);
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--gradient-accent);
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            font-size: 3rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.1);
+            z-index: 999;
+        }
+
+        /* Keyboard hints */
+        .keyboard-hint {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-size: 0.75rem;
+            color: var(--slate-600);
+            z-index: 1000;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+        .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+        .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+        .stagger-4 { animation-delay: 0.4s; opacity: 0; }
+        .stagger-5 { animation-delay: 0.5s; opacity: 0; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 3vh 5vw;
+            }
+
+            .two-col,
+            .stats-grid,
+            .personas {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-controls {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+
+        /* Quote */
+        .quote {
+            font-size: 1.15rem;
+            font-style: italic;
+            color: var(--slate-400);
+            padding: 1.25rem;
+            border-left: 3px solid var(--accent);
+            margin: 1.5rem 0;
+            background: rgba(14, 165, 233, 0.05);
+            line-height: 1.5;
+        }
+
+        /* Highlight */
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Role badge */
+        .role {
+            display: inline-block;
+            font-size: 1rem;
+            color: var(--slate-400);
+            margin-top: 0.5rem;
+        }
+
+        /* List styling */
+        ul, ol {
+            margin: 0.75rem 0;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            color: var(--slate-300);
+            margin: 0.35rem 0;
+            font-size: 0.9rem;
+        }
+
+        ol li {
+            line-height: 1.6;
+        }
+
+        /* Metric comparison */
+        .metric-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin: 1.25rem 0;
+        }
+
+        .metric-box {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .metric-box.bad {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .metric-box.good {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .metric-box h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric-box .big-number {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .metric-box.bad .big-number {
+            color: #ef4444;
+        }
+
+        .metric-box.good .big-number {
+            color: #10b981;
+        }
+
+        .metric-box p {
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            .metric-compare {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+        <div class="slide-inner">
+            <div style="min-height: 80vh; display: flex; flex-direction: column; justify-content: center;">
+                <div class="badge fade-in">Combating Emotional Drift Through Low-Friction Connection</div>
+                <h1 class="fade-in stagger-1">LoveNotes</h1>
+                <p class="subtitle fade-in stagger-2">A Product Management Case Study</p>
+                <p class="role fade-in stagger-3">Christopher Marks • Product Manager & Founder</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: The Problem -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">The Problem</div>
+            <h2>Emotional Drift Is Costly and Systemic</h2>
+            <p>Couples don't separate from lack of love—they drift from <span class="highlight">lack of connection</span>. Small relationship stressors compound when unattended.</p>
+
+            <div class="problem-layer fade-in stagger-1">
+                <h4>Surface Problem</h4>
+                <p>"We don't have time or structure for meaningful conversations"</p>
+            </div>
+
+            <div class="problem-layer fade-in stagger-2">
+                <h4>Behavioral Problem</h4>
+                <p>"We avoid vulnerable topics because they feel risky or draining"</p>
+            </div>
+
+            <div class="problem-layer fade-in stagger-3">
+                <h4>Emotional Problem</h4>
+                <p>"We worry we're drifting apart, but don't know how to fix it"</p>
+            </div>
+
+            <div class="problem-layer fade-in stagger-4">
+                <h4>Systemic Problem</h4>
+                <p>"Existing tools are inconvenient, performative, or overwhelming"</p>
+            </div>
+
+            <div class="stats-grid fade-in stagger-5">
+                <div class="stat">
+                    <div class="stat-number">$15k-20k</div>
+                    <div class="stat-label">Avg Divorce Cost</div>
+                    <div class="stat-context">Per person, legal fees alone</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">77%</div>
+                    <div class="stat-label">Wealth Drop</div>
+                    <div class="stat-context">For women post-divorce (53% for men)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: The Research -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">The Research</div>
+            <h2 style="margin-bottom: 0.75rem;">Small Daily Moments Matter More Than Big Conversations</h2>
+
+            <div class="two-col" style="margin-top: 0.75rem; gap: 1rem;">
+                <div class="card fade-in stagger-1" style="padding: 1rem;">
+                    <h4 style="font-size: 0.95rem;">The Science of Appreciation (Gottman Institute)</h4>
+                    <p style="font-size: 0.85rem;">Regular gratitude and admiration predict staying together. Lack of appreciation predicts divorce more than conflict. "Turning toward" partner's bids for connection has <span class="highlight">94% accuracy</span> in predicting relationship success.</p>
+                </div>
+
+                <div class="card fade-in stagger-1" style="background: rgba(14, 165, 233, 0.05); border-color: rgba(14, 165, 233, 0.3); padding: 1rem;">
+                    <h4 style="font-size: 0.95rem;">Qualitative Research: What Breaks Connection</h4>
+                    <p style="font-size: 0.8rem; margin-bottom: 0.5rem;">2,000+ Reddit posts analyzed to understand relationship pain points</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                        <div style="padding: 0.4rem; background: rgba(14, 165, 233, 0.08); border-radius: 0.4rem;">
+                            <div style="font-size: 0.7rem; font-weight: 600; color: var(--accent); margin-bottom: 0.15rem;">TOP PAIN POINT</div>
+                            <div style="font-size: 0.8rem; font-weight: 600;">Trust erosion from small disconnections</div>
+                        </div>
+                        <div style="padding: 0.4rem; background: rgba(14, 165, 233, 0.08); border-radius: 0.4rem;">
+                            <div style="font-size: 0.7rem; font-weight: 600; color: var(--accent); margin-bottom: 0.15rem;">PATTERN</div>
+                            <div style="font-size: 0.8rem; font-weight: 600;">Avoidance → silent withdrawal → crisis</div>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; margin-top: 0.5rem; font-style: italic; margin-bottom: 0;">Without consistent low-friction rituals, couples drift into crisis. LoveNotes prevents this drift.</p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 1rem;" class="fade-in stagger-2">Why Existing Solutions Fail</h3>
+
+            <div class="metric-compare fade-in stagger-3" style="margin: 0.75rem 0; gap: 1rem;">
+                <div class="metric-box bad" style="padding: 1rem;">
+                    <h4>App Retention</h4>
+                    <div class="big-number" style="font-size: 2.25rem;">2-8%</div>
+                    <p style="color: var(--slate-400); font-size: 0.75rem;">30-day retention for lifestyle/wellness apps</p>
+                </div>
+                <div class="metric-box bad" style="padding: 1rem;">
+                    <h4>Push Notifications</h4>
+                    <div class="big-number" style="font-size: 2.25rem;">4-15%</div>
+                    <p style="color: var(--slate-400); font-size: 0.75rem;">Open rates, declining due to notification fatigue</p>
+                </div>
+            </div>
+
+            <div class="card fade-in stagger-4" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); padding: 1rem; margin: 0;">
+                <h4 style="font-size: 0.95rem;">SMS Delivers Near-Guaranteed Visibility</h4>
+                <div style="font-size: 2rem; font-weight: 800; color: #10b981; margin: 0.5rem 0;">98%</div>
+                <p style="font-size: 0.85rem; margin-bottom: 0;">SMS open rate (CTIA, Twilio data) — No app download, no login, no notification fatigue</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: The Solution -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">The Solution</div>
+            <h2>SMS-First Micro-Rituals</h2>
+            <p>LoveNotes reframes relationship health as a <span class="highlight">habit-formation challenge</span>, not a software problem.</p>
+
+            <div class="card fade-in stagger-1">
+                <h4>How It Works</h4>
+                <ol style="color: var(--slate-300);">
+                    <li><strong>Daily SMS Prompt</strong> → Each partner receives a science-backed reflection prompt</li>
+                    <li><strong>Private Exchange</strong> → Partners see each other's responses (no AI interpretation)</li>
+                    <li><strong>Weekly LoveLetter</strong> → Compiled reflection delivered every Sunday</li>
+                </ol>
+            </div>
+
+            <div class="two-col fade-in stagger-2">
+                <div class="card">
+                    <h4>Software to Use</h4>
+                    <p>Apps, gamification, tracking — high-friction, performative</p>
+                </div>
+                <div class="card" style="background: rgba(14, 165, 233, 0.1); border-color: var(--accent);">
+                    <h4>Software as Support</h4>
+                    <p>SMS rituals, automatic delivery — removes cognitive load</p>
+                </div>
+            </div>
+
+            <div class="quote fade-in stagger-3">
+                "How can we help love flourish in tiny, consistent ways—without pressure, without demands, without surveillance?"
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Market Sizing -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">Market Opportunity</div>
+            <h2>TAM / SAM / SOM</h2>
+            <p style="margin-bottom: 2rem;">Conservative market sizing for US couples market</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;">
+                <!-- Concentric Circles -->
+                <div class="fade-in stagger-1" style="display: flex; justify-content: center; align-items: center;">
+                    <svg viewBox="0 0 400 400" style="width: 100%; max-width: 400px; height: auto;">
+                        <!-- TAM - Outermost circle -->
+                        <circle cx="200" cy="200" r="180" fill="#334155" opacity="0.9"/>
+                        <text x="200" y="50" fill="white" font-size="24" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif">TAM</text>
+
+                        <!-- SAM - Middle circle -->
+                        <circle cx="200" cy="200" r="120" fill="#0ea5e9" opacity="0.85"/>
+                        <text x="200" y="105" fill="white" font-size="24" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif">SAM</text>
+
+                        <!-- SOM - Innermost circle -->
+                        <circle cx="200" cy="200" r="70" fill="#ec4899" opacity="0.9"/>
+                        <text x="200" y="205" fill="white" font-size="24" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif">SOM</text>
+                    </svg>
+                </div>
+
+                <!-- Descriptions -->
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <div class="fade-in stagger-2">
+                        <h3 style="color: var(--slate-400); font-size: 1.5rem; margin-bottom: 0.5rem;">TAM</h3>
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--slate-300); margin-bottom: 0.5rem;">63M couples</div>
+                        <p style="font-size: 0.9rem; margin-bottom: 0.25rem;">All married and cohabiting couples in the US</p>
+                        <p style="font-size: 0.85rem; color: var(--slate-400);">Market value: <span class="highlight">$6.0B/year</span></p>
+                    </div>
+
+                    <div class="fade-in stagger-3">
+                        <h3 style="color: var(--accent); font-size: 1.5rem; margin-bottom: 0.5rem;">SAM</h3>
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--slate-300); margin-bottom: 0.5rem;">15.6M couples</div>
+                        <p style="font-size: 0.9rem; margin-bottom: 0.25rem;">Tech-savvy couples actively seeking relationship tools</p>
+                        <p style="font-size: 0.85rem; color: var(--slate-400);">Market value: <span class="highlight">$1.5B/year</span></p>
+                    </div>
+
+                    <div class="fade-in stagger-4">
+                        <h3 style="color: #ec4899; font-size: 1.5rem; margin-bottom: 0.5rem;">SOM</h3>
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--slate-300); margin-bottom: 0.5rem;">15,600 couples</div>
+                        <p style="font-size: 0.9rem; margin-bottom: 0.25rem;">3-year target: 0.1% market capture</p>
+                        <p style="font-size: 0.85rem; color: var(--slate-400);">Revenue target: <span class="highlight">$1.5M ARR</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Business Model -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">Business Model</div>
+            <h2>Capital-Efficient SaaS Economics</h2>
+
+            <div class="stats-grid fade-in stagger-1">
+                <div class="stat">
+                    <div class="stat-number">$8</div>
+                    <div class="stat-label">Price/Month</div>
+                    <div class="stat-context">Per couple ($96/year)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">$2.50</div>
+                    <div class="stat-label">COGS</div>
+                    <div class="stat-context">SMS + infrastructure</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">70%</div>
+                    <div class="stat-label">Gross Margin</div>
+                    <div class="stat-context">Sustainable from day 1</div>
+                </div>
+            </div>
+
+            <div class="two-col fade-in stagger-2">
+                <div class="card">
+                    <h4>Unit Economics</h4>
+                    <ul style="font-size: 0.9rem;">
+                        <li><strong>LTV:</strong> $70-$93 (6-8% monthly churn)</li>
+                        <li><strong>Target CAC:</strong> $30-$40</li>
+                        <li><strong>LTV:CAC Ratio:</strong> 2-3x baseline</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>Scale Targets</h4>
+                    <ul style="font-size: 0.9rem;">
+                        <li><strong>1,000 couples:</strong> $96k ARR</li>
+                        <li><strong>8,000 couples:</strong> $770k ARR</li>
+                        <li><strong>15,600 couples:</strong> $1.5M ARR</li>
+                    </ul>
+                </div>
+            </div>
+
+            <p class="fade-in stagger-3" style="margin-top: 1rem; font-style: italic; color: var(--slate-400); font-size: 0.9rem;">Meaningful scale without venture pressure</p>
+        </div>
+    </div>
+
+    <!-- Slide 7: Market Fit -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">Market Fit</div>
+            <h2>Target Personas</h2>
+
+            <div class="personas fade-in stagger-1">
+                <div class="persona">
+                    <div class="persona-name">Maya & Chris</div>
+                    <div class="persona-type">The Drifters</div>
+                    <p>"We still care, but we've fallen into routines. We want to feel close again without needing therapy right now."</p>
+                    <ul>
+                        <li>Long-term couples</li>
+                        <li>Stable but disconnected</li>
+                        <li>Need warmth without "relationship work" fatigue</li>
+                    </ul>
+                </div>
+
+                <div class="persona">
+                    <div class="persona-name">Alex & Jordan</div>
+                    <div class="persona-type">Busy Professionals</div>
+                    <p>"We love each other, but life is hectic. We tried daily compliments before but fell off."</p>
+                    <ul>
+                        <li>Engaged or newly married</li>
+                        <li>Time-poor, high guilt</li>
+                        <li>Need low-effort, high-value rituals</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Technical Execution -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">Technical Execution</div>
+            <h2>Challenges Solved</h2>
+
+            <div class="bento-grid fade-in stagger-1">
+                <div class="bento-box">
+                    <div class="bento-number">1</div>
+                    <h4>Technical Complexity & Edge Cases</h4>
+                    <p class="bento-challenge">SMS scheduling, state machines, time zones are fragile</p>
+                    <p class="bento-solution">Built testing tools, simulated couple logic, multi-LLM debugging</p>
+                </div>
+
+                <div class="bento-box">
+                    <div class="bento-number">2</div>
+                    <h4>Data Pairing & AI Safety</h4>
+                    <p class="bento-challenge">Late responses need correct pairing; prevent hallucinations</p>
+                    <p class="bento-solution">Structured JSON, pairing buffers, strict prompt engineering</p>
+                </div>
+
+                <div class="bento-box">
+                    <div class="bento-number">3</div>
+                    <h4>Emotional Safety vs. Engagement</h4>
+                    <p class="bento-challenge">Balance gratitude themes without inducing shame</p>
+                    <p class="bento-solution">Science-backed curriculum, recurring appreciation, habit focus</p>
+                </div>
+
+                <div class="bento-box">
+                    <div class="bento-number">4</div>
+                    <h4>Trials & Cost Control</h4>
+                    <p class="bento-challenge">Free trials vs. SMS cost risk</p>
+                    <p class="bento-solution">Capped trial volume, value-first pricing, sustainable modeling</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Roadmap -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">Execution</div>
+            <h2>From Validation to Scale</h2>
+
+            <div class="timeline fade-in stagger-1">
+                <div class="timeline-item">
+                    <div class="timeline-phase">Phase 1 — Q3 2025</div>
+                    <div class="timeline-title">Research</div>
+                    <p>Validated pain points; pivoted away from complex biometric tools toward simple prompts.</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-phase">Phase 2 — Q4 2025 – Q1 2026</div>
+                    <div class="timeline-title">MVP</div>
+                    <p>Built SMS infrastructure, closed beta with 10 couples, tested state machine logic.</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-phase">Phase 3 — Q2 2026</div>
+                    <div class="timeline-title">Open Beta</div>
+                    <p>Target: 50+ active couples and first paying subscribers.</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-phase">Phase 4 — Q3 2026</div>
+                    <div class="timeline-title">Growth</div>
+                    <p>Goal: 240 couples, $23k ARR. Establish repeatable acquisition channels.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Learnings -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div class="badge">Key Learnings</div>
+            <h2>PM Growth & Insights</h2>
+
+            <div class="learning-item fade-in stagger-1">
+                <h4>1. Research Redirected the Vision</h4>
+                <p>Early assumptions about biometric/AI-driven conflict tools were unrealistic. Research revealed simple prompts are validated and powerful—prevented "cool but not useful" product bloat.</p>
+            </div>
+
+            <div class="learning-item fade-in stagger-2">
+                <h4>2. Minimalism Became a Strategy, Not a Compromise</h4>
+                <p>Reducing onboarding complexity created trust. Postponing features drove focus. Constraint forced commitment to honoring users' words over AI interpretations.</p>
+            </div>
+
+            <div class="learning-item fade-in stagger-3">
+                <h4>3. User Feedback Transformed the Product</h4>
+                <p>Users rejected complex workflows and embraced lightweight prompts. Learned to prioritize real value over novelty—the best features are often the simplest ones.</p>
+            </div>
+
+            <div class="learning-item fade-in stagger-4">
+                <h4>4. Systems Complexity Is Hidden Until You Build</h4>
+                <p>State machines, cron logic, and edge cases created unexpected complexity. SMS is far less flexible than an app—every constraint forced better design decisions.</p>
+            </div>
+
+            <div class="learning-item fade-in stagger-5">
+                <h4>5. New Opportunities Emerge Through Use</h4>
+                <p>"LoveStory" (Spotify-wrapped style recap) emerged organically from usage patterns. Designing for vulnerability and trust revealed opportunities beyond the initial roadmap.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: North Star -->
+    <div class="slide">
+        <div class="slide-inner">
+            <div style="min-height: 80vh; display: flex; flex-direction: column; justify-content: center;">
+                <div class="badge fade-in">North Star</div>
+                <h2 class="fade-in stagger-1">Meaningful Engagement Over Time</h2>
+
+                <div class="two-col fade-in stagger-2" style="margin-top: 1.5rem;">
+                    <div class="card">
+                        <h4>Commercial Success</h4>
+                        <ul style="font-size: 0.9rem;">
+                            <li>Sustainable unit economics</li>
+                            <li>Capital-efficient growth</li>
+                            <li>$770k-$1.5M ARR at 0.05-0.1% market penetration</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Behavioral Outcomes</h4>
+                        <ul style="font-size: 0.9rem;">
+                            <li>Increased closeness index</li>
+                            <li>High ritual completion rate</li>
+                            <li>Qualitative signals of emotional impact</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="quote fade-in stagger-3" style="margin-top: 1.5rem;">
+                    "How can we help love flourish in tiny, consistent ways—without pressure, without demands, without surveillance, without manipulation?"
+                </div>
+
+                <p class="fade-in stagger-4" style="margin-top: 1.5rem; text-align: center; color: var(--slate-500); font-size: 0.9rem;">
+                    Christopher Marks • Product Manager<br>
+                    christopher.marks@example.com
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-controls">
+        <button class="nav-btn" id="prevBtn">←</button>
+        <button class="nav-btn" id="nextBtn">→</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="slide-counter" id="slideCounter">1</div>
+    <div class="keyboard-hint">Use ← → or click buttons to navigate</div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function showSlide(n) {
+            // Wrap around
+            if (n >= totalSlides) currentSlide = 0;
+            if (n < 0) currentSlide = totalSlides - 1;
+
+            // Hide all slides
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+
+            // Show current slide
+            slides[currentSlide].classList.add('active');
+
+            // Update progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+
+            // Update counter
+            slideCounter.textContent = currentSlide + 1;
+
+            // Trigger animations
+            const activeSlide = slides[currentSlide];
+            const fadeElements = activeSlide.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => {
+                el.style.animation = 'none';
+                setTimeout(() => {
+                    el.style.animation = '';
+                }, 10);
+            });
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            if (currentSlide >= totalSlides) currentSlide = 0;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide--;
+            if (currentSlide < 0) currentSlide = totalSlides - 1;
+            showSlide(currentSlide);
+        }
+
+        // Event listeners
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) nextSlide();
+            if (touchEndX > touchStartX + 50) prevSlide();
+        }
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>
