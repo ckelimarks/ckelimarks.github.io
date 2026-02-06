@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<!--
+    ============================================================
+    My Producer Journey - Interactive Student Dashboard Prototype
+    ============================================================
+
+    Created by: Christopher Marks
+    Date: February 2026
+
+    Copyright (c) 2026 Christopher Marks. All rights reserved.
+
+    This prototype and its design concepts are the intellectual
+    property of Christopher Marks. Unauthorized copying, modification,
+    distribution, or use of this work without explicit written
+    permission is strictly prohibited.
+
+    Contact: christopher.marks@remingtoncollege.edu
+    ============================================================
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Christopher Marks">
+    <meta name="copyright" content="Copyright (c) 2026 Christopher Marks. All rights reserved.">
+    <title>My Producer Journey - Beats Production & Recording Arts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0a0a0a;
+            color: #f5f5f7;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .nav {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #333;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-logo svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+            background: #111;
+            border-bottom: 1px solid #222;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            background: #1a1a1a;
+            color: #888;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            color: white;
+        }
+
+        .toggle-btn:hover:not(.active) {
+            background: #222;
+            color: #fff;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section - Where You Are */
+        .hero {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, rgba(224, 64, 251, 0.1) 0%, rgba(124, 77, 255, 0.1) 100%);
+            border-radius: 24px;
+            margin-bottom: 2rem;
+            border: 1px solid #222;
+        }
+
+        .hero-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .hero-name {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .hero-type {
+            color: #e040fb;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+
+        .hero-progress {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 1.5rem;
+        }
+
+        .progress-stat {
+            text-align: center;
+        }
+
+        .progress-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e040fb;
+        }
+
+        .progress-stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* My Goals Section */
+        .section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .goal-card {
+            background: #141414;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .goal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+        }
+
+        .goal-number {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .goal-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .goal-progress {
+            margin-top: 1rem;
+        }
+
+        .goal-progress-bar {
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .goal-progress-label {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        /* Journey Roadmap */
+        .roadmap {
+            background: #141414;
+            border: 1px solid #222;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .roadmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .roadmap-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .roadmap-legend {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.completed { background: #00d26a; }
+        .legend-dot.current { background: #e040fb; box-shadow: 0 0 12px #e040fb; }
+        .legend-dot.upcoming { background: #333; }
+
+        .roadmap-track {
+            position: relative;
+            padding: 0 1rem;
+        }
+
+        .roadmap-line {
+            position: absolute;
+            top: 24px;
+            left: 40px;
+            right: 40px;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+        }
+
+        .roadmap-line-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 35%;
+            background: linear-gradient(90deg, #00d26a 0%, #e040fb 100%);
+            border-radius: 2px;
+        }
+
+        .roadmap-courses {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+            cursor: pointer;
+        }
+
+        .course-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 3px solid #0a0a0a;
+        }
+
+        .course-node:hover .course-dot {
+            transform: scale(1.1);
+        }
+
+        .course-dot.completed {
+            background: #00d26a;
+            color: white;
+        }
+
+        .course-dot.current {
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(224, 64, 251, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .course-dot.upcoming {
+            background: #1a1a1a;
+            color: #666;
+            border: 2px solid #333;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(224, 64, 251, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(224, 64, 251, 0.8); }
+        }
+
+        .course-name {
+            font-size: 0.75rem;
+            text-align: center;
+            color: #888;
+            line-height: 1.3;
+        }
+
+        .course-node.completed .course-name { color: #00d26a; }
+        .course-node.current .course-name { color: #e040fb; font-weight: 600; }
+
+        /* Current Course Detail */
+        .current-course {
+            background: linear-gradient(135deg, rgba(224, 64, 251, 0.15) 0%, rgba(124, 77, 255, 0.15) 100%);
+            border: 1px solid #e040fb;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .current-course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .current-course-badge {
+            background: #e040fb;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .current-course-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .current-course-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .skill-tag {
+            background: rgba(224, 64, 251, 0.2);
+            color: #e040fb;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        /* Portfolio Section */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .portfolio-item {
+            background: #141414;
+            border: 1px solid #222;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .portfolio-item:hover {
+            transform: translateY(-4px);
+            border-color: #e040fb;
+        }
+
+        .portfolio-thumb {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            position: relative;
+        }
+
+        .portfolio-course-tag {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0,0,0,0.7);
+            color: #888;
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .portfolio-info {
+            padding: 0.75rem;
+        }
+
+        .portfolio-info h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .portfolio-info p {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        /* What's Ahead Section */
+        .ahead-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .ahead-card {
+            background: #141414;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .ahead-icon {
+            width: 44px;
+            height: 44px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .ahead-content h4 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .ahead-content p {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* Reflection CTA */
+        .reflection-cta {
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .reflection-cta h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .reflection-cta p {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .reflection-btn {
+            background: white;
+            color: #7c4dff;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .reflection-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* ============================================ */
+        /* INSTRUCTOR VIEW */
+        /* ============================================ */
+
+        .instructor-view {
+            display: none;
+        }
+
+        .instructor-view.active {
+            display: block;
+        }
+
+        .student-view.active {
+            display: block;
+        }
+
+        .student-view {
+            display: none;
+        }
+
+        .instructor-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .avatar-filter {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .avatar-filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #333;
+            background: #141414;
+            color: #888;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .avatar-filter-btn.active {
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background: #141414;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .stat-box-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-box-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .student-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .student-card {
+            background: #141414;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .student-card:hover {
+            border-color: #e040fb;
+        }
+
+        .student-card.at-risk {
+            border-color: #ff4757;
+            background: rgba(255, 71, 87, 0.05);
+        }
+
+        .student-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .student-card-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+        }
+
+        .student-card-name {
+            font-weight: 600;
+        }
+
+        .student-card-type {
+            font-size: 0.75rem;
+            color: #e040fb;
+        }
+
+        .student-card-progress {
+            margin-bottom: 1rem;
+        }
+
+        .student-card-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .student-card-progress-bar {
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .student-card-progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);
+            border-radius: 3px;
+        }
+
+        .student-card-goals {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .student-card-goals strong {
+            color: #fff;
+        }
+
+        .student-card-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.75rem;
+        }
+
+        .student-card-status.on-track {
+            background: rgba(0, 210, 106, 0.2);
+            color: #00d26a;
+        }
+
+        .student-card-status.needs-attention {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .student-card-status.at-risk {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .goals-grid { grid-template-columns: 1fr; }
+            .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+            .ahead-grid { grid-template-columns: 1fr; }
+            .roadmap-courses { flex-wrap: wrap; gap: 1rem; justify-content: center; }
+            .course-node { width: 80px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .student-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+            </svg>
+            My Producer Journey
+        </div>
+        <div class="nav-user">
+            <span id="userName">Jenny Martinez</span>
+            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);"></div>
+        </div>
+    </nav>
+
+    <!-- View Toggle -->
+    <div class="view-toggle">
+        <button class="toggle-btn active" onclick="showView('student')">Student Journey</button>
+        <button class="toggle-btn" onclick="showView('instructor')">Instructor View</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STUDENT JOURNEY VIEW -->
+    <!-- ============================================ -->
+    <div class="student-view active">
+        <div class="main-container">
+
+            <!-- Hero - Where You Are -->
+            <div class="hero">
+                <div class="hero-avatar">JM</div>
+                <div class="hero-name">Jenny Martinez</div>
+                <div class="hero-type">Vocalist Becoming a Producer</div>
+                <p style="color: #888; max-width: 500px; margin: 0 auto;">You started this journey to stop depending on others for beats.<br>Look how far you've come.</p>
+                <div class="hero-progress">
+                    <div class="progress-stat">
+                        <div class="progress-stat-value">3</div>
+                        <div class="progress-stat-label">Courses Complete</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="progress-stat-value">5</div>
+                        <div class="progress-stat-label">Tracks Created</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="progress-stat-value">37%</div>
+                        <div class="progress-stat-label">Journey Progress</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Goals -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="6"/>
+                            <circle cx="12" cy="12" r="2"/>
+                        </svg>
+                        My Goals
+                    </h2>
+                </div>
+                <div class="goals-grid">
+                    <div class="goal-card">
+                        <div class="goal-number">1</div>
+                        <div class="goal-title">Complete 1 fully produced, finished song</div>
+                        <div class="goal-progress">
+                            <div class="goal-progress-bar">
+                                <div class="goal-progress-fill" style="width: 60%;"></div>
+                            </div>
+                            <div class="goal-progress-label">Beat done, vocals recorded, mixing in progress</div>
+                        </div>
+                    </div>
+                    <div class="goal-card">
+                        <div class="goal-number">2</div>
+                        <div class="goal-title">Improve my rhythm & timing</div>
+                        <div class="goal-progress">
+                            <div class="goal-progress-bar">
+                                <div class="goal-progress-fill" style="width: 45%;"></div>
+                            </div>
+                            <div class="goal-progress-label">Getting better at programming drums on the grid</div>
+                        </div>
+                    </div>
+                    <div class="goal-card">
+                        <div class="goal-number">3</div>
+                        <div class="goal-title">Learn to produce my own music</div>
+                        <div class="goal-progress">
+                            <div class="goal-progress-bar">
+                                <div class="goal-progress-fill" style="width: 35%;"></div>
+                            </div>
+                            <div class="goal-progress-label">Can make beats from scratch, learning vocal production next</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journey Roadmap -->
+            <div class="roadmap">
+                <div class="roadmap-header">
+                    <h2 class="roadmap-title">My Journey Through the Program</h2>
+                    <div class="roadmap-legend">
+                        <div class="legend-item"><div class="legend-dot completed"></div> Completed</div>
+                        <div class="legend-item"><div class="legend-dot current"></div> Current</div>
+                        <div class="legend-item"><div class="legend-dot upcoming"></div> Ahead</div>
+                    </div>
+                </div>
+
+                <div class="roadmap-track">
+                    <div class="roadmap-line">
+                        <div class="roadmap-line-progress"></div>
+                    </div>
+                    <div class="roadmap-courses">
+                        <div class="course-node completed">
+                            <div class="course-dot completed">RM105</div>
+                            <div class="course-name">Songwriting</div>
+                        </div>
+                        <div class="course-node completed">
+                            <div class="course-dot completed">RM100</div>
+                            <div class="course-name">Music Business</div>
+                        </div>
+                        <div class="course-node completed">
+                            <div class="course-dot completed">RM101</div>
+                            <div class="course-name">Beat Production 1</div>
+                        </div>
+                        <div class="course-node current">
+                            <div class="course-dot current">RM102</div>
+                            <div class="course-name">Beat Production 2</div>
+                        </div>
+                        <div class="course-node upcoming">
+                            <div class="course-dot upcoming">RM203</div>
+                            <div class="course-name">Beat Production 3</div>
+                        </div>
+                        <div class="course-node upcoming">
+                            <div class="course-dot upcoming">RM106</div>
+                            <div class="course-name">Vocal Production</div>
+                        </div>
+                        <div class="course-node upcoming">
+                            <div class="course-dot upcoming">RM204</div>
+                            <div class="course-name">Music Marketing</div>
+                        </div>
+                        <div class="course-node upcoming">
+                            <div class="course-dot upcoming">RM107</div>
+                            <div class="course-name">Capstone</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Course Detail -->
+                <div class="current-course">
+                    <div class="current-course-header">
+                        <div>
+                            <span class="current-course-badge">Currently Learning</span>
+                            <h3 class="current-course-title">RM102: Beat Production 2 - Sampling & Arrangement</h3>
+                        </div>
+                    </div>
+                    <p style="color: #aaa; font-size: 0.9rem;">Building on fundamentals, you're learning to chop samples, create arrangements, and develop your signature sound.</p>
+                    <div class="current-course-skills">
+                        <span class="skill-tag">Sample Chopping</span>
+                        <span class="skill-tag">Arrangement</span>
+                        <span class="skill-tag">Swing & Groove</span>
+                        <span class="skill-tag">Advanced 808s</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What I've Created (Portfolio) -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18V5l12-2v13"/>
+                            <circle cx="6" cy="18" r="3"/>
+                            <circle cx="18" cy="16" r="3"/>
+                        </svg>
+                        What I've Created
+                    </h2>
+                </div>
+                <div class="portfolio-grid">
+                    <div class="portfolio-item">
+                        <div class="portfolio-thumb" style="background: linear-gradient(135deg, #00d26a 0%, #00a86b 100%);">
+                            <span class="portfolio-course-tag">RM105</span>
+                            <span style="font-size: 1.75rem;">1</span>
+                        </div>
+                        <div class="portfolio-info">
+                            <h4>"Unfinished Business"</h4>
+                            <p>My first complete song structure</p>
+                        </div>
+                    </div>
+                    <div class="portfolio-item">
+                        <div class="portfolio-thumb" style="background: linear-gradient(135deg, #00d26a 0%, #00a86b 100%);">
+                            <span class="portfolio-course-tag">RM101</span>
+                            <span style="font-size: 1.75rem;">808</span>
+                        </div>
+                        <div class="portfolio-info">
+                            <h4>"Night Drive"</h4>
+                            <p>First beat from scratch</p>
+                        </div>
+                    </div>
+                    <div class="portfolio-item">
+                        <div class="portfolio-thumb" style="background: linear-gradient(135deg, #00d26a 0%, #00a86b 100%);">
+                            <span class="portfolio-course-tag">RM101</span>
+                            <span style="font-size: 1.75rem;">R&B</span>
+                        </div>
+                        <div class="portfolio-info">
+                            <h4>"Slow Motion"</h4>
+                            <p>Beat I can actually sing on!</p>
+                        </div>
+                    </div>
+                    <div class="portfolio-item">
+                        <div class="portfolio-thumb" style="background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);">
+                            <span class="portfolio-course-tag">RM102</span>
+                            <span style="font-size: 1.5rem;">CHOP</span>
+                        </div>
+                        <div class="portfolio-info">
+                            <h4>"Sunday Soul"</h4>
+                            <p>First sampled beat (in progress)</p>
+                        </div>
+                    </div>
+                    <div class="portfolio-item">
+                        <div class="portfolio-thumb" style="background: linear-gradient(135deg, #e040fb 0%, #7c4dff 100%);">
+                            <span class="portfolio-course-tag">RM102</span>
+                            <span style="font-size: 1.5rem;">WIP</span>
+                        </div>
+                        <div class="portfolio-info">
+                            <h4>"My First Finished Song"</h4>
+                            <p>Goal #1 - almost there!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What's Ahead -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                        What's Ahead
+                    </h2>
+                </div>
+                <div class="ahead-grid">
+                    <div class="ahead-card">
+                        <div class="ahead-icon">🎤</div>
+                        <div class="ahead-content">
+                            <h4>RM106: Vocal Production</h4>
+                            <p>Record and mix your own vocals professionally. This is where your producer + vocalist skills combine.</p>
+                        </div>
+                    </div>
+                    <div class="ahead-card">
+                        <div class="ahead-icon">🚀</div>
+                        <div class="ahead-content">
+                            <h4>RM204: Music Marketing</h4>
+                            <p>Learn to release your music, build an audience, and sell beats. Turn your skills into income.</p>
+                        </div>
+                    </div>
+                    <div class="ahead-card">
+                        <div class="ahead-icon">🎓</div>
+                        <div class="ahead-content">
+                            <h4>RM107: Production Capstone</h4>
+                            <p>Create a polished portfolio piece that showcases everything you've learned. Your best work yet.</p>
+                        </div>
+                    </div>
+                    <div class="ahead-card">
+                        <div class="ahead-icon">🎯</div>
+                        <div class="ahead-content">
+                            <h4>Your Future</h4>
+                            <p>Graduate as a self-sufficient artist who can produce, record, and release your own music. No more waiting on producers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Reflection CTA -->
+            <div class="reflection-cta">
+                <h3>How was this week in the studio?</h3>
+                <p>Take 5 minutes to reflect on what you learned and how you're progressing toward your goals.</p>
+                <button class="reflection-btn">Add Weekly Reflection</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INSTRUCTOR VIEW -->
+    <!-- ============================================ -->
+    <div class="instructor-view">
+        <div class="instructor-main">
+            <div class="dashboard-header">
+                <div class="dashboard-title">Beats Production & Recording Arts - Spring 2026</div>
+                <div class="avatar-filter">
+                    <button class="avatar-filter-btn active">All Students</button>
+                    <button class="avatar-filter-btn">Vocalists → Producers</button>
+                    <button class="avatar-filter-btn">Leveling Up</button>
+                    <button class="avatar-filter-btn">Beginners</button>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-box-label">Total Students</div>
+                    <div class="stat-box-value">28</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-label">Avg. Progress</div>
+                    <div class="stat-box-value">42%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-label">Tracks Created</div>
+                    <div class="stat-box-value">156</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-label">Need Attention</div>
+                    <div class="stat-box-value" style="color: #ff4757;">3</div>
+                </div>
+            </div>
+
+            <div class="student-cards">
+                <!-- Jenny - Vocalist/Producer Avatar -->
+                <div class="student-card">
+                    <div class="student-card-header">
+                        <div class="student-card-avatar">JM</div>
+                        <div>
+                            <div class="student-card-name">Jenny Martinez</div>
+                            <div class="student-card-type">Vocalist → Producer</div>
+                        </div>
+                    </div>
+                    <div class="student-card-progress">
+                        <div class="student-card-progress-label">
+                            <span>Journey Progress</span>
+                            <span>37%</span>
+                        </div>
+                        <div class="student-card-progress-bar">
+                            <div class="student-card-progress-fill" style="width: 37%;"></div>
+                        </div>
+                    </div>
+                    <div class="student-card-goals">
+                        <strong>Goal 1:</strong> Complete 1 finished song (60% there)
+                    </div>
+                    <span class="student-card-status on-track">On Track</span>
+                </div>
+
+                <!-- DeShawn - Leveling Up Avatar -->
+                <div class="student-card">
+                    <div class="student-card-header">
+                        <div class="student-card-avatar" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">DW</div>
+                        <div>
+                            <div class="student-card-name">DeShawn Williams</div>
+                            <div class="student-card-type">Leveling Up</div>
+                        </div>
+                    </div>
+                    <div class="student-card-progress">
+                        <div class="student-card-progress-label">
+                            <span>Journey Progress</span>
+                            <span>52%</span>
+                        </div>
+                        <div class="student-card-progress-bar">
+                            <div class="student-card-progress-fill" style="width: 52%;"></div>
+                        </div>
+                    </div>
+                    <div class="student-card-goals">
+                        <strong>Goal:</strong> Make beats sound professional
+                    </div>
+                    <span class="student-card-status on-track">On Track</span>
+                </div>
+
+                <!-- Marcus - Beginner Avatar -->
+                <div class="student-card">
+                    <div class="student-card-header">
+                        <div class="student-card-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">MR</div>
+                        <div>
+                            <div class="student-card-name">Marcus Robinson</div>
+                            <div class="student-card-type">Passionate Beginner</div>
+                        </div>
+                    </div>
+                    <div class="student-card-progress">
+                        <div class="student-card-progress-label">
+                            <span>Journey Progress</span>
+                            <span>28%</span>
+                        </div>
+                        <div class="student-card-progress-bar">
+                            <div class="student-card-progress-fill" style="width: 28%;"></div>
+                        </div>
+                    </div>
+                    <div class="student-card-goals">
+                        <strong>Goal:</strong> Turn passion into a career
+                    </div>
+                    <span class="student-card-status on-track">On Track</span>
+                </div>
+
+                <!-- Travante - At Risk -->
+                <div class="student-card at-risk">
+                    <div class="student-card-header">
+                        <div class="student-card-avatar" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);">TM</div>
+                        <div>
+                            <div class="student-card-name">Travante Miller</div>
+                            <div class="student-card-type">Passionate Beginner</div>
+                        </div>
+                    </div>
+                    <div class="student-card-progress">
+                        <div class="student-card-progress-label">
+                            <span>Journey Progress</span>
+                            <span>15%</span>
+                        </div>
+                        <div class="student-card-progress-bar">
+                            <div class="student-card-progress-fill" style="width: 15%; background: #ff4757;"></div>
+                        </div>
+                    </div>
+                    <div class="student-card-goals">
+                        <strong>Goal:</strong> Pass SAP requirements
+                    </div>
+                    <span class="student-card-status at-risk">Needs SAP Meeting</span>
+                </div>
+
+                <!-- Jacqueline - Needs Attention -->
+                <div class="student-card at-risk">
+                    <div class="student-card-header">
+                        <div class="student-card-avatar" style="background: linear-gradient(135deg, #a55eea 0%, #8854d0 100%);">JT</div>
+                        <div>
+                            <div class="student-card-name">Jacqueline Torres</div>
+                            <div class="student-card-type">Vocalist → Producer</div>
+                        </div>
+                    </div>
+                    <div class="student-card-progress">
+                        <div class="student-card-progress-label">
+                            <span>Journey Progress</span>
+                            <span>22%</span>
+                        </div>
+                        <div class="student-card-progress-bar">
+                            <div class="student-card-progress-fill" style="width: 22%; background: #ffc107;"></div>
+                        </div>
+                    </div>
+                    <div class="student-card-goals">
+                        <strong>Goal:</strong> Produce R&B tracks
+                    </div>
+                    <span class="student-card-status needs-attention">Needs Tutoring</span>
+                </div>
+
+                <!-- Kayla - On Track -->
+                <div class="student-card">
+                    <div class="student-card-header">
+                        <div class="student-card-avatar" style="background: linear-gradient(135deg, #20bf6b 0%, #26de81 100%);">KT</div>
+                        <div>
+                            <div class="student-card-name">Kayla Thompson</div>
+                            <div class="student-card-type">Leveling Up</div>
+                        </div>
+                    </div>
+                    <div class="student-card-progress">
+                        <div class="student-card-progress-label">
+                            <span>Journey Progress</span>
+                            <span>65%</span>
+                        </div>
+                        <div class="student-card-progress-bar">
+                            <div class="student-card-progress-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                    <div class="student-card-goals">
+                        <strong>Goal:</strong> Mix and master professionally
+                    </div>
+                    <span class="student-card-status on-track">On Track</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Attribution -->
+    <footer style="text-align: center; padding: 2rem; color: #555; font-size: 0.75rem; border-top: 1px solid #222; margin-top: 2rem;">
+        <p>&copy; 2026 Christopher Marks. All rights reserved.</p>
+        <p style="margin-top: 0.25rem;">My Producer Journey - Interactive Student Dashboard Prototype</p>
+    </footer>
+
+    <script>
+        function showView(view) {
+            const studentView = document.querySelector('.student-view');
+            const instructorView = document.querySelector('.instructor-view');
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
+            const userName = document.getElementById('userName');
+
+            toggleBtns.forEach(btn => btn.classList.remove('active'));
+
+            if (view === 'student') {
+                studentView.classList.add('active');
+                instructorView.classList.remove('active');
+                toggleBtns[0].classList.add('active');
+                userName.textContent = 'Jenny Martinez';
+            } else {
+                instructorView.classList.add('active');
+                studentView.classList.remove('active');
+                toggleBtns[1].classList.add('active');
+                userName.textContent = 'Christopher Marks';
+            }
+        }
+
+        // Avatar filter
+        document.querySelectorAll('.avatar-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.avatar-filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
