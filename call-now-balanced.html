@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Call Now</title>
+  <meta name="description" content="Hold federal agencies accountable. One call. One minute.">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    html, body {
+      height: 100%;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #fafafa;
+      min-height: 100%;
+    }
+    
+    .container {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      max-width: 440px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 16px 0 20px;
+    }
+    
+    .headline {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    
+    .subhead {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    /* Rep list */
+    .rep-list {
+      flex: 1;
+    }
+    
+    .section-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #555;
+      margin: 20px 0 10px;
+      padding-left: 4px;
+    }
+    
+    .section-label:first-child {
+      margin-top: 0;
+    }
+    
+    .rep-card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    
+    .rep-header {
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .rep-header:hover {
+      background: #1a1a1a;
+    }
+    
+    .rep-info {
+      flex: 1;
+    }
+    
+    .rep-name {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .rep-detail {
+      font-size: 0.78rem;
+      color: #666;
+    }
+    
+    .rep-party {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+    
+    .rep-party.D {
+      background: #1e3a5f;
+      color: #60a5fa;
+    }
+    
+    .rep-party.R {
+      background: #4a2020;
+      color: #f87171;
+    }
+    
+    .expand-icon {
+      color: #444;
+      font-size: 1.1rem;
+      transition: transform 0.2s;
+    }
+    
+    .rep-card.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+    
+    .rep-body {
+      display: none;
+      padding: 0 16px 16px;
+      border-top: 1px solid #1a1a1a;
+    }
+    
+    .rep-card.expanded .rep-body {
+      display: block;
+    }
+    
+    /* Script */
+    .script-section {
+      margin-top: 14px;
+    }
+    
+    .script-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    
+    .script {
+      background: #0a0a0a;
+      border-left: 3px solid #3b82f6;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #aaa;
+      border-radius: 0 6px 6px 0;
+    }
+    
+    .script .blank {
+      color: #fafafa;
+      font-weight: 500;
+    }
+    
+    .script .emphasis {
+      color: #fafafa;
+    }
+    
+    /* Add-on toggle */
+    .addon-section {
+      margin-top: 12px;
+    }
+    
+    .addon-toggle {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      padding: 10px 12px;
+      background: #0a0a0a;
+      border: 1px solid #222;
+      border-radius: 8px;
+    }
+    
+    .addon-toggle:hover {
+      border-color: #333;
+    }
+    
+    .addon-toggle input {
+      margin-top: 3px;
+      width: 16px;
+      height: 16px;
+      accent-color: #3b82f6;
+    }
+    
+    .addon-toggle-text {
+      flex: 1;
+    }
+    
+    .addon-toggle-label {
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    
+    .addon-script {
+      font-size: 0.82rem;
+      color: #666;
+      line-height: 1.5;
+      display: none;
+    }
+    
+    .addon-toggle.checked .addon-script {
+      display: block;
+      color: #999;
+    }
+    
+    .addon-toggle.checked {
+      border-color: #3b82f6;
+      background: #0d1829;
+    }
+    
+    /* Call buttons */
+    .call-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    
+    .call-btn {
+      flex: 1;
+      padding: 14px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    
+    .call-btn.local {
+      background: #dc2626;
+      color: white;
+    }
+    
+    .call-btn.dc {
+      background: #1f2937;
+      color: #9ca3af;
+      border: 1px solid #374151;
+    }
+    
+    .call-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .call-btn.local:active {
+      background: #b91c1c;
+    }
+    
+    .call-btn .btn-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+    }
+    
+    .call-btn .btn-number {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px 0 16px;
+      color: #444;
+      font-size: 0.7rem;
+      line-height: 1.6;
+    }
+    
+    .footer a {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <div class="header">
+      <h1 class="headline">Demand accountability.<br>One call.</h1>
+      <p class="subhead">Austin, TX • Tap a name</p>
+    </div>
+    
+    <div class="rep-list">
+      
+      <div class="section-label">U.S. Senators</div>
+      
+      <div class="rep-card">
+        <div class="rep-header">
+          <div class="rep-info">
+            <div class="rep-name">John Cornyn<span class="rep-party R">R</span></div>
+            <div class="rep-detail">U.S. Senator • Texas</div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="rep-body">
+          <div class="script-section">
+            <div class="script-label">Say this</div>
+            <div class="script">
+              Hi, I'm <span class="blank">[NAME]</span> from Austin. I'm concerned that ICE is operating without consistent oversight or due-process standards. I'm asking Senator <span class="emphasis">Cornyn</span> to support independent review and clear accountability — federal agencies should follow the law they enforce. <span class="emphasis">What is the Senator's position?</span>
+            </div>
+          </div>
+          <div class="addon-section">
+            <label class="addon-toggle">
+              <input type="checkbox" class="addon-checkbox">
+              <div class="addon-toggle-text">
+                <div class="addon-toggle-label">+ Add personal statement</div>
+                <div class="addon-script">"I also believe enforcement should protect families, not separate them. Schools, hospitals, and churches should remain safe spaces."</div>
+              </div>
+            </label>
+          </div>
+          <div class="call-buttons">
+            <a class="call-btn local" href="tel:+15124696034">
+              <span class="btn-label">Austin</span>
+              <span class="btn-number">(512) 469-6034</span>
+            </a>
+            <a class="call-btn dc" href="tel:+12022242934">
+              <span class="btn-label">DC</span>
+              <span class="btn-number">(202) 224-2934</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="rep-card">
+        <div class="rep-header">
+          <div class="rep-info">
+            <div class="rep-name">Ted Cruz<span class="rep-party R">R</span></div>
+            <div class="rep-detail">U.S. Senator • Texas</div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="rep-body">
+          <div class="script-section">
+            <div class="script-label">Say this</div>
+            <div class="script">
+              Hi, I'm <span class="blank">[NAME]</span> from Austin. I'm concerned that ICE is operating without consistent oversight or due-process standards. I'm asking Senator <span class="emphasis">Cruz</span> to support independent review and clear accountability — federal agencies should follow the law they enforce. <span class="emphasis">What is the Senator's position?</span>
+            </div>
+          </div>
+          <div class="addon-section">
+            <label class="addon-toggle">
+              <input type="checkbox" class="addon-checkbox">
+              <div class="addon-toggle-text">
+                <div class="addon-toggle-label">+ Add personal statement</div>
+                <div class="addon-script">"I also believe enforcement should protect families, not separate them. Schools, hospitals, and churches should remain safe spaces."</div>
+              </div>
+            </label>
+          </div>
+          <div class="call-buttons">
+            <a class="call-btn local" href="tel:+15129165834">
+              <span class="btn-label">Austin</span>
+              <span class="btn-number">(512) 916-5834</span>
+            </a>
+            <a class="call-btn dc" href="tel:+12022245922">
+              <span class="btn-label">DC</span>
+              <span class="btn-number">(202) 224-5922</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section-label">U.S. House</div>
+      
+      <div class="rep-card expanded">
+        <div class="rep-header">
+          <div class="rep-info">
+            <div class="rep-name">Greg Casar<span class="rep-party D">D</span></div>
+            <div class="rep-detail">TX-35 • East Austin → San Antonio</div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="rep-body">
+          <div class="script-section">
+            <div class="script-label">Say this</div>
+            <div class="script">
+              Hi, I'm <span class="blank">[NAME]</span> from Austin. I'm concerned that ICE is operating without consistent oversight or due-process standards. I'm asking Rep. <span class="emphasis">Casar</span> to keep pushing for independent review and clear accountability — federal agencies should follow the law they enforce. <span class="emphasis">What else is the office doing?</span>
+            </div>
+          </div>
+          <div class="addon-section">
+            <label class="addon-toggle">
+              <input type="checkbox" class="addon-checkbox">
+              <div class="addon-toggle-text">
+                <div class="addon-toggle-label">+ Add personal statement</div>
+                <div class="addon-script">"Thank you for fighting for immigrant families. Please keep pushing — schools, hospitals, and churches must remain safe."</div>
+              </div>
+            </label>
+          </div>
+          <div class="call-buttons">
+            <a class="call-btn local" href="tel:+15126911200">
+              <span class="btn-label">Austin</span>
+              <span class="btn-number">(512) 691-1200</span>
+            </a>
+            <a class="call-btn dc" href="tel:+12022255645">
+              <span class="btn-label">DC</span>
+              <span class="btn-number">(202) 225-5645</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="rep-card">
+        <div class="rep-header">
+          <div class="rep-info">
+            <div class="rep-name">Lloyd Doggett<span class="rep-party D">D</span></div>
+            <div class="rep-detail">TX-37 • Central Austin, Williamson</div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="rep-body">
+          <div class="script-section">
+            <div class="script-label">Say this</div>
+            <div class="script">
+              Hi, I'm <span class="blank">[NAME]</span> from Austin. I'm concerned that ICE is operating without consistent oversight or due-process standards. I'm asking Rep. <span class="emphasis">Doggett</span> to keep pushing for independent review and clear accountability — federal agencies should follow the law they enforce. <span class="emphasis">What else is the office doing?</span>
+            </div>
+          </div>
+          <div class="addon-section">
+            <label class="addon-toggle">
+              <input type="checkbox" class="addon-checkbox">
+              <div class="addon-toggle-text">
+                <div class="addon-toggle-label">+ Add personal statement</div>
+                <div class="addon-script">"Thank you for fighting for immigrant families. Please keep pushing — schools, hospitals, and churches must remain safe."</div>
+              </div>
+            </label>
+          </div>
+          <div class="call-buttons">
+            <a class="call-btn local" href="tel:+15129165921">
+              <span class="btn-label">Austin</span>
+              <span class="btn-number">(512) 916-5921</span>
+            </a>
+            <a class="call-btn dc" href="tel:+12022254865">
+              <span class="btn-label">DC</span>
+              <span class="btn-number">(202) 225-4865</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="rep-card">
+        <div class="rep-header">
+          <div class="rep-info">
+            <div class="rep-name">Chip Roy<span class="rep-party R">R</span></div>
+            <div class="rep-detail">TX-21 • SW Austin, Hill Country</div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="rep-body">
+          <div class="script-section">
+            <div class="script-label">Say this</div>
+            <div class="script">
+              Hi, I'm <span class="blank">[NAME]</span> from Austin. I'm concerned that ICE is operating without consistent oversight or due-process standards. I'm asking Rep. <span class="emphasis">Roy</span> to support independent review and clear accountability — federal agencies should follow the law they enforce. <span class="emphasis">What is the Representative's position?</span>
+            </div>
+          </div>
+          <div class="addon-section">
+            <label class="addon-toggle">
+              <input type="checkbox" class="addon-checkbox">
+              <div class="addon-toggle-text">
+                <div class="addon-toggle-label">+ Add personal statement</div>
+                <div class="addon-script">"I also believe enforcement should protect families, not separate them. Schools, hospitals, and churches should remain safe spaces."</div>
+              </div>
+            </label>
+          </div>
+          <div class="call-buttons">
+            <a class="call-btn local" href="tel:+15128715959">
+              <span class="btn-label">Austin</span>
+              <span class="btn-number">(512) 871-5959</span>
+            </a>
+            <a class="call-btn dc" href="tel:+12022250755">
+              <span class="btn-label">DC</span>
+              <span class="btn-number">(202) 225-0755</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="rep-card">
+        <div class="rep-header">
+          <div class="rep-info">
+            <div class="rep-name">Michael McCaul<span class="rep-party R">R</span></div>
+            <div class="rep-detail">TX-10 • NW Austin → Houston</div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="rep-body">
+          <div class="script-section">
+            <div class="script-label">Say this</div>
+            <div class="script">
+              Hi, I'm <span class="blank">[NAME]</span> from Austin. I'm concerned that ICE is operating without consistent oversight or due-process standards. I'm asking Rep. <span class="emphasis">McCaul</span> to support independent review and clear accountability — federal agencies should follow the law they enforce. <span class="emphasis">What is the Representative's position?</span>
+            </div>
+          </div>
+          <div class="addon-section">
+            <label class="addon-toggle">
+              <input type="checkbox" class="addon-checkbox">
+              <div class="addon-toggle-text">
+                <div class="addon-toggle-label">+ Add personal statement</div>
+                <div class="addon-script">"I also believe enforcement should protect families, not separate them. Schools, hospitals, and churches should remain safe spaces."</div>
+              </div>
+            </label>
+          </div>
+          <div class="call-buttons">
+            <a class="call-btn local" href="tel:+15127708929">
+              <span class="btn-label">Austin</span>
+              <span class="btn-number">(512) 770-8929</span>
+            </a>
+            <a class="call-btn dc" href="tel:+12022252401">
+              <span class="btn-label">DC</span>
+              <span class="btn-number">(202) 225-2401</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section-label">State</div>
+      
+      <div class="rep-card">
+        <div class="rep-header">
+          <div class="rep-info">
+            <div class="rep-name">Greg Abbott<span class="rep-party R">R</span></div>
+            <div class="rep-detail">Governor of Texas</div>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="rep-body">
+          <div class="script-section">
+            <div class="script-label">Say this</div>
+            <div class="script">
+              Hi, I'm <span class="blank">[NAME]</span> from Austin. I'm calling about state cooperation with federal immigration enforcement. I'm asking Governor <span class="emphasis">Abbott</span> to ensure Texas agencies require clear identification and proper warrants before participating in enforcement actions. <span class="emphasis">What is the Governor's position?</span>
+            </div>
+          </div>
+          <div class="addon-section">
+            <label class="addon-toggle">
+              <input type="checkbox" class="addon-checkbox">
+              <div class="addon-toggle-text">
+                <div class="addon-toggle-label">+ Add personal statement</div>
+                <div class="addon-script">"I also believe schools, hospitals, and churches should remain safe spaces for all Texans, regardless of status."</div>
+              </div>
+            </label>
+          </div>
+          <div class="call-buttons">
+            <a class="call-btn local" href="tel:+15124632000" style="flex: 1;">
+              <span class="btn-label">Governor's Office</span>
+              <span class="btn-number">(512) 463-2000</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <div class="footer">
+      Numbers verified Feb 2025 • Austin, TX<br>
+      <a href="https://5calls.org" target="_blank">More issues at 5calls.org</a>
+    </div>
+    
+  </div>
+
+  <script>
+    // Expand/collapse cards
+    document.querySelectorAll('.rep-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const card = header.parentElement;
+        const wasExpanded = card.classList.contains('expanded');
+        
+        // Collapse all
+        document.querySelectorAll('.rep-card').forEach(c => c.classList.remove('expanded'));
+        
+        // Toggle clicked card
+        if (!wasExpanded) {
+          card.classList.add('expanded');
+        }
+      });
+    });
+    
+    // Prevent call buttons from triggering accordion
+    document.querySelectorAll('.call-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Force the tel: link to work
+        const href = btn.getAttribute('href');
+        if (href && href.startsWith('tel:')) {
+          window.location.href = href;
+        }
+      });
+    });
+    
+    // Addon toggle styling
+    document.querySelectorAll('.addon-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const toggle = e.target.closest('.addon-toggle');
+        toggle.classList.toggle('checked', e.target.checked);
+      });
+    });
+    
+    // Prevent addon clicks from collapsing
+    document.querySelectorAll('.addon-toggle').forEach(toggle => {
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    });
+  </script>
+</body>
+</html>
