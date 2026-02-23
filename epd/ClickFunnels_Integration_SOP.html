@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connecting EasyPayDirect to ClickFunnels - Quick Setup Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f9fafb;
+            padding: 20px;
+        }
+
+        .email-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .greeting {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        h2 {
+            color: #1e40af;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        h3 {
+            color: #374151;
+            font-size: 1.2em;
+            margin: 25px 0 12px 0;
+        }
+
+        .step-box {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.1em;
+        }
+
+        .step-title {
+            font-size: 1.15em;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 12px;
+        }
+
+        ol, ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .credential-box {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .credential-box strong {
+            color: #92400e;
+        }
+
+        code {
+            background: #f3f4f6;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #dc2626;
+            font-size: 0.95em;
+        }
+
+        .warning {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning strong {
+            color: #991b1b;
+        }
+
+        .tip {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .tip strong {
+            color: #065f46;
+        }
+
+        .screenshot {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .screenshot img {
+            width: 95%;
+            max-width: 1000px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .screenshot.cf-crop {
+            overflow: hidden;
+            padding-top: 0;
+        }
+
+        .screenshot.cf-crop img {
+            margin-top: -50px;
+        }
+
+        .screenshot-caption {
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .test-card-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+
+        .test-card-table th {
+            background: #f3f4f6;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #d1d5db;
+        }
+
+        .test-card-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .quick-reference {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 25px 0;
+        }
+
+        .quick-reference h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+
+        .next-steps {
+            background: #f0fdf4;
+            padding: 25px;
+            border-radius: 6px;
+            margin: 30px 0;
+        }
+
+        .next-steps h3 {
+            color: #065f46;
+            margin-top: 0;
+        }
+
+        .footer {
+            background: #f9fafb;
+            padding: 25px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+        }
+
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 25px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🚀 Connect EasyPayDirect to ClickFunnels</h1>
+            <p>Quick & Easy Setup Guide</p>
+        </div>
+
+        <div class="content">
+            <div class="greeting">
+                <p>Ready to connect your EasyPayDirect gateway to ClickFunnels? Here's how to do it. Takes about 10 minutes.</p>
+            </div>
+
+            <div class="tip">
+                <strong>💡 Before You Start:</strong> Open both your EasyPayDirect merchant portal and ClickFunnels in separate tabs - makes it easier!
+            </div>
+
+            <h2>🔑 Step 1: Get Your Security Key from EasyPayDirect</h2>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">1</span>Log into your EasyPayDirect merchant portal</div>
+                <ul>
+                    <li>Go to your merchant portal (the link was in your welcome email)</li>
+                    <li>Log in with your username and password</li>
+                </ul>
+            </div>
+
+            <div class="screenshot">
+                <img src="epd login.png" alt="EasyPayDirect Login Page">
+                <p class="screenshot-caption">EasyPayDirect merchant portal login page</p>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">2</span>Navigate to Security Keys</div>
+                <ul>
+                    <li>Click on <strong>"Gateway Options"</strong> in the menu</li>
+                    <li>Then click <strong>"Security Keys"</strong></li>
+                </ul>
+            </div>
+
+            <div class="screenshot">
+                <img src="epd-security-keys-screenshot-2026-02-23-113413.png" alt="EasyPayDirect Security Keys Page">
+                <p class="screenshot-caption">Your Security Keys page will look like this</p>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">3</span>Copy your Private Security Key</div>
+                <ul>
+                    <li>Look for the section called <strong>"Private Security Keys"</strong></li>
+                    <li>Find the key labeled <strong>"API"</strong> (NOT the "Cart" one)</li>
+                    <li>Click the <strong>"Copy"</strong> button next to it</li>
+                    <li>Save it somewhere safe (you'll need it in a minute!)</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Important:</strong> Make sure you copy the <strong>Private</strong> key (API), not the Public key. The Private key is what connects ClickFunnels to your gateway securely.
+            </div>
+
+            <h2>⚙️ Step 2: Add the Gateway in ClickFunnels</h2>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">4</span>Go to Payment Gateways in ClickFunnels</div>
+                <ul>
+                    <li>Log into your ClickFunnels account</li>
+                    <li>Click your account name (top right corner)</li>
+                    <li>Select <strong>"Account Settings"</strong></li>
+                    <li>Click <strong>"Payment Gateways"</strong> in the left menu</li>
+                </ul>
+            </div>
+
+            <div class="screenshot cf-crop">
+                <img src="https://www.easypaydirect.com/wp-content/uploads/2024/09/CF1.0-Step1.webp" alt="ClickFunnels Payment Gateway Settings">
+                <p class="screenshot-caption">ClickFunnels Payment Gateway page</p>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">5</span>Add New Gateway</div>
+                <ul>
+                    <li>Click the <strong>"+ Add New Payment Gateway"</strong> button</li>
+                    <li>Select <strong>"Network Merchants Inc (NMI)"</strong> from the list</li>
+                    <li>Click <strong>"Add Gateway"</strong></li>
+                </ul>
+
+                <div class="tip" style="margin-top: 15px;">
+                    <strong>Why NMI?</strong> EasyPayDirect uses the Network Merchants Inc (NMI) gateway format for ClickFunnels integration.
+                </div>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">6</span>Enter Your Credentials</div>
+                <p>Fill out the form with these values:</p>
+
+                <div class="credential-box">
+                    <strong>Gateway Name:</strong> Type <code>EasyPayDirect</code> (or whatever you want to call it)<br><br>
+                    <strong>API Login ID:</strong> Type <code>api_key</code> (literally those letters - not a placeholder!)<br><br>
+                    <strong>Transaction Key:</strong> Paste your <strong>Private Security Key</strong> from Step 3<br><br>
+                    <strong>Gateway Mode:</strong> Select <code>Test Mode</code> (for now)<br><br>
+                    <strong>MD5 Hash (if asked):</strong> Type <code>gateway</code>
+                </div>
+
+                <div class="warning">
+                    <strong>⚠️ That "api_key" thing looks weird, right?</strong> Don't worry - you really do type the literal word "api_key" in the API Login ID field. It's how EasyPayDirect's system works. Your actual authentication happens through the Private Security Key.
+                </div>
+            </div>
+
+            <div class="screenshot cf-crop">
+                <img src="https://www.easypaydirect.com/wp-content/uploads/2024/09/cf1.0-step2.webp" alt="ClickFunnels Gateway Configuration">
+                <p class="screenshot-caption">Fill in your credentials like this</p>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">7</span>Save It!</div>
+                <ul>
+                    <li>Double-check everything looks right</li>
+                    <li>Click <strong>"Save"</strong></li>
+                    <li>You should see a success message</li>
+                </ul>
+            </div>
+
+            <h2>🎯 Step 3: Connect to Your Funnel</h2>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">8</span>Select Your Funnel</div>
+                <ul>
+                    <li>Go to your <strong>Funnels</strong> page</li>
+                    <li>Click on the funnel you want to add payments to</li>
+                    <li>Find your Order Form or Checkout page</li>
+                    <li>Click <strong>"Edit Page"</strong></li>
+                </ul>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">9</span>Assign the Payment Gateway</div>
+                <ul>
+                    <li>Click on your Order Form element</li>
+                    <li>In the settings panel, find <strong>"Payment Gateway"</strong></li>
+                    <li>Select <strong>"EasyPayDirect"</strong> from the dropdown</li>
+                    <li>Make sure your products and prices are set correctly</li>
+                    <li>Click <strong>"Save"</strong> then <strong>"Publish"</strong></li>
+                </ul>
+            </div>
+
+            <div class="screenshot cf-crop">
+                <img src="https://www.easypaydirect.com/wp-content/uploads/2024/09/cf1.0-step3.webp" alt="Selecting Payment Gateway in Order Form">
+                <p class="screenshot-caption">Select EasyPayDirect in your order form settings</p>
+            </div>
+
+            <h2>🧪 Step 4: Test It!</h2>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">10</span>Run a Test Transaction</div>
+                <p><strong>Before going live, let's make sure everything works!</strong></p>
+
+                <ol>
+                    <li>Preview your funnel (click the Preview button)</li>
+                    <li>Go through your checkout page</li>
+                    <li>Use this test card:</li>
+                </ol>
+
+                <table class="test-card-table">
+                    <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Card Number</strong></td>
+                        <td><code>4111 1111 1111 1111</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Expiration</strong></td>
+                        <td>Any future date (like 12/27)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CVV</strong></td>
+                        <td><code>123</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Name</strong></td>
+                        <td>Test Customer</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Zip Code</strong></td>
+                        <td>Any valid zip</td>
+                    </tr>
+                </table>
+
+                <ol start="4">
+                    <li>Complete the test order</li>
+                    <li>You should see a success/thank you page</li>
+                    <li>Check your EasyPayDirect portal - you should see the test transaction</li>
+                </ol>
+            </div>
+
+            <div class="tip">
+                <strong>✅ Success looks like:</strong> You get to a thank you page, receive a confirmation email, and see the transaction in your EasyPayDirect portal under Transactions.
+            </div>
+
+            <h2>🎉 Step 5: Go Live!</h2>
+
+            <div class="step-box">
+                <div class="step-title"><span class="step-number">11</span>Switch to Live Mode</div>
+                <p><strong>Once your test works perfectly:</strong></p>
+                <ol>
+                    <li>Go back to ClickFunnels → Account Settings → Payment Gateways</li>
+                    <li>Click on your EasyPayDirect gateway</li>
+                    <li>Change from <strong>"Test Mode"</strong> to <strong>"Live Mode"</strong></li>
+                    <li>Click <strong>"Save"</strong></li>
+                </ol>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Important:</strong> Only switch to Live Mode after your test transaction works perfectly!
+            </div>
+
+            <div class="next-steps">
+                <h3>🎊 You're All Set!</h3>
+                <p>Your ClickFunnels store is now connected to EasyPayDirect and ready to accept payments!</p>
+
+                <p style="margin-top: 15px;"><strong>What happens now:</strong></p>
+                <ul>
+                    <li>Customers can pay with credit/debit cards</li>
+                    <li>Transactions process securely through EasyPayDirect</li>
+                    <li>Funds settle to your bank account</li>
+                    <li>You can view all transactions in your merchant portal</li>
+                </ul>
+            </div>
+
+            <h2>❓ Need Help?</h2>
+
+            <div class="quick-reference">
+                <h3>Common Questions</h3>
+
+                <p><strong>Q: It says "Invalid Credentials" - what's wrong?</strong></p>
+                <p>A: Double-check that you typed <code>api_key</code> exactly in the API Login ID field, and that you pasted your Private Security Key (API) - not the Public key - in the Transaction Key field.</p>
+
+                <p style="margin-top: 15px;"><strong>Q: The test card is being declined</strong></p>
+                <p>A: Make sure your gateway is still in Test Mode. Also verify you're using <code>4111 1111 1111 1111</code> with a future expiration date.</p>
+
+                <p style="margin-top: 15px;"><strong>Q: Which ClickFunnels plan do I need?</strong></p>
+                <p>A: The Platinum plan or higher is recommended for full payment gateway features, but basic payment processing works on most plans.</p>
+
+                <p style="margin-top: 15px;"><strong>Q: Can I use this for recurring/subscription payments?</strong></p>
+                <p>A: Yes! ClickFunnels supports recurring billing with EasyPayDirect. Just set up your products as subscriptions in ClickFunnels.</p>
+            </div>
+
+            <div class="tip">
+                <strong>📞 Still stuck?</strong> Our support team is here to help!<br><br>
+                <strong>Call:</strong> 1-800-EPD-TECH (1-800-373-8324)<br>
+                <strong>Email:</strong> techsupport@easypaydirect.com<br>
+                <strong>Hours:</strong> Monday-Friday, 8 AM - 8 PM EST
+            </div>
+
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 0.85em; color: #6b7280;">
+                <p><strong>Document Information</strong></p>
+                <p>Guide ID: EPD-CF-001 | Version: 1.0 | Date: February 23, 2026</p>
+                <p>For: ClickFunnels integration with EasyPayDirect Gateway</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Thanks for choosing EasyPayDirect!</strong></p>
+            <p style="margin-top: 10px;">Questions? Reach out to us anytime at <a href="mailto:support@easypaydirect.com">support@easypaydirect.com</a></p>
+            <p style="margin-top: 15px; font-size: 0.9em;">© 2026 EasyPayDirect | <a href="#">Merchant Portal</a> | <a href="#">Help Center</a></p>
+        </div>
+    </div>
+</body>
+</html>
