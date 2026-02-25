@@ -166,17 +166,19 @@
         /* Technical header with measurements */
         header {
             position: relative;
-            margin-bottom: 100px;
+            margin-bottom: 80px;
             padding: 40px 0;
             border-top: 2px solid var(--accent-orange);
             border-bottom: 2px solid var(--accent-orange);
+            text-align: center;
         }
 
         header::before {
             content: 'PROTOCOL_v1.0';
             position: absolute;
             top: -12px;
-            left: 0;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 0.7rem;
             color: var(--accent-orange);
             background: var(--forge-black);
@@ -185,53 +187,41 @@
             font-weight: 700;
         }
 
-        header::after {
-            content: 'ACTIVE';
-            position: absolute;
-            top: -12px;
-            right: 0;
-            font-size: 0.7rem;
-            color: var(--accent-cyan);
-            background: var(--forge-black);
-            padding: 0 8px;
-            letter-spacing: 2px;
-            font-weight: 700;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        /* QR Code placeholder */
-        .qr-placeholder {
-            width: 200px;
-            height: 200px;
-            margin: 32px auto;
-            border: 2px dashed var(--accent-cyan);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-dim);
-            font-size: 0.8rem;
+        /* QR Code styling */
+        .qr-container {
             text-align: center;
+            margin: 40px auto 32px;
+        }
+
+        .qr-code {
+            width: 240px;
+            height: 240px;
+            background: white;
             padding: 20px;
-            background: var(--forge-black);
+            border-radius: 12px;
+            display: inline-block;
+            border: 1px solid var(--grid-line);
+        }
+
+        .qr-cta {
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 500;
         }
 
         h1 {
             font-family: 'Space Mono', monospace;
-            font-size: 4rem;
+            font-size: 2.8rem;
             font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 16px;
-            letter-spacing: -2px;
+            line-height: 1.2;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
             text-transform: uppercase;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-orange) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
         }
 
         .tagline {
@@ -601,7 +591,13 @@
             }
 
             h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
+            }
+
+            .qr-code {
+                width: 200px;
+                height: 200px;
+                padding: 16px;
             }
 
             .section {
@@ -637,11 +633,21 @@
 
         @media (max-width: 480px) {
             h1 {
-                font-size: 2rem;
+                font-size: 1.6rem;
             }
 
             .tagline {
-                font-size: 0.8rem;
+                font-size: 0.75rem;
+            }
+
+            .qr-code {
+                width: 180px;
+                height: 180px;
+                padding: 12px;
+            }
+
+            .qr-cta {
+                font-size: 0.75rem;
             }
 
             .section {
@@ -671,8 +677,12 @@
 
     <div class="container">
         <header>
-            <h1>Christopher<br>K-Lee Marks</h1>
+            <h1>Christopher K-Lee Marks</h1>
             <p class="tagline">Collaboration Protocol Exchange</p>
+            <div class="qr-container">
+                <img src="mission-match-qr.png" alt="Scan to connect" class="qr-code">
+                <p class="qr-cta">Scan to Exchange Collaboration Profiles</p>
+            </div>
         </header>
 
         <div class="section" data-section="PROFILE_SPEC">
@@ -713,16 +723,10 @@
             </div>
         </div>
 
-        <!-- QR Code -->
-        <div style="text-align: center; margin: 60px 0;">
-            <img src="mission-match-qr.png" alt="Scan to connect" style="width: 200px; height: 200px; border: 3px solid var(--accent-cyan); border-radius: 12px; background: white; padding: 16px; box-shadow: 0 0 30px var(--glow-cyan);">
-            <p style="color: var(--text-secondary); margin-top: 16px; font-size: 0.9rem; letter-spacing: 1px;">SCAN TO CONNECT</p>
-        </div>
-
         <div class="section" data-section="COLLABORATION_PROMPT">
-            <h2 class="section-title">Execution Protocol</h2>
+            <h2 class="section-title">Connection Protocol</h2>
             <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">
-                Copy this prompt and execute it with any AI assistant (Claude, ChatGPT, etc.). The AI will guide you through a wizard to create your Mission Match profile (with privacy controls), then analyze collaboration potential across multiple dimensions. You'll get both a shareable profile and concrete collaboration opportunities.
+                Copy this prompt into any AI assistant (Claude, ChatGPT, etc.). Answer 4 quick questions to create your profile, then get an instant collaboration analysis. You'll receive a shareable profile you can use with anyone, plus specific opportunities to connect with Christopher.
             </p>
 
             <div class="prompt-terminal">
@@ -737,7 +741,7 @@
                 <div class="terminal-body">
                     <div class="prompt-text"># Collaboration Protocol Exchange
 
-I just met K-Lee Marks and we're analyzing collaboration fit in 60 seconds.
+I just met Christopher K-Lee Marks and we're analyzing collaboration fit in 60 seconds.
 
 ## CHRISTOPHER K-LEE'S PROFILE
 Role: AI-native product builder, educator, and creative technologist
