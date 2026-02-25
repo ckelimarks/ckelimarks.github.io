@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COLLABORATION PROTOCOL :: CHRISTOPHER MARKS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --forge-black: #0d0d0d;
+            --forge-dark: #1a1a1a;
+            --grid-line: #2a2a2a;
+            --accent-orange: #ff6b35;
+            --accent-cyan: #00d4ff;
+            --text-primary: #f5f5f5;
+            --text-secondary: #999;
+            --text-dim: #666;
+            --glow-orange: rgba(255, 107, 53, 0.4);
+            --glow-cyan: rgba(0, 212, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: var(--forge-black);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Gradient background effect */
+        .gradient-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .gradient-sphere {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+
+        .sphere-1 {
+            width: 40vw;
+            height: 40vw;
+            background: linear-gradient(40deg, rgba(255, 107, 53, 0.4), rgba(255, 107, 53, 0.2));
+            top: -10%;
+            left: -10%;
+            animation: float-1 15s ease-in-out infinite alternate;
+        }
+
+        .sphere-2 {
+            width: 45vw;
+            height: 45vw;
+            background: linear-gradient(240deg, rgba(0, 212, 255, 0.4), rgba(0, 212, 255, 0.2));
+            bottom: -20%;
+            right: -10%;
+            animation: float-2 18s ease-in-out infinite alternate;
+        }
+
+        .sphere-3 {
+            width: 30vw;
+            height: 30vw;
+            background: linear-gradient(120deg, rgba(255, 107, 53, 0.3), rgba(0, 212, 255, 0.2));
+            top: 60%;
+            left: 20%;
+            animation: float-3 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes float-1 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(15%, 15%) rotate(180deg); }
+        }
+
+        @keyframes float-2 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-10%, -10%) rotate(-180deg); }
+        }
+
+        @keyframes float-3 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10%, -10%) scale(1.1); }
+        }
+
+        .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.1) 0%, transparent 70%);
+            animation: pulse-glow 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Technical header with measurements */
+        header {
+            position: relative;
+            margin-bottom: 100px;
+            padding: 40px 0;
+            border-top: 2px solid var(--accent-orange);
+            border-bottom: 2px solid var(--accent-orange);
+        }
+
+        header::before {
+            content: 'PROTOCOL_v1.0';
+            position: absolute;
+            top: -12px;
+            left: 0;
+            font-size: 0.7rem;
+            color: var(--accent-orange);
+            background: var(--forge-black);
+            padding: 0 8px;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        header::after {
+            content: 'ACTIVE';
+            position: absolute;
+            top: -12px;
+            right: 0;
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            background: var(--forge-black);
+            padding: 0 8px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* QR Code placeholder */
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            margin: 32px auto;
+            border: 2px dashed var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 20px;
+            background: var(--forge-black);
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        /* Blueprint section styling */
+        .section {
+            margin-bottom: 80px;
+            position: relative;
+            background: var(--forge-dark);
+            border: 1px solid var(--grid-line);
+            padding: 48px;
+            position: relative;
+        }
+
+        .section::before {
+            content: attr(data-section);
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            font-size: 0.7rem;
+            color: var(--accent-orange);
+            background: var(--forge-black);
+            padding: 0 12px;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        /* Corner brackets */
+        .section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                linear-gradient(var(--accent-orange) 2px, transparent 2px) 0 0,
+                linear-gradient(90deg, var(--accent-orange) 2px, transparent 2px) 0 0,
+                linear-gradient(var(--accent-orange) 2px, transparent 2px) 100% 100%,
+                linear-gradient(90deg, var(--accent-orange) 2px, transparent 2px) 100% 100%;
+            background-size: 20px 20px;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        .section-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .section-title::before {
+            content: '//';
+            color: var(--accent-cyan);
+            font-size: 1.4rem;
+        }
+
+        /* Profile specifications */
+        .spec-grid {
+            display: grid;
+            gap: 32px;
+        }
+
+        .spec-item {
+            position: relative;
+            padding-left: 24px;
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .spec-item::before {
+            content: '>';
+            position: absolute;
+            left: -10px;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .spec-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-orange);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .spec-content {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        /* Proof points as technical callouts */
+        .proof-grid {
+            display: grid;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .proof-callout {
+            background: var(--forge-black);
+            border-left: 4px solid var(--accent-orange);
+            padding: 20px 24px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .proof-callout:hover {
+            border-left-width: 8px;
+            box-shadow: -8px 0 20px var(--glow-orange);
+            transform: translateX(4px);
+        }
+
+        .proof-callout::before {
+            content: '[' counter(proof) ']';
+            counter-increment: proof;
+            position: absolute;
+            left: -16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--accent-orange);
+            color: var(--forge-black);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 6px;
+            border-radius: 2px;
+        }
+
+        .spec-grid {
+            counter-reset: proof;
+        }
+
+        .proof-name {
+            color: var(--accent-orange);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .proof-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        /* Prompt terminal styling */
+        .prompt-terminal {
+            background: #000;
+            border: 2px solid var(--accent-cyan);
+            position: relative;
+            margin-bottom: 24px;
+            box-shadow: 0 0 30px var(--glow-cyan);
+        }
+
+        .terminal-header {
+            background: var(--accent-cyan);
+            color: #000;
+            padding: 12px 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-dots span {
+            width: 10px;
+            height: 10px;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .terminal-body {
+            padding: 32px;
+            max-height: 500px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .terminal-body::before {
+            content: '$ ';
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .terminal-body::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .terminal-body::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+        }
+
+        .prompt-text {
+            color: #0f0;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            font-family: 'JetBrains Mono', monospace;
+            text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+        }
+
+        /* Action button */
+        .action-btn {
+            width: 100%;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--accent-orange) 0%, #d94a1f 100%);
+            color: #fff;
+            border: none;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px var(--glow-orange);
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--glow-orange);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn.copied {
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, #0099cc 100%);
+            box-shadow: 0 4px 20px var(--glow-cyan);
+        }
+
+        /* Steps as sequential diagram */
+        .steps-diagram {
+            display: grid;
+            gap: 24px;
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .steps-diagram::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-orange));
+        }
+
+        .step-node {
+            position: relative;
+            padding: 20px 24px;
+            background: var(--forge-black);
+            border: 1px solid var(--grid-line);
+            transition: all 0.3s ease;
+        }
+
+        .step-node:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px var(--glow-cyan);
+            transform: translateX(8px);
+        }
+
+        .step-node::before {
+            content: attr(data-step);
+            position: absolute;
+            left: -60px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-cyan));
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            border: 3px solid var(--forge-black);
+            z-index: 2;
+        }
+
+        .step-content {
+            color: var(--text-primary);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Footer technical readout */
+        footer {
+            margin-top: 120px;
+            padding-top: 40px;
+            border-top: 2px solid var(--grid-line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .footer-meta {
+            display: flex;
+            gap: 24px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-item::before {
+            content: '■';
+            color: var(--accent-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .section {
+                padding: 32px 24px;
+            }
+
+            .section-title {
+                font-size: 1.4rem;
+            }
+
+            .steps-diagram {
+                padding-left: 50px;
+            }
+
+            .step-node::before {
+                left: -50px;
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .footer-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .tagline {
+                font-size: 0.8rem;
+            }
+
+            .section {
+                padding: 24px 16px;
+            }
+
+            .terminal-body {
+                padding: 20px;
+            }
+
+            .prompt-text {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gradient-background">
+        <div class="gradient-sphere sphere-1"></div>
+        <div class="gradient-sphere sphere-2"></div>
+        <div class="gradient-sphere sphere-3"></div>
+        <div class="glow"></div>
+        <div class="grid-overlay"></div>
+        <div class="noise-overlay"></div>
+        <div class="particles-container" id="particles-container"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>K-Lee<br>Marks</h1>
+            <p class="tagline">Collaboration Protocol Exchange</p>
+            <div class="qr-placeholder">
+                QR CODE<br>
+                (Add when hosted)
+            </div>
+        </header>
+
+        <div class="section" data-section="PROFILE_SPEC">
+            <h2 class="section-title">Builder Profile</h2>
+            <div class="spec-grid">
+                <div class="spec-item">
+                    <div class="spec-label">Identity</div>
+                    <div class="spec-content">AI-native product builder, educator, and creative technologist</div>
+                </div>
+
+                <div class="spec-item">
+                    <div class="spec-label">Core Mission</div>
+                    <div class="spec-content">Build technology that helps people think clearly, create freely, and deepen human connection</div>
+                </div>
+
+                <div class="spec-item">
+                    <div class="spec-label">Validated Output</div>
+                    <div class="proof-grid">
+                        <div class="proof-callout">
+                            <div class="proof-name">Podcast Farm</div>
+                            <div class="proof-desc">Founder → $360K+ revenue → Validated business model</div>
+                        </div>
+                        <div class="proof-callout">
+                            <div class="proof-name">LoveNotes</div>
+                            <div class="proof-desc">AI-driven product → Production scale → Real users</div>
+                        </div>
+                        <div class="proof-callout">
+                            <div class="proof-name">Personal OS</div>
+                            <div class="proof-desc">Workflows used in real teaching and production → Proven in practice</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="spec-item">
+                    <div class="spec-label">Seeking Connection With</div>
+                    <div class="spec-content">AI product collaborators → Consumer app founders → Agent/workflow builders → Partners in human-connection tech and education</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" data-section="COLLABORATION_PROMPT">
+            <h2 class="section-title">Execution Protocol</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">
+                Copy this prompt and execute it with any AI assistant (Claude, ChatGPT, etc.). The AI will guide you through a wizard to create your Mission Match profile (with privacy controls), then analyze collaboration potential across multiple dimensions. You'll get both a shareable profile and concrete collaboration opportunities.
+            </p>
+
+            <div class="prompt-terminal">
+                <div class="terminal-header">
+                    <span>COLLABORATION_ANALYSIS.TXT</span>
+                    <div class="terminal-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+                <div class="terminal-body">
+                    <div class="prompt-text"># Collaboration Protocol Exchange
+
+I just met K-Lee Marks and we're analyzing collaboration fit in 60 seconds.
+
+## K-LEE'S PROFILE
+Role: AI-native product builder, educator, and creative technologist
+Mission: Build technology that helps people think clearly, create freely, and deepen human connection
+Proof: Founder of Podcast Farm ($360K+ revenue) and creator of AI-driven products like LoveNotes and Personal OS workflows used in real teaching and production
+Looking for: AI product collaborators, consumer app founders, agent/workflow builders, and partners in human-connection tech and education
+
+## YOUR PROFILE (4 Quick Questions)
+
+1. What do you do? (role or what you're building)
+[Your answer]
+
+2. Your mission in one sentence
+[Your answer]
+
+3. One proof point (something you've shipped/built/achieved)
+[Your answer]
+
+4. What are you looking for? (who you want to collaborate with)
+[Your answer]
+
+5. Share your LinkedIn? (optional - paste URL or write "skip")
+[Your answer]
+
+---
+
+## ANALYSIS
+
+Based on both profiles above, provide:
+
+**1. COLLABORATION POTENTIAL (0-100%)**
+- Mission alignment score
+- Skill complementarity score
+- Overall collaboration potential
+
+**2. TOP 3 OPPORTUNITIES**
+For each opportunity:
+- What we could do together
+- Why it's a fit
+- Concrete first step
+
+**3. YOUR SHAREABLE PROFILE**
+Generate my profile in this format:
+
+```
+[NAME]'s Collaboration Protocol
+
+Role: [from Q1]
+Mission: [from Q2]
+Proof: [from Q3]
+Looking for: [from Q4]
+LinkedIn: [from Q5 if provided]
+```
+
+Keep the analysis concise - we're standing at an event. Focus on actionable opportunities.</div>
+                </div>
+            </div>
+
+            <button class="action-btn" onclick="copyPrompt()">
+                <span class="button-text">Execute Copy</span>
+            </button>
+        </div>
+
+        <div class="section" data-section="USAGE_FLOW">
+            <h2 class="section-title">Implementation Steps</h2>
+            <div class="steps-diagram">
+                <div class="step-node" data-step="01">
+                    <div class="step-content">Initiate copy sequence by clicking the button above → Prompt loaded to clipboard</div>
+                </div>
+                <div class="step-node" data-step="02">
+                    <div class="step-content">Launch AI assistant conversation (Claude, ChatGPT, or alternative) with your networking contact</div>
+                </div>
+                <div class="step-node" data-step="03">
+                    <div class="step-content">Execute paste → AI wizard guides contact through profile creation → Privacy controls for sensitive info → Both profiles complete</div>
+                </div>
+                <div class="step-node" data-step="04">
+                    <div class="step-content">Receive shareable Mission Match profile + collaboration analysis → Select high-confidence opportunity → Initiate first step</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div>BUILT BY K-LEE MARKS</div>
+            <div class="footer-meta">
+                <div class="meta-item">PROTOCOL v1.0</div>
+                <div class="meta-item">2026</div>
+                <div class="meta-item">ACTIVE</div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Particle animation with mouse interaction
+        const particlesContainer = document.getElementById('particles-container');
+        const particleCount = 60;
+
+        for (let i = 0; i < particleCount; i++) {
+            createParticle();
+        }
+
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+
+            const size = Math.random() * 3 + 1;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+
+            resetParticle(particle);
+            particlesContainer.appendChild(particle);
+            animateParticle(particle);
+        }
+
+        function resetParticle(particle) {
+            const posX = Math.random() * 100;
+            const posY = Math.random() * 100;
+
+            particle.style.left = `${posX}%`;
+            particle.style.top = `${posY}%`;
+
+            return { x: posX, y: posY };
+        }
+
+        function animateParticle(particle) {
+            const pos = resetParticle(particle);
+            const duration = Math.random() * 10 + 10;
+            const delay = Math.random() * 5;
+
+            setTimeout(() => {
+                particle.style.transition = `all ${duration}s linear`;
+                particle.style.opacity = Math.random() * 0.3 + 0.1;
+
+                const moveX = pos.x + (Math.random() * 20 - 10);
+                const moveY = pos.y - Math.random() * 30;
+
+                particle.style.left = `${moveX}%`;
+                particle.style.top = `${moveY}%`;
+
+                setTimeout(() => {
+                    animateParticle(particle);
+                }, duration * 1000);
+            }, delay * 1000);
+        }
+
+        // Mouse interaction
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth) * 100;
+            const mouseY = (e.clientY / window.innerHeight) * 100;
+
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+
+            const size = Math.random() * 4 + 2;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${mouseX}%`;
+            particle.style.top = `${mouseY}%`;
+            particle.style.opacity = '0.6';
+
+            particlesContainer.appendChild(particle);
+
+            setTimeout(() => {
+                particle.style.transition = 'all 2s ease-out';
+                particle.style.left = `${mouseX + (Math.random() * 10 - 5)}%`;
+                particle.style.top = `${mouseY + (Math.random() * 10 - 5)}%`;
+                particle.style.opacity = '0';
+
+                setTimeout(() => {
+                    particle.remove();
+                }, 2000);
+            }, 10);
+
+            const spheres = document.querySelectorAll('.gradient-sphere');
+            const moveX = (e.clientX / window.innerWidth - 0.5) * 5;
+            const moveY = (e.clientY / window.innerHeight - 0.5) * 5;
+
+            spheres.forEach(sphere => {
+                sphere.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            });
+        });
+
+        // Copy prompt function
+        async function copyPrompt() {
+            const promptText = document.querySelector('.prompt-text').textContent;
+            const button = document.querySelector('.action-btn');
+            const buttonText = button.querySelector('.button-text');
+
+            try {
+                await navigator.clipboard.writeText(promptText);
+                button.classList.add('copied');
+                buttonText.textContent = 'Copied Successfully';
+
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    buttonText.textContent = 'Execute Copy';
+                }, 2000);
+            } catch (err) {
+                console.error('Copy failed:', err);
+                buttonText.textContent = 'Copy Failed';
+                setTimeout(() => {
+                    buttonText.textContent = 'Execute Copy';
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
