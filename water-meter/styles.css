@@ -527,6 +527,59 @@ footer {
     font-size: 0.85rem;
 }
 
+footer .credits {
+    margin-bottom: 1.5rem;
+}
+
+footer .credits a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+footer .credits a:hover {
+    color: var(--accent-dark);
+    text-decoration: underline;
+}
+
+footer .sources {
+    text-align: left;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+footer .sources p {
+    margin-bottom: 0.75rem;
+}
+
+footer .sources ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+footer .sources li {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+footer .sources a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+footer .sources a:hover {
+    color: var(--accent-dark);
+    text-decoration: underline;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .meter-section {
