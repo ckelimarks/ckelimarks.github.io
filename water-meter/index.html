@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Water Meter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Token Water Meter</h1>
+            <p class="subtitle">Visualizing AI consumption</p>
+        </header>
+
+        <main>
+            <div class="meter-section">
+                <div class="bucket-container">
+                    <div class="filled-buckets" id="filledBuckets"></div>
+                    <div class="bucket">
+                        <div class="water" id="water">
+                            <div class="wave"></div>
+                            <div class="wave wave2"></div>
+                        </div>
+                        <div class="bucket-lines">
+                            <span class="line" data-label="5 gal"></span>
+                            <span class="line" data-label="4 gal"></span>
+                            <span class="line" data-label="3 gal"></span>
+                            <span class="line" data-label="2 gal"></span>
+                            <span class="line" data-label="1 gal"></span>
+                        </div>
+                        <div class="bucket-handle"></div>
+                    </div>
+                    <div class="bucket-shadow"></div>
+                    <div class="bucket-count" id="bucketCount"></div>
+                </div>
+
+                <div class="stats-panel">
+                    <div class="stat-card">
+                        <span class="stat-label">Tokens Used</span>
+                        <span class="stat-value" id="tokens">0</span>
+                        <span class="stat-unit">tokens</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Energy Cost</span>
+                        <span class="stat-value" id="energy">0.00</span>
+                        <span class="stat-unit">Wh</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Water Equivalent</span>
+                        <span class="stat-value" id="gallons">0.0</span>
+                        <span class="stat-unit">gallons</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Est. Cost</span>
+                        <span class="stat-value" id="cost">$0.00</span>
+                        <span class="stat-unit">USD</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="api-config">
+                    <h3>API Configuration</h3>
+                    <div class="input-group">
+                        <label for="provider">Provider</label>
+                        <select id="provider">
+                            <option value="claude-code" selected>Claude Code CLI</option>
+                            <option value="anthropic">Anthropic API</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="demo">Demo Mode</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="api-key-group">
+                        <label for="apiKey">API Key</label>
+                        <input type="password" id="apiKey" placeholder="Enter your API key">
+                    </div>
+                    <div class="input-group" id="claude-code-group">
+                        <label for="tokenInput">Tokens (from /cost)</label>
+                        <input type="number" id="tokenInput" placeholder="e.g., 125000">
+                        <p class="hint">Run <code>/cost</code> in Claude Code to get your token count</p>
+                    </div>
+                    <div class="button-group">
+                        <button id="fetchBtn" class="btn primary">Update Meter</button>
+                        <button id="demoBtn" class="btn secondary">Run Demo</button>
+                        <button id="watchBtn" class="btn accent" style="display:none;">Watch File</button>
+                    </div>
+                </div>
+
+                <div class="scale-info">
+                    <h3>Scale Reference</h3>
+                    <p>5 gallons = <strong>1,000,000 tokens</strong></p>
+                    <p class="note">Based on average energy consumption of ~0.001 Wh per token</p>
+                </div>
+            </div>
+        </main>
+
+        <section class="water-context">
+            <h3>The Hierarchy of Digital Water Sins</h3>
+
+            <div class="context-tables">
+                <div class="context-card">
+                    <h4>Manufacturing (one-time, but huge)</h4>
+                    <table>
+                        <tr><th>Item</th><th>Water to make</th></tr>
+                        <tr><td>Smartphone</td><td>3,000-13,000 L</td></tr>
+                        <tr><td>Laptop</td><td>20,000-50,000 L</td></tr>
+                        <tr><td>Single chip (fab)</td><td>30-50 L</td></tr>
+                    </table>
+                    <p class="note">Your iPhone cost more water to manufacture than you'll use streaming for years.</p>
+                </div>
+
+                <div class="context-card">
+                    <h4>Ongoing Usage</h4>
+                    <table>
+                        <tr><th>Activity</th><th>Water estimate</th></tr>
+                        <tr><td>1 hour YouTube / TikTok</td><td>~5-10 L</td></tr>
+                        <tr><td>1 hour Zoom</td><td>~5 L</td></tr>
+                        <tr><td>1 Google search</td><td>~0.5-1 L</td></tr>
+                        <tr><td>1 ChatGPT query</td><td>~50-500 mL</td></tr>
+                        <tr class="highlight"><td>1 Opus session (heavy)</td><td>~1-5 L</td></tr>
+                        <tr class="danger"><td>1 Bitcoin transaction</td><td>~16,000+ L</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="water-hogs">
+                <h4>The Real Water Hogs</h4>
+                <ol>
+                    <li><strong>Crypto mining</strong> - absurd</li>
+                    <li><strong>Chip fabrication</strong> - TSMC uses 150,000+ tons/day</li>
+                    <li><strong>Video streaming at scale</strong> - Netflix alone is ~1% of internet traffic</li>
+                    <li><strong>AI training</strong> (not inference) - GPT-4 training estimated at 700,000+ L</li>
+                </ol>
+            </div>
+
+            <div class="perspective">
+                <p><strong>Perspective:</strong> A single load of laundry uses ~50-100 liters. Your daily Opus habit is roughly equivalent to one extra load of laundry.</p>
+                <p class="takeaway">The uncomfortable truth: buying a new phone every 2 years matters more than your AI usage.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>Energy estimates based on published model efficiency data</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
