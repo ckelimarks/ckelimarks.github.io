@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Print-Ready Validator — Creative Fabrica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FF6B35;
+      --secondary: #004E89;
+      --tertiary: #FFD23F;
+      --dark: #1A1423;
+      --light: #F8F5F1;
+      --accent: #3BCEAC;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--dark);
+      background: var(--light);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+
+    /* Navigation dots */
+    .nav-dots {
+      position: fixed;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .nav-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--dark);
+      opacity: 0.2;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .nav-dot.active {
+      opacity: 1;
+      background: var(--primary);
+      transform: scale(1.3);
+    }
+
+    .nav-dot:hover {
+      opacity: 0.6;
+      transform: scale(1.2);
+    }
+
+    /* Section base */
+    section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      position: relative;
+      opacity: 0;
+      transform: translateY(60px);
+      transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Typography */
+    h1, h2, h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    h1 {
+      font-size: clamp(3rem, 8vw, 7rem);
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      margin-bottom: 2rem;
+    }
+
+    h3 {
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      margin-bottom: 1rem;
+    }
+
+    /* Hero section */
+    #hero {
+      background: var(--dark);
+      color: var(--light);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 80%;
+      height: 200%;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 60%);
+      opacity: 0.15;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    #hero::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 60%;
+      height: 150%;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 60%);
+      opacity: 0.1;
+      animation: float 25s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -30px) rotate(5deg); }
+      66% { transform: translate(-20px, 20px) rotate(-5deg); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .hero-logo {
+      max-width: 200px;
+      height: auto;
+      margin-bottom: 2rem;
+      animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0s both;
+      filter: brightness(0) invert(1);
+    }
+
+    .hero-title {
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      font-weight: 700;
+      line-height: 0.95;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, var(--light) 0%, var(--tertiary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.25rem, 2.5vw, 2rem);
+      color: var(--light);
+      opacity: 0.9;
+      margin-bottom: 1rem;
+      animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+    }
+
+    .hero-meta {
+      font-size: 1rem;
+      color: var(--light);
+      opacity: 0.6;
+      animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+    }
+
+    .scroll-arrow {
+      position: absolute;
+      bottom: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: bounce 2s ease-in-out infinite;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.3s ease;
+    }
+
+    .scroll-arrow:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(-50%) scale(1.1);
+    }
+
+    .scroll-arrow::after {
+      content: '↓';
+      font-size: 1.5rem;
+      color: var(--light);
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateX(-50%) translateY(0);
+      }
+      50% {
+        transform: translateX(-50%) translateY(10px);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Decorative elements */
+    .deco-circle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.4;
+      z-index: 0;
+    }
+
+    /* Content sections */
+    .content-section {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      margin-bottom: 3rem;
+    }
+
+    .section-number {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      margin-bottom: 1rem;
+      position: relative;
+      display: inline-block;
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 60%;
+      height: 6px;
+      background: var(--tertiary);
+      border-radius: 3px;
+    }
+
+    .section-subtitle {
+      font-size: clamp(1.125rem, 2vw, 1.5rem);
+      color: var(--secondary);
+      font-weight: 500;
+    }
+
+    /* Problem section */
+    #problem {
+      background: linear-gradient(135deg, #FFF5EB 0%, var(--light) 100%);
+    }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .pain-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      border: 3px solid var(--dark);
+      box-shadow: 8px 8px 0 var(--dark);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pain-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--primary);
+    }
+
+    .pain-card:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: 12px 12px 0 var(--dark);
+    }
+
+    .pain-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .pain-text {
+      font-size: 1.125rem;
+      line-height: 1.6;
+      color: var(--dark);
+    }
+
+    .quote-box {
+      background: var(--dark);
+      color: var(--light);
+      padding: 3rem;
+      border-radius: 20px;
+      margin-top: 3rem;
+      position: relative;
+      font-style: italic;
+      font-size: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .quote-box::before {
+      content: '"';
+      font-family: 'Fraunces', serif;
+      font-size: 8rem;
+      position: absolute;
+      top: -2rem;
+      left: 1rem;
+      color: var(--primary);
+      opacity: 0.3;
+    }
+
+    /* Research section */
+    #research {
+      background: var(--secondary);
+      color: var(--light);
+    }
+
+    .research-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .research-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      padding: 2.5rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .research-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-8px);
+    }
+
+    .research-label {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--tertiary);
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .research-title {
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+      color: var(--light);
+    }
+
+    .research-text {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .research-stat {
+      font-family: 'Fraunces', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--tertiary);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    /* Competition section */
+    #competition {
+      background: var(--light);
+    }
+
+    .comparison-wrapper {
+      margin-top: 3rem;
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 4px solid var(--dark);
+      box-shadow: 12px 12px 0 var(--dark);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .comparison-table thead {
+      background: var(--primary);
+      color: white;
+    }
+
+    .comparison-table th {
+      padding: 1.5rem;
+      font-weight: 700;
+      text-align: left;
+      font-size: 1.125rem;
+    }
+
+    .comparison-table td {
+      padding: 1.5rem;
+      border-bottom: 2px solid var(--light);
+      font-size: 1rem;
+    }
+
+    .comparison-table tbody tr:nth-child(even) {
+      background: #FFFBF7;
+    }
+
+    .comparison-table tbody tr:hover {
+      background: #FFF5EB;
+    }
+
+    .check-mark {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .highlight-box {
+      background: var(--tertiary);
+      color: var(--dark);
+      padding: 2rem;
+      border-radius: 16px;
+      margin-top: 2rem;
+      font-weight: 600;
+      font-size: 1.125rem;
+      border: 3px solid var(--dark);
+    }
+
+    /* Solution section */
+    #solution {
+      background: linear-gradient(135deg, var(--accent) 0%, #2A9D8F 100%);
+      color: var(--light);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.03);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .feature-text {
+      font-size: 1.125rem;
+      line-height: 1.6;
+    }
+
+    .demo-box {
+      background: rgba(26, 20, 35, 0.4);
+      backdrop-filter: blur(20px);
+      padding: 4rem;
+      border-radius: 24px;
+      text-align: center;
+      margin-top: 3rem;
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+    }
+
+    .demo-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .demo-text {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      margin-bottom: 1.5rem;
+    }
+
+    .demo-link {
+      display: inline-block;
+      padding: 1rem 2.5rem;
+      background: var(--light);
+      color: var(--dark);
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.125rem;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 3px solid var(--dark);
+    }
+
+    .demo-link:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Growth section */
+    #growth {
+      background: var(--light);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+
+    .metric-card {
+      background: var(--dark);
+      color: var(--light);
+      padding: 2.5rem 2rem;
+      border-radius: 20px;
+      text-align: center;
+      border: 4px solid var(--dark);
+      box-shadow: 6px 6px 0 var(--primary);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .metric-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 8px 12px 0 var(--primary);
+    }
+
+    .metric-number {
+      font-family: 'Fraunces', serif;
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--tertiary);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-label {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    .timeline {
+      margin-top: 3rem;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 30px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--primary);
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .timeline-marker {
+      min-width: 60px;
+      height: 60px;
+      padding: 0 0.5rem;
+      border-radius: 30px;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      border: 4px solid var(--light);
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    .timeline-content {
+      flex: 1;
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      border: 3px solid var(--dark);
+      box-shadow: 4px 4px 0 var(--dark);
+    }
+
+    .timeline-title {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-text {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--dark);
+    }
+
+    /* Psychology section */
+    #psychology {
+      background: #FFF5EB;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+
+    .state-card {
+      padding: 3rem;
+      border-radius: 24px;
+      border: 4px solid var(--dark);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .state-card.fail {
+      background: linear-gradient(135deg, #FFE5E5 0%, #FFB3BA 100%);
+    }
+
+    .state-card.pass {
+      background: linear-gradient(135deg, #E5FFE5 0%, #B3FFBA 100%);
+    }
+
+    .state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .state-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .state-label {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .state-value {
+      font-size: 1.125rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .state-cta {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-top: 1rem;
+    }
+
+    .insight-box {
+      background: var(--dark);
+      color: var(--light);
+      padding: 3rem;
+      border-radius: 24px;
+      text-align: center;
+      margin-top: 3rem;
+      border: 4px solid var(--dark);
+      box-shadow: 8px 8px 0 var(--primary);
+    }
+
+    .insight-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .insight-text {
+      font-size: 1.125rem;
+      opacity: 0.9;
+    }
+
+    /* Technical section */
+    #technical {
+      background: var(--dark);
+      color: var(--light);
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 3rem;
+      margin: 3rem 0;
+    }
+
+    .tech-column h3 {
+      color: var(--tertiary);
+      margin-bottom: 2rem;
+    }
+
+    .tech-list {
+      list-style: none;
+    }
+
+    .tech-list li {
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      font-size: 1.125rem;
+      transition: all 0.3s ease;
+    }
+
+    .tech-list li:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(8px);
+    }
+
+    .tech-highlight {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 1.5rem;
+      color: var(--tertiary);
+      font-weight: 600;
+    }
+
+    /* Next steps section */
+    #next-steps {
+      background: linear-gradient(135deg, var(--primary) 0%, #E63946 100%);
+      color: var(--light);
+    }
+
+    /* Thank you section */
+    #thank-you {
+      background: var(--light);
+      text-align: center;
+    }
+
+    .thank-you-content {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .thank-you-title {
+      font-size: clamp(3rem, 8vw, 6rem);
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .thank-you-subtitle {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      color: var(--secondary);
+      margin-bottom: 3rem;
+    }
+
+    .stats-box {
+      background: white;
+      padding: 2.5rem;
+      border-radius: 20px;
+      border: 3px solid var(--dark);
+      box-shadow: 8px 8px 0 var(--dark);
+      margin-bottom: 2rem;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 0;
+      border-bottom: 2px solid var(--light);
+      font-size: 1.125rem;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .stat-value {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .contact-info {
+      font-size: 1.125rem;
+      color: var(--dark);
+      line-height: 1.8;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-dots {
+        display: none;
+      }
+
+      .hero-title {
+        font-size: 3rem;
+      }
+
+      section {
+        padding: 3rem 1.5rem;
+      }
+
+      .pain-grid,
+      .research-grid,
+      .feature-grid,
+      .metrics-grid,
+      .tech-grid,
+      .split-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline::before {
+        left: 20px;
+      }
+
+      .timeline-marker {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--tertiary) 100%);
+      width: 0;
+      z-index: 9999;
+      transition: width 0.1s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="scroll-indicator" id="scrollIndicator"></div>
+
+  <nav class="nav-dots" id="navDots"></nav>
+
+  <!-- Hero -->
+  <section id="hero">
+    <div class="container">
+      <div class="hero-content">
+        <img src="cflogo.png" alt="Creative Fabrica" class="hero-logo">
+        <h1 class="hero-title">Print-Ready File Validator</h1>
+        <p class="hero-subtitle">Solving DPI confusion for POD sellers</p>
+        <p class="hero-meta">Creative Fabrica Take-Home Assignment<br>Christopher Marks • March 2026</p>
+      </div>
+    </div>
+    <div class="scroll-arrow" onclick="document.getElementById('problem').scrollIntoView({ behavior: 'smooth' })"></div>
+  </section>
+
+  <!-- Problem -->
+  <section id="problem">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number">01 — Problem</div>
+          <h2 class="section-title">POD Sellers Are Bleeding Money</h2>
+          <p class="section-subtitle">Hours wasted on DPI confusion, rejected uploads, and pixelated prints</p>
+        </div>
+
+        <div class="pain-grid">
+          <div class="pain-card">
+            <span class="pain-icon">📁</span>
+            <p class="pain-text">Printify shows different DPI than file metadata</p>
+          </div>
+          <div class="pain-card">
+            <span class="pain-icon">❌</span>
+            <p class="pain-text">Uploads rejected without clear explanation</p>
+          </div>
+          <div class="pain-card">
+            <span class="pain-icon">🖨️</span>
+            <p class="pain-text">Prints come out pixelated after passing upload</p>
+          </div>
+          <div class="pain-card">
+            <span class="pain-icon">⏱️</span>
+            <p class="pain-text">Hours researching "effective DPI" vs "metadata DPI"</p>
+          </div>
+          <div class="pain-card">
+            <span class="pain-icon">💸</span>
+            <p class="pain-text">Lost revenue from rejected designs and reprints</p>
+          </div>
+          <div class="pain-card">
+            <span class="pain-icon">🔥</span>
+            <p class="pain-text">At $1.79 profit/sale, one error wipes out a week of sales</p>
+          </div>
+        </div>
+
+        <div class="quote-box">
+          "Why does Printify say my file is 72 DPI when Photoshop shows 300 DPI?"
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Research -->
+  <section id="research">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number" style="color: var(--tertiary);">02 — Research</div>
+          <h2 class="section-title" style="color: var(--light);">Built on Real User Pain</h2>
+          <p class="section-subtitle" style="color: rgba(255, 255, 255, 0.8);">Competitive analysis + user research validated every design decision</p>
+        </div>
+
+        <div class="research-grid">
+          <div class="research-card">
+            <div class="research-label">User Research</div>
+            <h3 class="research-title">Financial Fragility</h3>
+            <span class="research-stat">76%</span>
+            <p class="research-text">of failed POD shops underpriced to unsustainable margins. Average profit: $1.79/sale. Zero buffer for errors—one bad print wipes out 5-7 sales of profit.</p>
+          </div>
+
+          <div class="research-card">
+            <div class="research-label">Direct Evidence</div>
+            <h3 class="research-title">The Exact Problem</h3>
+            <p class="research-text">"Printify says my image dpi is about 258 but when I check the properties of the image it says the dpi is 96. Which one is correct?"<br><br>Reddit r/printondemand — This is exactly what we solve.</p>
+          </div>
+
+          <div class="research-card">
+            <div class="research-label">Market Size</div>
+            <h3 class="research-title">CF's Sweet Spot</h3>
+            <span class="research-stat">150K+</span>
+            <p class="research-text">paying Creative Fabrica members. Tool targets monetization-focused creators with high tool adoption and retention—CF's highest-value segment.</p>
+          </div>
+
+          <div class="research-card">
+            <div class="research-label">Competitive Gap</div>
+            <h3 class="research-title">Calculator vs Validator</h3>
+            <p class="research-text">Existing tools (gopathtomillions.com) require manual number entry. They calculate dimensions—we validate actual files. Different job, different moment, different value.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Competition -->
+  <section id="competition">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number">03 — Competition</div>
+          <h2 class="section-title">We Solve a Different Problem</h2>
+          <p class="section-subtitle">Existing tools fall short where it matters</p>
+        </div>
+
+        <div class="comparison-wrapper">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Existing Tools</th>
+                <th>Our Solution</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Input Method</strong></td>
+                <td>Manual number entry</td>
+                <td><span class="check-mark">✓</span> Actual file upload</td>
+              </tr>
+              <tr>
+                <td><strong>Use Case</strong></td>
+                <td>Planning dimensions</td>
+                <td><span class="check-mark">✓</span> Validation before upload</td>
+              </tr>
+              <tr>
+                <td><strong>Multi-Size Display</strong></td>
+                <td>One size at a time</td>
+                <td><span class="check-mark">✓</span> All 4 sizes at once</td>
+              </tr>
+              <tr>
+                <td><strong>Platform-Specific</strong></td>
+                <td>Generic rules</td>
+                <td><span class="check-mark">✓</span> Printful vs Printify</td>
+              </tr>
+              <tr>
+                <td><strong>Guidance</strong></td>
+                <td>Basic calculations</td>
+                <td><span class="check-mark">✓</span> Prescriptive "how to fix"</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight-box">
+          <strong>Key Differentiator:</strong> Multi-size DPI display shows all common print sizes (4×6", 8×10", 11×14", 16×20") at once—no competitor does this
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solution -->
+  <section id="solution">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number" style="color: var(--light);">04 — Solution</div>
+          <h2 class="section-title" style="color: var(--light);">File Validation with Prescriptive Guidance</h2>
+          <p class="section-subtitle" style="color: rgba(255, 255, 255, 0.9);">Drop a file. Know it's print-ready in 3 seconds.</p>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <span class="feature-icon">🎯</span>
+            <p class="feature-text">Platform selector (Printful, Printify, General)</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">📤</span>
+            <p class="feature-text">Drag-and-drop file upload (PNG, JPG, SVG)</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">📊</span>
+            <p class="feature-text">Multi-size DPI table (4 common print sizes)</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">✅</span>
+            <p class="feature-text">Pass/fail validation with visual indicators</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">💡</span>
+            <p class="feature-text">Prescriptive "how to fix" explanations</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🔗</span>
+            <p class="feature-text">Share functionality (viral growth mechanic)</p>
+          </div>
+        </div>
+
+        <div class="demo-box">
+          <h3 class="demo-title">Live Demo Available</h3>
+          <p class="demo-text">Fully functional prototype deployed and ready to test</p>
+          <a href="https://dpi-checker-one.vercel.app/" target="_blank" class="demo-link">View Working Prototype</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Growth -->
+  <section id="growth">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number">05 — Growth</div>
+          <h2 class="section-title">Path to 4,000 Trials/Month</h2>
+          <p class="section-subtitle">Data-driven strategy with clear OKRs</p>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-number">50+</div>
+            <div class="metric-label">Free Trial Clicks/Month</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-number">5%</div>
+            <div class="metric-label">Conversion Rate Target</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-number">40%</div>
+            <div class="metric-label">Engagement Rate</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-number">60</div>
+            <div class="metric-label">Days to PMF</div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 3rem; margin-bottom: 2rem; font-size: 2rem;">Distribution Strategy</h3>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-marker">1</div>
+            <div class="timeline-content">
+              <h4 class="timeline-title">SEO (Primary)</h4>
+              <p class="timeline-text">Target: "printify dpi checker", "printful dpi validator" — low competition, high intent keywords with ready-to-convert traffic</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-marker">2</div>
+            <div class="timeline-content">
+              <h4 class="timeline-title">Reddit/Facebook (Launch)</h4>
+              <p class="timeline-text">r/EtsySellers, r/Printify, POD Facebook groups — seed traffic, build authority, establish community presence</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-marker">3</div>
+            <div class="timeline-content">
+              <h4 class="timeline-title">Viral Mechanic</h4>
+              <p class="timeline-text">Share functionality — users save others from expensive print mistakes, creating organic word-of-mouth growth</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Psychology -->
+  <section id="psychology">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number">06 — Psychology</div>
+          <h2 class="section-title">Context-Aware Conversion</h2>
+          <p class="section-subtitle">Different CTAs for different moments</p>
+        </div>
+
+        <div class="split-grid">
+          <div class="state-card fail">
+            <span class="state-icon">❌</span>
+            <h3 class="state-title">FAIL State</h3>
+            <div class="state-label">Message:</div>
+            <p class="state-value">"Your file won't print well"</p>
+            <div class="state-label">CTA:</div>
+            <p class="state-value">"Get professionally designed, print-ready files"</p>
+            <div class="state-cta">8% CTR target</div>
+            <p style="margin-top: 1rem; font-size: 1rem; font-weight: 600;">High urgency → immediate need</p>
+          </div>
+
+          <div class="state-card pass">
+            <span class="state-icon">✅</span>
+            <h3 class="state-title">PASS State</h3>
+            <div class="state-label">Message:</div>
+            <p class="state-value">"Your file looks great!"</p>
+            <div class="state-label">CTA:</div>
+            <p class="state-value">"Save time with CF's ready-made designs"</p>
+            <div class="state-cta">3% CTR target</div>
+            <p style="margin-top: 1rem; font-size: 1rem; font-weight: 600;">Upsell opportunity → efficiency play</p>
+          </div>
+        </div>
+
+        <div class="insight-box">
+          <h3 class="insight-title">Expected: 2× higher conversion on FAIL vs PASS</h3>
+          <p class="insight-text">Users with problems convert better than users without problems</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical -->
+  <section id="technical">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number" style="color: var(--tertiary);">07 — Technical</div>
+          <h2 class="section-title" style="color: var(--light);">Production-Ready in 6 Hours</h2>
+          <p class="section-subtitle" style="color: rgba(255, 255, 255, 0.8);">Zero technical debt, deployable today</p>
+        </div>
+
+        <div class="tech-grid">
+          <div class="tech-column">
+            <h3>Built</h3>
+            <ul class="tech-list">
+              <li>React 18 + Vite</li>
+              <li>Tailwind CSS</li>
+              <li>Client-side processing</li>
+              <li>Canvas API + File API</li>
+              <li>No backend required</li>
+              <li>~900 lines of code</li>
+            </ul>
+          </div>
+
+          <div class="tech-column">
+            <h3>Delivered</h3>
+            <ul class="tech-list">
+              <li>Functional prototype</li>
+              <li>Production build (211 KB)</li>
+              <li>7 documentation files</li>
+              <li>SEO-optimized</li>
+              <li>Mobile responsive</li>
+              <li>Vercel deploy config</li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="tech-highlight">Privacy-first • Files never uploaded • Static hosting ready</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Operations -->
+  <section id="operations">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number" style="color: var(--primary);">08 — Operations</div>
+          <h2 class="section-title">Managing at Scale</h2>
+          <p class="section-subtitle">Simple framework for 20+ satellite apps</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 3rem 0;">
+          <div>
+            <h3 style="font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--primary);">Weekly Dashboard</h3>
+            <div style="background: white; padding: 2rem; border-radius: 16px; border: 3px solid var(--dark); box-shadow: 6px 6px 0 var(--dark);">
+              <ul style="list-style: none; line-height: 2;">
+                <li>📊 Visitors/week per app</li>
+                <li>🎯 Conversion rate (trials/validations)</li>
+                <li>📈 Traffic sources breakdown</li>
+                <li>⚡ Quick win: Sort by CTR</li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <h3 style="font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--primary);">Decision Framework</h3>
+            <div style="background: white; padding: 2rem; border-radius: 16px; border: 3px solid var(--dark); box-shadow: 6px 6px 0 var(--dark);">
+              <ul style="list-style: none; line-height: 2;">
+                <li><strong>Kill:</strong> &lt;2% CTR after 500 uses</li>
+                <li><strong>Maintain:</strong> 2-5% CTR, steady</li>
+                <li><strong>Optimize:</strong> High traffic, low CTR</li>
+                <li><strong>2x Down:</strong> &gt;5% CTR or growing fast</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: var(--dark); color: var(--light); padding: 2.5rem; border-radius: 20px; margin-top: 3rem; text-align: center;">
+          <h3 style="color: var(--tertiary); margin-bottom: 1rem; font-size: 1.5rem;">Mon: Review metrics → Wed: Test 1-2 apps → Fri: Check for issues</h3>
+          <p style="opacity: 0.9; font-size: 1.125rem;">30 min Monday, 1 hour Wednesday, 30 min Friday = manageable at scale</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Next Steps -->
+  <section id="next-steps">
+    <div class="container">
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-number" style="color: var(--light);">09 — Next Steps</div>
+          <h2 class="section-title" style="color: var(--light);">60-Day Launch Plan</h2>
+          <p class="section-subtitle" style="color: rgba(255, 255, 255, 0.9);">Validated strategy, ready to execute</p>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-marker" style="background: var(--light); color: var(--primary);">W1</div>
+            <div class="timeline-content" style="background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+              <h4 class="timeline-title" style="color: var(--light);">Deploy & Seed</h4>
+              <p class="timeline-text" style="color: rgba(255, 255, 255, 0.9);">Deploy to Vercel, seed on Reddit/Facebook, submit to Google Search Console</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-marker" style="background: var(--light); color: var(--primary);">W2-4</div>
+            <div class="timeline-content" style="background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+              <h4 class="timeline-title" style="color: var(--light);">Monitor & Optimize</h4>
+              <p class="timeline-text" style="color: rgba(255, 255, 255, 0.9);">Track engagement and conversion rates. Monitor traffic sources and optimize using Search Console data.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-marker" style="background: var(--light); color: var(--primary);">M2</div>
+            <div class="timeline-content" style="background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+              <h4 class="timeline-title" style="color: var(--light);">A/B Test CTAs</h4>
+              <p class="timeline-text" style="color: rgba(255, 255, 255, 0.9);">Test CTA copy, button placement, messaging based on real conversion data</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-marker" style="background: var(--light); color: var(--primary);">M3</div>
+            <div class="timeline-content" style="background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+              <h4 class="timeline-title" style="color: var(--light);">Scale What Works</h4>
+              <p class="timeline-text" style="color: rgba(255, 255, 255, 0.9);">Double down on best-performing channels, hit 50+ trial clicks/month target</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Thank You -->
+  <section id="thank-you">
+    <div class="container">
+      <div class="thank-you-content">
+        <h1 class="thank-you-title">Thank You</h1>
+        <p class="thank-you-subtitle">Questions? Let's discuss.</p>
+
+        <div class="stats-box">
+          <div class="stat-row">
+            <span class="stat-label">Time to build:</span>
+            <span class="stat-value">~6 hours</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Documentation:</span>
+            <span class="stat-value">7 comprehensive guides</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Deployable:</span>
+            <span class="stat-value">Today</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Live URL:</span>
+            <span class="stat-value">Ready in 5 minutes</span>
+          </div>
+        </div>
+
+        <div class="contact-info">
+          <strong>Christopher Marks</strong><br>
+          March 2026
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Intersection Observer for sections
+    const sections = document.querySelectorAll('section');
+    const navDots = document.getElementById('navDots');
+
+    // Create nav dots
+    sections.forEach((section, index) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot';
+      dot.addEventListener('click', () => {
+        section.scrollIntoView({ behavior: 'smooth' });
+      });
+      navDots.appendChild(dot);
+    });
+
+    const dots = document.querySelectorAll('.nav-dot');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+
+          // Update active dot
+          const index = Array.from(sections).indexOf(entry.target);
+          dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+          });
+        }
+      });
+    }, {
+      threshold: 0.3
+    });
+
+    sections.forEach(section => observer.observe(section));
+
+    // Scroll progress indicator
+    const scrollIndicator = document.getElementById('scrollIndicator');
+
+    window.addEventListener('scroll', () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight - windowHeight;
+      const scrolled = (window.scrollY / documentHeight) * 100;
+      scrollIndicator.style.width = scrolled + '%';
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
