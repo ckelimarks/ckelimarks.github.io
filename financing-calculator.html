@@ -432,7 +432,7 @@
             <span class="cost-line-value" id="sba-working">—</span>
           </div>
           <div class="cost-line">
-            <span class="cost-line-label">Interest (9.31%, 5yr)</span>
+            <span class="cost-line-label">Interest (11%, 5yr)</span>
             <span class="cost-line-value" id="sba-interest">—</span>
           </div>
           <div class="option-total">
@@ -485,7 +485,7 @@
       const privateRate = parseFloat(document.getElementById('privateRate').value) / 100 || 0;
       const privateDownPercent = parseFloat(document.getElementById('privateDown').value) / 100 || 0;
 
-      const sbaRate = 0.0931;
+      const sbaRate = 0.11; // Current SBA 7(a) average rate (9.75-14.75% range)
       const sbaDownPercent = 0.10;
       const sbaWorkingCapital = purchasePrice * 0.05;
       const loanTermYears = 5;
