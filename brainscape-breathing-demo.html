@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainscape - Learning Optimization Protocol</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sea-100: #e6f4f1;
+            --sea-200: #b8e4db;
+            --sea-500: #2d9687;
+            --sea-700: #1a5d52;
+            --sea-900: #0d2e28;
+            --sand-100: #faf8f5;
+            --sand-200: #f2ede6;
+            --sand-800: #4a443d;
+            --sage-400: #a8c5a0;
+            --sage-600: #5a8250;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(168, 197, 160, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(45, 150, 135, 0.12) 0%, transparent 50%),
+                linear-gradient(135deg, #faf8f5 0%, #e6f4f1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 2px 2px, rgba(45, 150, 135, 0.03) 1px, transparent 0);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(250, 248, 245, 0.92);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 48px 56px;
+            max-width: 920px;
+            width: 100%;
+            box-shadow:
+                0 1px 2px rgba(26, 93, 82, 0.04),
+                0 8px 24px rgba(26, 93, 82, 0.06),
+                0 24px 48px rgba(26, 93, 82, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            animation: containerFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 56px;
+            align-items: center;
+        }
+
+        .breathing-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        @keyframes containerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            width: 160px;
+            height: auto;
+            margin: 0 auto 24px;
+            display: block;
+            animation: textFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+        }
+
+        h1 {
+            font-family: 'Newsreader', Georgia, serif;
+            font-size: 32px;
+            color: var(--sea-900);
+            margin-bottom: 16px;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            animation: textFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--sea-700);
+            margin-bottom: 48px;
+            line-height: 1.7;
+            max-width: 540px;
+            margin-left: auto;
+            margin-right: auto;
+            animation: textFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
+        }
+
+        @keyframes textFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .breathing-circle-container {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            margin: 0 auto 40px;
+            animation: textFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s backwards;
+        }
+
+        /* Outer glow rings */
+        .breathing-circle-container::before,
+        .breathing-circle-container::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .breathing-circle-container::before {
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(45, 150, 135, 0.1) 0%, transparent 70%);
+            animation: pulseRing 4s ease-in-out infinite;
+        }
+
+        .breathing-circle-container::after {
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle, rgba(45, 150, 135, 0.05) 0%, transparent 70%);
+            animation: pulseRing 4s ease-in-out infinite 0.5s;
+        }
+
+        @keyframes pulseRing {
+            0%, 100% {
+                opacity: 0.3;
+                transform: translate(-50%, -50%) scale(0.95);
+            }
+            50% {
+                opacity: 0.6;
+                transform: translate(-50%, -50%) scale(1.05);
+            }
+        }
+
+        .breathing-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+                linear-gradient(135deg, var(--sea-500) 0%, var(--sage-600) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            position: relative;
+            box-shadow:
+                0 4px 12px rgba(45, 150, 135, 0.15),
+                0 16px 32px rgba(45, 150, 135, 0.1),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+
+            /* Start small and faded */
+            transform: scale(0.65);
+            opacity: 0.25;
+
+            transition:
+                transform 4s cubic-bezier(0.45, 0.05, 0.55, 0.95),
+                opacity 4s cubic-bezier(0.45, 0.05, 0.55, 0.95),
+                box-shadow 4s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        }
+
+        .breathing-circle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 4s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        }
+
+        .breathing-circle.inhale {
+            transform: scale(1);
+            opacity: 1;
+            box-shadow:
+                0 8px 24px rgba(45, 150, 135, 0.25),
+                0 24px 48px rgba(45, 150, 135, 0.15),
+                inset 0 1px 2px rgba(255, 255, 255, 0.4);
+        }
+
+        .breathing-circle.inhale::before {
+            opacity: 1;
+        }
+
+        .breathing-circle.hold-in {
+            transform: scale(1);
+            opacity: 1;
+            box-shadow:
+                0 8px 24px rgba(45, 150, 135, 0.25),
+                0 24px 48px rgba(45, 150, 135, 0.15),
+                inset 0 1px 2px rgba(255, 255, 255, 0.4);
+        }
+
+        .breathing-circle.hold-in::before {
+            opacity: 1;
+        }
+
+        .breathing-circle.exhale {
+            transform: scale(0.65);
+            opacity: 0.25;
+            box-shadow:
+                0 4px 12px rgba(45, 150, 135, 0.15),
+                0 16px 32px rgba(45, 150, 135, 0.1),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .breathing-circle.exhale::before {
+            opacity: 0;
+        }
+
+        .breathing-circle.hold-out {
+            transform: scale(0.65);
+            opacity: 0.25;
+            box-shadow:
+                0 4px 12px rgba(45, 150, 135, 0.15),
+                0 16px 32px rgba(45, 150, 135, 0.1),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .breathing-circle.hold-out::before {
+            opacity: 0;
+        }
+
+        #breathingText {
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .instruction {
+            font-size: 18px;
+            color: var(--sea-700);
+            margin-top: 24px;
+            min-height: 28px;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            text-align: center;
+        }
+
+        .progress-container {
+            margin-bottom: 28px;
+            animation: textFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s backwards;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            color: var(--sea-700);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--sea-200);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 100%);
+            animation: shimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--sea-500) 0%, var(--sage-600) 100%);
+            border-radius: 3px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 0 8px rgba(45, 150, 135, 0.3);
+        }
+
+        .card-count {
+            font-size: 13px;
+            color: var(--sage-600);
+            margin-top: 12px;
+            font-weight: 400;
+        }
+
+        .complete-message {
+            display: none;
+            margin-top: 28px;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(168, 197, 160, 0.15) 0%, rgba(90, 130, 80, 0.1) 100%);
+            border: 1.5px solid var(--sage-400);
+            border-radius: 16px;
+            color: var(--sage-600);
+            font-weight: 500;
+            font-size: 15px;
+            letter-spacing: -0.01em;
+        }
+
+        .complete-message.show {
+            display: block;
+            animation: slideInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+
+        /* Floating particles animation */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            33% {
+                transform: translateY(-20px) translateX(10px);
+            }
+            66% {
+                transform: translateY(-10px) translateX(-10px);
+            }
+        }
+
+        .breathing-circle-container .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(168, 197, 160, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .particle:nth-child(1) { top: 10%; left: 20%; animation: float 8s ease-in-out infinite; }
+        .particle:nth-child(2) { top: 80%; left: 15%; animation: float 10s ease-in-out infinite 1s; }
+        .particle:nth-child(3) { top: 60%; right: 20%; animation: float 9s ease-in-out infinite 2s; }
+        .particle:nth-child(4) { top: 30%; right: 15%; animation: float 11s ease-in-out infinite 3s; }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 32px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .breathing-circle-container {
+                width: 200px;
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://www.brainscape.com/pks/images/logos/brainscape-logo-c4e172b280b4616f7fda.svg" alt="Brainscape" class="logo">
+            <h1>Preparing Your Mind for Learning</h1>
+            <p class="subtitle">Box breathing (4-4-4-4) reduces cortisol by 20% and primes your brain for memory consolidation. Students who breathe before studying perform significantly better on exams. Let's prepare while your cards import.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="breathing-section">
+                <div class="breathing-circle-container">
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="breathing-circle" id="breathingCircle">
+                        <span id="breathingText">Inhale</span>
+                    </div>
+                </div>
+                <div class="instruction" id="instruction">Breathe in slowly through your nose</div>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Importing flashcards</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="card-count" id="cardCount">0 of 47 cards imported</div>
+                </div>
+
+                <div class="complete-message" id="completeMessage">
+                    ✓ Import complete! You're ready to study.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Breathing cycle states
+        const states = [
+            { name: 'Inhale', duration: 4000, instruction: 'Breathe in slowly through your nose', class: 'inhale' },
+            { name: 'Hold', duration: 4000, instruction: 'Hold your breath gently', class: 'hold-in' },
+            { name: 'Exhale', duration: 4000, instruction: 'Breathe out slowly through your mouth', class: 'exhale' },
+            { name: 'Hold', duration: 4000, instruction: 'Hold your breath gently', class: 'hold-out' }
+        ];
+
+        let currentStateIndex = 0;
+        let currentCycle = 1;
+        const totalCycles = 2;
+        const totalCards = 47;
+        const totalDuration = states.reduce((sum, state) => sum + state.duration, 0) * totalCycles;
+        let elapsedTime = 0;
+
+        const breathingCircle = document.getElementById('breathingCircle');
+        const breathingText = document.getElementById('breathingText');
+        const instruction = document.getElementById('instruction');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercent = document.getElementById('progressPercent');
+        const cardCount = document.getElementById('cardCount');
+        const completeMessage = document.getElementById('completeMessage');
+
+        function updateBreathingState() {
+            const state = states[currentStateIndex];
+
+            // Fade out instruction
+            instruction.style.opacity = '0';
+            instruction.style.transform = 'translateY(-5px)';
+
+            setTimeout(() => {
+                // Update text and instruction
+                breathingText.textContent = state.name;
+                instruction.textContent = state.instruction;
+
+                // Fade in instruction
+                instruction.style.opacity = '1';
+                instruction.style.transform = 'translateY(0)';
+
+                // Update circle animation
+                breathingCircle.className = 'breathing-circle ' + state.class;
+            }, 300);
+
+            // Move to next state
+            currentStateIndex++;
+
+            if (currentStateIndex >= states.length) {
+                currentStateIndex = 0;
+                currentCycle++;
+            }
+
+            // Continue if not finished
+            if (currentCycle <= totalCycles) {
+                setTimeout(updateBreathingState, state.duration);
+            } else {
+                setTimeout(() => {
+                    breathingText.textContent = '✓';
+                    instruction.style.opacity = '0';
+                    setTimeout(() => {
+                        instruction.textContent = 'Perfect! You\'re ready to learn.';
+                        instruction.style.opacity = '1';
+                    }, 300);
+                }, state.duration);
+            }
+        }
+
+        function updateProgress() {
+            elapsedTime += 100;
+            const progress = Math.min((elapsedTime / totalDuration) * 100, 100);
+            const cardsImported = Math.min(Math.floor((progress / 100) * totalCards), totalCards);
+
+            progressFill.style.width = progress + '%';
+            progressPercent.textContent = Math.floor(progress) + '%';
+            cardCount.textContent = `${cardsImported} of ${totalCards} cards imported`;
+
+            if (progress < 100) {
+                setTimeout(updateProgress, 100);
+            } else {
+                setTimeout(() => {
+                    completeMessage.classList.add('show');
+                }, 500);
+            }
+        }
+
+        // Start breathing exercise
+        updateBreathingState();
+
+        // Start progress simulation
+        updateProgress();
+    </script>
+</body>
+</html>
