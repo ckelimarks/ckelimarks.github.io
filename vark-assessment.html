@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VARK Learning Style Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #0a0e12;
+            --dark-card: #12171d;
+            --dark-border: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00d9ff;
+            --accent-magenta: #ff00aa;
+            --accent-yellow: #ffd600;
+            --accent-green: #00ff88;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+            --text-muted: rgba(255, 255, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--dark-card);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 6rem 2rem 4rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 24px;
+            padding: 3rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-number {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 1.5rem;
+        }
+
+        .question-text {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 2.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Answer Options */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .option {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--dark-border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(8px);
+        }
+
+        .option.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .option.selected::before {
+            opacity: 0.1;
+        }
+
+        .option-text {
+            position: relative;
+            z-index: 1;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .option.selected .option-text {
+            color: var(--text-primary);
+        }
+
+        /* Navigation Buttons */
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 1.2rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            color: var(--dark-bg);
+            box-shadow: 0 10px 40px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(0, 217, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Results Page */
+        .results-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 24px;
+            padding: 3rem;
+        }
+
+        .results-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .results-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .score-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .score-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .score-bar-bg {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .visual-bar { background: linear-gradient(90deg, var(--accent-cyan), #0099ff); }
+        .auditory-bar { background: linear-gradient(90deg, var(--accent-magenta), #ff0066); }
+        .reading-bar { background: linear-gradient(90deg, var(--accent-yellow), #ffaa00); }
+        .kinesthetic-bar { background: linear-gradient(90deg, var(--accent-green), #00cc66); }
+
+        .learning-style {
+            padding: 2rem;
+            background: rgba(0, 217, 255, 0.05);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .learning-style h3 {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .learning-style p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .container {
+                padding: 4rem 1.5rem 3rem;
+            }
+
+            .question-card, .results-card {
+                padding: 2rem;
+            }
+
+            .question-text {
+                font-size: 1.4rem;
+            }
+
+            .btn {
+                padding: 1rem 2rem;
+                font-size: 0.9rem;
+            }
+
+            .navigation {
+                flex-direction: column-reverse;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="container">
+        <div id="questionContainer"></div>
+        <div id="resultsContainer" class="hidden"></div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                id: 1,
+                text: "You are helping someone who wants to go to your airport, the center of town, or railway station. You would:",
+                options: [
+                    { text: "Draw or show them a map", type: "V" },
+                    { text: "Tell them the directions", type: "A" },
+                    { text: "Write down the directions", type: "R" },
+                    { text: "Go with them or take them there", type: "K" }
+                ]
+            },
+            {
+                id: 2,
+                text: "A website has a video showing how to make a special graph or chart. There is a person speaking, some lists and words describing what to do and some diagrams. You would learn most from:",
+                options: [
+                    { text: "Seeing the diagrams", type: "V" },
+                    { text: "Listening", type: "A" },
+                    { text: "Reading the words", type: "R" },
+                    { text: "Watching the actions", type: "K" }
+                ]
+            },
+            {
+                id: 3,
+                text: "You are planning a holiday for a group. You want some feedback from them about the plan. You would:",
+                options: [
+                    { text: "Use a map or website to show them the places", type: "V" },
+                    { text: "Describe some of the highlights they will experience", type: "A" },
+                    { text: "Give them a copy of the printed itinerary", type: "R" },
+                    { text: "Phone, text, or email them", type: "K" }
+                ]
+            },
+            {
+                id: 4,
+                text: "You are going to cook something as a special treat. You would:",
+                options: [
+                    { text: "Look at a recipe in a cookbook with pictures", type: "V" },
+                    { text: "Ask friends for suggestions", type: "A" },
+                    { text: "Use a cookbook where you know there is a good recipe", type: "R" },
+                    { text: "Cook something familiar without the need for instructions", type: "K" }
+                ]
+            },
+            {
+                id: 5,
+                text: "A group of tourists wants to learn about the parks or wildlife reserves in your area. You would:",
+                options: [
+                    { text: "Show them photos or pictures", type: "V" },
+                    { text: "Talk about, or arrange a talk for them about parks or wildlife reserves", type: "A" },
+                    { text: "Give them pamphlets or a book on the subject", type: "R" },
+                    { text: "Take them to a park or wildlife reserve and walk with them", type: "K" }
+                ]
+            },
+            {
+                id: 6,
+                text: "You are about to purchase a digital camera or mobile phone. Other than price, what would most influence your decision?",
+                options: [
+                    { text: "It is a modern design and looks good", type: "V" },
+                    { text: "The salesperson telling me about its features", type: "A" },
+                    { text: "Reading the details or checking its features online", type: "R" },
+                    { text: "Trying or testing it", type: "K" }
+                ]
+            },
+            {
+                id: 7,
+                text: "Remember a time when you learned how to do something new. Avoid choosing a physical skill, e.g., riding a bike. You learned best by:",
+                options: [
+                    { text: "Watching a demonstration", type: "V" },
+                    { text: "Listening to somebody explaining it and asking questions", type: "A" },
+                    { text: "Following written instructions or diagrams", type: "R" },
+                    { text: "Doing it or trying it", type: "K" }
+                ]
+            },
+            {
+                id: 8,
+                text: "You have a problem with your heart. You would prefer that the doctor:",
+                options: [
+                    { text: "Showed you a diagram of what was wrong", type: "V" },
+                    { text: "Described what was wrong", type: "A" },
+                    { text: "Gave you a web address or something to read about the problem", type: "R" },
+                    { text: "Used a plastic model to show what was wrong", type: "K" }
+                ]
+            },
+            {
+                id: 9,
+                text: "You want to learn a new program, skill, or game on a computer. You would:",
+                options: [
+                    { text: "Follow the diagrams in the book that came with it", type: "V" },
+                    { text: "Talk with people who know about the program", type: "A" },
+                    { text: "Read the written instructions that came with the program", type: "R" },
+                    { text: "Use the controls or keyboard and try things out", type: "K" }
+                ]
+            },
+            {
+                id: 10,
+                text: "I like websites that have:",
+                options: [
+                    { text: "Interesting design and visual features", type: "V" },
+                    { text: "Audio channels where I can listen to podcasts or interviews", type: "A" },
+                    { text: "Interesting written descriptions, lists, and explanations", type: "R" },
+                    { text: "Things I can click on, shift, or try", type: "K" }
+                ]
+            },
+            {
+                id: 11,
+                text: "Other than price, what would most influence your decision to buy a new non-fiction book?",
+                options: [
+                    { text: "The way it looks is appealing", type: "V" },
+                    { text: "A friend talks about it and recommends it", type: "A" },
+                    { text: "Quickly reading parts of it", type: "R" },
+                    { text: "It has real-life stories, experiences, and examples", type: "K" }
+                ]
+            },
+            {
+                id: 12,
+                text: "You are using a book, CD, or website to learn how to take photos with your new digital camera. You would like to have:",
+                options: [
+                    { text: "Diagrams showing the camera and what each part does", type: "V" },
+                    { text: "A chance to ask questions and talk about the camera and its features", type: "A" },
+                    { text: "Clear written instructions with lists and bullet points about what to do", type: "R" },
+                    { text: "Many examples of good and poor photos and how to improve them", type: "K" }
+                ]
+            },
+            {
+                id: 13,
+                text: "Do you prefer a teacher or a presenter who uses:",
+                options: [
+                    { text: "Diagrams, charts, maps, or graphs", type: "V" },
+                    { text: "Question and answer, talk, group discussion, or guest speakers", type: "A" },
+                    { text: "Handouts, books, or readings", type: "R" },
+                    { text: "Demonstrations, models, or practical sessions", type: "K" }
+                ]
+            },
+            {
+                id: 14,
+                text: "You have finished a competition or test and would like some feedback. You would like to have feedback:",
+                options: [
+                    { text: "Using graphs showing what you achieved", type: "V" },
+                    { text: "From somebody who talks it through with you", type: "A" },
+                    { text: "Using a written description of your results", type: "R" },
+                    { text: "Using examples from what you have done", type: "K" }
+                ]
+            },
+            {
+                id: 15,
+                text: "You are going to choose food at a restaurant or cafe. You would:",
+                options: [
+                    { text: "Look at what others are eating, or look at pictures of each dish", type: "V" },
+                    { text: "Listen to the waiter or ask friends to recommend choices", type: "A" },
+                    { text: "Choose from the descriptions in the menu", type: "R" },
+                    { text: "Choose something that you have had there before", type: "K" }
+                ]
+            },
+            {
+                id: 16,
+                text: "You have to make an important speech at a conference or special occasion. You would:",
+                options: [
+                    { text: "Make diagrams or get graphs to help explain things", type: "V" },
+                    { text: "Write a few key words and practice saying your speech over and over", type: "A" },
+                    { text: "Write out your speech and learn from reading it over several times", type: "R" },
+                    { text: "Gather many examples and stories to make the talk real and practical", type: "K" }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let answers = {};
+        let scores = { V: 0, A: 0, R: 0, K: 0 };
+
+        function updateProgress() {
+            const progress = (currentQuestion / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function renderQuestion() {
+            const question = questions[currentQuestion];
+            const container = document.getElementById('questionContainer');
+
+            container.innerHTML = `
+                <div class="question-card">
+                    <div class="question-number">Question ${currentQuestion + 1} of ${questions.length}</div>
+                    <div class="question-text">${question.text}</div>
+                    <div class="options">
+                        ${question.options.map((option, index) => `
+                            <div class="option ${answers[currentQuestion] === index ? 'selected' : ''}"
+                                 onclick="selectOption(${index})">
+                                <div class="option-text">${option.text}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="previousQuestion()" ${currentQuestion === 0 ? 'disabled' : ''}>
+                            ← Previous
+                        </button>
+                        <button class="btn btn-primary" onclick="nextQuestion()" ${answers[currentQuestion] === undefined ? 'disabled' : ''}>
+                            ${currentQuestion === questions.length - 1 ? 'See Results' : 'Next'} →
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            updateProgress();
+        }
+
+        function selectOption(index) {
+            answers[currentQuestion] = index;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (answers[currentQuestion] === undefined) return;
+
+            if (currentQuestion === questions.length - 1) {
+                calculateResults();
+                showResults();
+            } else {
+                currentQuestion++;
+                renderQuestion();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        function calculateResults() {
+            scores = { V: 0, A: 0, R: 0, K: 0 };
+
+            Object.keys(answers).forEach(questionIndex => {
+                const question = questions[questionIndex];
+                const answerIndex = answers[questionIndex];
+                const selectedType = question.options[answerIndex].type;
+                scores[selectedType]++;
+            });
+        }
+
+        function showResults() {
+            const maxScore = Math.max(scores.V, scores.A, scores.R, scores.K);
+            const dominantStyles = Object.keys(scores).filter(key => scores[key] === maxScore);
+
+            // Also include styles within 2 points of max for closely tied results
+            const closeStyles = Object.keys(scores).filter(key =>
+                scores[key] >= maxScore - 2 && !dominantStyles.includes(key)
+            );
+            const relevantStyles = [...dominantStyles, ...closeStyles];
+
+            const styleNames = {
+                V: 'Visual',
+                A: 'Auditory',
+                R: 'Reading/Writing',
+                K: 'Kinesthetic'
+            };
+
+            const styleDescriptions = {
+                V: 'Visual learners prefer using images, pictures, colors, and maps to organize information and communicate with others. You learn best through visual aids like diagrams, charts, and videos.',
+                A: 'Auditory learners prefer using sound and music. You learn best through lectures, discussions, talking things through, and listening to what others have to say.',
+                R: 'Reading/Writing learners prefer using words, both in speech and writing. You learn best through reading and writing notes, lists, and text-based information.',
+                K: 'Kinesthetic learners prefer using your body, hands, and sense of touch. You learn best through a hands-on approach, actively exploring the physical world around you.'
+            };
+
+            const practicalTips = {
+                V: {
+                    study: ['Use color coding and highlighters', 'Create mind maps and diagrams', 'Watch videos and demonstrations', 'Use charts, graphs, and infographics', 'Draw pictures or symbols to remember concepts'],
+                    work: ['Request visual presentations and flowcharts', 'Use whiteboards for brainstorming', 'Take notes with diagrams and sketches', 'Use visual project management tools (Kanban, Gantt)', 'Create visual documentation'],
+                    communication: ['Use slides and visuals in presentations', 'Share screen recordings', 'Create visual summaries of meetings', 'Use emojis and formatting in written communication']
+                },
+                A: {
+                    study: ['Record lectures and listen to them again', 'Discuss concepts with study groups', 'Explain ideas out loud to yourself', 'Use podcasts and audiobooks', 'Create verbal mnemonics and rhymes'],
+                    work: ['Participate actively in meetings and discussions', 'Use voice memos for ideas and notes', 'Schedule verbal check-ins with team', 'Listen to audio content while working', 'Talk through problems with colleagues'],
+                    communication: ['Prefer phone calls over emails', 'Use voice messages', 'Schedule regular 1-on-1 conversations', 'Practice presentations out loud']
+                },
+                R: {
+                    study: ['Take detailed written notes', 'Rewrite notes in your own words', 'Create lists and outlines', 'Read textbooks and articles thoroughly', 'Write summaries and essays'],
+                    work: ['Document everything in writing', 'Create detailed written reports', 'Use email for important communication', 'Maintain written to-do lists', 'Take comprehensive meeting notes'],
+                    communication: ['Follow up conversations with written summaries', 'Prefer email and chat over calls', 'Write clear documentation', 'Use bullet points and numbered lists']
+                },
+                K: {
+                    study: ['Use real-life examples and case studies', 'Take frequent breaks to move around', 'Practice hands-on experiments', 'Use flashcards you can manipulate', 'Study while walking or moving'],
+                    work: ['Request hands-on training', 'Build prototypes and demos', 'Take walking meetings', 'Use standing desk or movement breaks', 'Learn by doing rather than observing'],
+                    communication: ['Use gestures when presenting', 'Prefer in-person demonstrations', 'Create interactive experiences', 'Use physical props and models']
+                }
+            };
+
+            const total = questions.length;
+
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.remove('hidden');
+            document.getElementById('progressBar').style.width = '100%';
+
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="results-card">
+                    <div class="results-title">Your Learning Style</div>
+                    <div class="results-subtitle">Based on your responses, here's your VARK profile:</div>
+
+                    <div class="score-bars">
+                        <div class="score-item">
+                            <div class="score-header">
+                                <span class="score-label" style="color: var(--accent-cyan)">Visual</span>
+                                <span class="score-value" style="color: var(--accent-cyan)">${scores.V}</span>
+                            </div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill visual-bar" style="width: ${(scores.V / total) * 100}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="score-item">
+                            <div class="score-header">
+                                <span class="score-label" style="color: var(--accent-magenta)">Auditory</span>
+                                <span class="score-value" style="color: var(--accent-magenta)">${scores.A}</span>
+                            </div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill auditory-bar" style="width: ${(scores.A / total) * 100}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="score-item">
+                            <div class="score-header">
+                                <span class="score-label" style="color: var(--accent-yellow)">Reading/Writing</span>
+                                <span class="score-value" style="color: var(--accent-yellow)">${scores.R}</span>
+                            </div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill reading-bar" style="width: ${(scores.R / total) * 100}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="score-item">
+                            <div class="score-header">
+                                <span class="score-label" style="color: var(--accent-green)">Kinesthetic</span>
+                                <span class="score-value" style="color: var(--accent-green)">${scores.K}</span>
+                            </div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill kinesthetic-bar" style="width: ${(scores.K / total) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${dominantStyles.map(style => `
+                        <div class="learning-style">
+                            <h3>${styleNames[style]} Learning Style</h3>
+                            <p>${styleDescriptions[style]}</p>
+                        </div>
+                    `).join('')}
+
+                    ${closeStyles.length > 0 ? `
+                        <div style="padding: 1.5rem; background: rgba(255, 214, 0, 0.05); border: 1px solid rgba(255, 214, 0, 0.2); border-radius: 16px; margin-bottom: 2rem;">
+                            <h3 style="font-size: 1.2rem; color: var(--accent-yellow); margin-bottom: 0.75rem;">
+                                Closely Tied: ${closeStyles.map(s => styleNames[s]).join(' & ')}
+                            </h3>
+                            <p style="color: var(--text-secondary); line-height: 1.7;">
+                                Your scores show you also have strong ${closeStyles.map(s => styleNames[s]).join(' and ')} preferences.
+                                Consider combining strategies from multiple learning styles for best results.
+                            </p>
+                        </div>
+                    ` : ''}
+
+                    <div style="margin: 3rem 0;">
+                        <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">How to Use This Information</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                            Optimize your learning and work based on your ${relevantStyles.length > 1 ? 'dominant learning styles' : 'learning style'}:
+                        </p>
+
+                        ${relevantStyles.map(style => `
+                            <div style="margin-bottom: 2.5rem; padding: 2rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--dark-border); border-radius: 16px;">
+                                <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: ${
+                                    style === 'V' ? 'var(--accent-cyan)' :
+                                    style === 'A' ? 'var(--accent-magenta)' :
+                                    style === 'R' ? 'var(--accent-yellow)' :
+                                    'var(--accent-green)'
+                                }">
+                                    ${styleNames[style]} Learning Tips
+                                </h3>
+
+                                <div style="display: grid; gap: 1.5rem;">
+                                    <div>
+                                        <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">
+                                            📚 For Studying
+                                        </h4>
+                                        <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                                            ${practicalTips[style].study.map(tip => `<li>${tip}</li>`).join('')}
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">
+                                            💼 For Work
+                                        </h4>
+                                        <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                                            ${practicalTips[style].work.map(tip => `<li>${tip}</li>`).join('')}
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">
+                                            💬 For Communication
+                                        </h4>
+                                        <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                                            ${practicalTips[style].communication.map(tip => `<li>${tip}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="location.reload()">
+                            Start Over
+                        </button>
+                        <a href="noco-inspired-portfolio.html" class="btn btn-primary">
+                            Back to Portfolio
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        renderQuestion();
+    </script>
+</body>
+</html>

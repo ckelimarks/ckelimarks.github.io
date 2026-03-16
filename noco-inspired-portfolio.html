@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christopher K-Lee Marks — Builder of Human Connection</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="AI Product Builder specializing in 0→1 development. I design, build, and ship AI-powered products that solve real human problems—from relationship health to creator growth and learning systems. $350K+ bootstrapped revenue.">
+    <meta name="keywords" content="AI Product Manager, Product Builder, AI Development, UX Research, Full Stack Developer, SaaS, Relationship Tech, EdTech, Christopher Marks, K-Lee Marks">
+    <meta name="author" content="Christopher K-Lee Marks">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://ckelimarks.github.io/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ckelimarks.github.io/">
+    <meta property="og:title" content="Christopher K-Lee Marks — Builder of Human Connection">
+    <meta property="og:description" content="Building tools for human connection. AI Product Builder with $350K+ bootstrapped revenue, specializing in 0→1 development from concept to launch.">
+    <meta property="og:image" content="https://ckelimarks.github.io/personalOSreport.png">
+    <meta property="og:site_name" content="Christopher K-Lee Marks Portfolio">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://ckelimarks.github.io/">
+    <meta name="twitter:title" content="Christopher K-Lee Marks — Builder of Human Connection">
+    <meta name="twitter:description" content="Building tools for human connection. AI Product Builder with $350K+ bootstrapped revenue, specializing in 0→1 development from concept to launch.">
+    <meta name="twitter:image" content="https://ckelimarks.github.io/personalOSreport.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../../ckelimarks.github.io/favicon.svg">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Swiper.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Christopher K-Lee Marks",
+      "jobTitle": "AI Product Builder",
+      "description": "0→1 Builder crafting AI-powered systems that help people connect, create, and grow",
+      "url": "https://ckelimarks.github.io/",
+      "sameAs": [
+        "https://www.linkedin.com/in/k-lee-marks-3693512b/",
+        "https://github.com/k-lee-marks",
+        "https://www.youtube.com/@k-leemarks",
+        "https://open.spotify.com/artist/5JswE3yJjoqWuEdFEHpXqa"
+      ],
+      "knowsAbout": [
+        "AI Product Development",
+        "Product Management",
+        "UX Research",
+        "Full Stack Development",
+        "SaaS",
+        "EdTech",
+        "Relationship Technology"
+      ],
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "name": "Product Development"
+      }
+    }
+    </script>
+
+    <style>
+        :root {
+            --dark-bg: #0a0e12;
+            --dark-card: #12171d;
+            --dark-border: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00d9ff;
+            --accent-magenta: #ff00aa;
+            --accent-yellow: #ffd600;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+            --text-muted: rgba(255, 255, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Selection */
+        ::selection {
+            background: var(--accent-cyan);
+            color: var(--dark-bg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 217, 255, 0.3);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 217, 255, 0.5);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1.25rem 3rem;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 14, 18, 0.8);
+            border-bottom: 1px solid var(--dark-border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        nav.scrolled {
+            padding: 0.875rem 3rem;
+            background: rgba(10, 14, 18, 0.95);
+        }
+
+        .nav-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-cyan);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 75vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 8rem 4rem 6rem 4rem;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.15) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin: 1.25rem auto 2rem auto;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards 0.2s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-title {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .hero-title .line {
+            display: block;
+            overflow: hidden;
+        }
+
+        .hero-title .line span {
+            display: inline-block;
+            opacity: 0;
+            animation: slideInUp 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .hero-title .line:nth-child(1) span { animation-delay: 0.3s; }
+        .hero-title .line:nth-child(2) span { animation-delay: 0.5s; }
+        .hero-title .line:nth-child(3) span { animation-delay: 0.7s; }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-magenta) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
+            color: var(--text-secondary);
+            max-width: 700px;
+            line-height: 1.6;
+            margin: 0 auto 2rem auto;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards 1s;
+        }
+
+        .hero-cta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards 1.2s;
+        }
+
+        .btn {
+            padding: 1.2rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            color: var(--dark-bg);
+            box-shadow: 0 10px 40px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(0, 217, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 8rem 4rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-header {
+            margin-bottom: 5rem;
+            text-align: center;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        /* Stats Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        /* Brands Section */
+        .brands-section {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .brands-image {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            display: block;
+            opacity: 0.5;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .brands-image:hover {
+            opacity: 0.7;
+            transform: scale(1.02);
+        }
+
+        /* Portfolio Carousel */
+        .portfolio-carousel-section {
+            padding: 3rem 0 6rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .portfolio-carousel-section::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 200px;
+            background: linear-gradient(90deg, var(--dark-bg) 0%, transparent 100%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .portfolio-carousel-section::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 200px;
+            background: linear-gradient(270deg, var(--dark-bg) 0%, transparent 100%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .carousel-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 0 4rem;
+        }
+
+        .swiper {
+            width: 100%;
+            height: 430px;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+
+        .swiper-slide {
+            width: 320px;
+            height: 100%;
+        }
+
+        .portfolio-slide {
+            height: 100%;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: grab;
+            position: relative;
+        }
+
+        .portfolio-slide:active {
+            cursor: grabbing;
+        }
+
+        .portfolio-slide:hover {
+            border-color: rgba(0, 217, 255, 0.4);
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 217, 255, 0.2);
+        }
+
+        .portfolio-slide-image {
+            width: 100%;
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 0, 170, 0.3));
+        }
+
+        .swiper-slide:nth-child(1) .portfolio-slide-image {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .swiper-slide:nth-child(2) .portfolio-slide-image {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .swiper-slide:nth-child(3) .portfolio-slide-image {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .swiper-slide:nth-child(4) .portfolio-slide-image {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .swiper-slide:nth-child(5) .portfolio-slide-image {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .swiper-slide:nth-child(6) .portfolio-slide-image {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .swiper-slide:nth-child(7) .portfolio-slide-image {
+            background: linear-gradient(135deg, #ff6b35 0%, #00d4ff 100%);
+        }
+
+        .portfolio-slide-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+        }
+
+        .portfolio-slide:hover .portfolio-slide-image img {
+            transform: scale(1.1);
+        }
+
+        .portfolio-slide-content {
+            padding: 1.5rem;
+        }
+
+        .portfolio-slide-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 217, 255, 0.15);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 50px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 0.75rem;
+        }
+
+        .portfolio-slide-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .portfolio-slide-description {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .stat-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            transform: translateX(-100%);
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 217, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 217, 255, 0.15);
+        }
+
+        .stat-number {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Featured Work */
+        .work-grid {
+            display: grid;
+            gap: 3rem;
+        }
+
+        .work-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 30px;
+            padding: 4rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .work-item:nth-child(even) {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .work-item:nth-child(even) .work-content {
+            order: 2;
+        }
+
+        .work-item:nth-child(even) .work-image {
+            order: 1;
+        }
+
+        .work-item::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 0, 170, 0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .work-item:hover::before {
+            opacity: 1;
+        }
+
+        .work-item:hover {
+            border-color: rgba(255, 0, 170, 0.3);
+            box-shadow: 0 30px 80px rgba(255, 0, 170, 0.2);
+        }
+
+        .work-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .work-category {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(0, 217, 255, 0.15);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 1.5rem;
+        }
+
+        .work-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .work-description {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .work-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .tag {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .work-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: gap 0.3s ease;
+        }
+
+        .work-link:hover {
+            gap: 1rem;
+        }
+
+        .work-image {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            aspect-ratio: 16/10;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(255, 0, 170, 0.1));
+        }
+
+        .work-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .work-item:hover .work-image img {
+            transform: scale(1.05);
+        }
+
+        /* Prototypes Grid */
+        .prototypes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .prototype-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prototype-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-magenta));
+            transform: translateX(-100%);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .prototype-card:hover::after {
+            transform: translateX(0);
+        }
+
+        .prototype-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 214, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(255, 214, 0, 0.15);
+        }
+
+        .prototype-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .prototype-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .prototype-badge {
+            padding: 0.3rem 0.8rem;
+            background: rgba(255, 214, 0, 0.2);
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--accent-yellow);
+            white-space: nowrap;
+        }
+
+        .prototype-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .prototype-link {
+            color: var(--accent-yellow);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: gap 0.3s ease;
+        }
+
+        .prototype-link:hover {
+            gap: 1rem;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 40px;
+            padding: 6rem 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-section::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 0, 170, 0.2) 0%, transparent 70%);
+            animation: pulse 6s ease-in-out infinite;
+        }
+
+        .contact-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .contact-title {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 5rem);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 2rem;
+        }
+
+        .contact-description {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 3rem;
+            line-height: 1.7;
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .social-link {
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 4rem;
+            text-align: center;
+            border-top: 1px solid var(--dark-border);
+            color: var(--text-muted);
+        }
+
+        /* Scroll Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            nav {
+                padding: 1.25rem 2rem;
+            }
+
+            nav.scrolled {
+                padding: 0.875rem 2rem;
+            }
+
+            .nav-links {
+                gap: 2rem;
+            }
+
+            .hero {
+                padding: 8rem 2rem 6rem 2rem;
+            }
+
+            section {
+                padding: 6rem 2rem;
+            }
+
+            .work-item {
+                grid-template-columns: 1fr !important;
+                padding: 3rem 2rem;
+            }
+
+            .work-item:nth-child(even) .work-content,
+            .work-item:nth-child(even) .work-image {
+                order: initial;
+            }
+
+            .prototypes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-section {
+                padding: 4rem 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 1.5rem;
+            }
+
+            nav.scrolled {
+                padding: 0.75rem 1.5rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">CKM</div>
+            <ul class="nav-links">
+                <li><a href="#work">Work</a></li>
+                <li><a href="#articles">Articles</a></li>
+                <li><a href="#prototypes">Prototypes</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">AI Product Manager & Builder</div>
+            <h1 class="hero-title">
+                <span class="line"><span>Building tools for</span></span>
+                <span class="line"><span class="gradient-text">Human Connection.</span></span>
+            </h1>
+            <p class="hero-description">
+                I'm <strong>Christopher K-Lee Marks</strong>. 0 → 1 Builder crafting systems that help people connect, create, and grow.
+            </p>
+            <div class="hero-cta">
+                <a href="#work" class="btn btn-primary">View My Work</a>
+                <a href="#contact" class="btn btn-secondary">Get In Touch</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Carousel -->
+    <div class="portfolio-carousel-section fade-in">
+        <div class="swiper portfolioSwiper">
+            <div class="swiper-wrapper">
+                <!-- Slide 1: LoveNotes -->
+                <div class="swiper-slide">
+                    <div class="portfolio-slide">
+                        <div class="portfolio-slide-image">
+                            <img src="../../ckelimarks.github.io/LoveNotesPreview.png" alt="LoveNotes">
+                        </div>
+                        <div class="portfolio-slide-content">
+                            <span class="portfolio-slide-category">SaaS Product</span>
+                            <h3 class="portfolio-slide-title">LoveNotes</h3>
+                            <p class="portfolio-slide-description">SMS-first micro-ritual helping couples stay connected daily.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Agent Chat -->
+                <div class="swiper-slide">
+                    <div class="portfolio-slide">
+                        <div class="portfolio-slide-image">
+                            <img src="../../ckelimarks.github.io/agent-chat-preview.png" alt="Agent Chat">
+                        </div>
+                        <div class="portfolio-slide-content">
+                            <span class="portfolio-slide-category">Developer Tools</span>
+                            <h3 class="portfolio-slide-title">Agent Chat</h3>
+                            <p class="portfolio-slide-description">Multi-agent orchestration interface for Claude Code.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Amplify -->
+                <div class="swiper-slide">
+                    <div class="portfolio-slide">
+                        <div class="portfolio-slide-image">
+                            <img src="4lineAmplifyLogo.png" alt="Amplify">
+                        </div>
+                        <div class="portfolio-slide-content">
+                            <span class="portfolio-slide-category">EdTech</span>
+                            <h3 class="portfolio-slide-title">Amplify What You Love</h3>
+                            <p class="portfolio-slide-description">$250K+ creator-focused learning platform.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Content Machine -->
+                <div class="swiper-slide">
+                    <div class="portfolio-slide">
+                        <div class="portfolio-slide-image">
+                            <img src="content machine logo.jpg" alt="Content Machine">
+                        </div>
+                        <div class="portfolio-slide-content">
+                            <span class="portfolio-slide-category">Automation</span>
+                            <h3 class="portfolio-slide-title">1-Hour-A-Week Machine</h3>
+                            <p class="portfolio-slide-description">Content system generating $100K first-year revenue.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: RAGA -->
+                <div class="swiper-slide">
+                    <div class="portfolio-slide">
+                        <div class="portfolio-slide-image">
+                            <img src="https://podcast-farm.com/projects/gitsite/ragathumb.jpg" alt="RAGA">
+                        </div>
+                        <div class="portfolio-slide-content">
+                            <span class="portfolio-slide-category">Audio Tech</span>
+                            <h3 class="portfolio-slide-title">RAGA - Sounds of India</h3>
+                            <p class="portfolio-slide-description">Official Ableton Live pack with 1300+ loops.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Zero Gravity -->
+                <div class="swiper-slide">
+                    <div class="portfolio-slide">
+                        <div class="portfolio-slide-image">
+                            <img src="https://podcast-farm.com/projects/gitsite/Untitled%20design.jpg" alt="Zero Gravity">
+                        </div>
+                        <div class="portfolio-slide-content">
+                            <span class="portfolio-slide-category">IoT & Mobile</span>
+                            <h3 class="portfolio-slide-title">Zero Gravity</h3>
+                            <p class="portfolio-slide-description">Sensory deprivation tank control systems.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Mission Match -->
+                <div class="swiper-slide">
+                    <div class="portfolio-slide">
+                        <div class="portfolio-slide-image">
+                            <img src="../../hackathon/mission-match/web/public/mm2-logo.png" alt="Mission Match">
+                        </div>
+                        <div class="portfolio-slide-content">
+                            <span class="portfolio-slide-category">AI Matchmaking</span>
+                            <h3 class="portfolio-slide-title">Mission Match</h3>
+                            <p class="portfolio-slide-description">Real-time AI collaboration matchmaking for builders.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brands Section -->
+        <div class="brands-section fade-in">
+            <h3 class="section-label">Brands I've Worked With</h3>
+            <img src="../../ckelimarks.github.io/transparentbrands.png" alt="Brands I've worked with" class="brands-image">
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <section>
+        <div class="section-header fade-in">
+            <h2 class="section-title" style="margin-bottom: 4rem;">Track Record of Impact</h2>
+        </div>
+
+        <div class="stats-grid fade-in">
+            <div class="stat-card">
+                <div class="stat-number">$350K+</div>
+                <div class="stat-label">Bootstrapped Revenue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">42%</div>
+                <div class="stat-label">User Activation Lift</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">94%</div>
+                <div class="stat-label">YoY Revenue Growth</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5x</div>
+                <div class="stat-label">LTV Increase</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Work -->
+    <section id="work">
+        <div class="section-header fade-in">
+            <div class="section-label">Portfolio</div>
+            <h2 class="section-title">Featured Work</h2>
+        </div>
+
+        <div class="work-grid">
+            <!-- LoveNotes -->
+            <div class="work-item fade-in">
+                <div class="work-content">
+                    <span class="work-category">End-to-End Product</span>
+                    <h3 class="work-title">LoveNotes</h3>
+                    <p class="work-description">
+                        SMS-first micro-ritual helping couples stay connected through daily appreciation prompts and weekly LoveLetters. Built full stack with React, Supabase, Twilio, Stripe, and Gemini AI. Now serving 11 beta couples with 80-90% engagement rate.
+                    </p>
+                    <div class="work-tags">
+                        <span class="tag">Product Management</span>
+                        <span class="tag">UX Research</span>
+                        <span class="tag">Full Stack</span>
+                    </div>
+                    <a href="lovenotes-case-study.html" class="work-link">Read Case Study →</a>
+                </div>
+                <div class="work-image">
+                    <img src="../../ckelimarks.github.io/LoveNotesPreview.png" alt="LoveNotes Interface">
+                </div>
+            </div>
+
+            <!-- Amplify What You Love -->
+            <div class="work-item fade-in">
+                <div class="work-content">
+                    <span class="work-category">Product Management</span>
+                    <h3 class="work-title">Amplify What You Love</h3>
+                    <p class="work-description">
+                        A data-driven, 90-day learning product helping creators build consistent content systems. Validated user insights and generated $250K+ in revenue through strategic product management and user research.
+                    </p>
+                    <div class="work-tags">
+                        <span class="tag">User Research</span>
+                        <span class="tag">Strategy</span>
+                        <span class="tag">EdTech</span>
+                    </div>
+                    <a href="https://podcast-farm.com" target="_blank" class="work-link">View Case Study →</a>
+                </div>
+                <div class="work-image">
+                    <img src="4lineAmplifyLogo.png" alt="Amplify Course">
+                </div>
+            </div>
+
+            <!-- Agent Chat -->
+            <div class="work-item fade-in">
+                <div class="work-content">
+                    <span class="work-category">Developer Tools</span>
+                    <h3 class="work-title">Agent Chat</h3>
+                    <p class="work-description">
+                        Local-first, Slack-style interface for orchestrating multiple Claude Code AI agents simultaneously. Built as a single-page web app with Python bridge server, WebSockets for live updates, and SQLite for persistence. A lightweight control plane for parallel AI coding sessions.
+                    </p>
+                    <div class="work-tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">WebSockets</span>
+                        <span class="tag">Claude Code</span>
+                    </div>
+                    <span class="work-link">Local Tool →</span>
+                </div>
+                <div class="work-image">
+                    <img src="../../ckelimarks.github.io/agent-chat-preview.png" alt="Agent Chat Interface">
+                </div>
+            </div>
+
+            <!-- Mission Match -->
+            <div class="work-item fade-in">
+                <div class="work-content">
+                    <span class="work-category">AI Matchmaking</span>
+                    <h3 class="work-title">Mission Match</h3>
+                    <p class="work-description">
+                        Real-time collaboration matchmaking app using AI to analyze compatibility between builders. Built in 72 hours for a hackathon. Features QR-based profile sharing, consent-driven handshakes, and Claude-powered compatibility analysis. Full-stack Next.js app with Supabase backend and real-time updates.
+                    </p>
+                    <div class="work-tags">
+                        <span class="tag">Next.js</span>
+                        <span class="tag">Claude AI</span>
+                        <span class="tag">Supabase</span>
+                    </div>
+                    <a href="https://mission-match.vercel.app" target="_blank" class="work-link">View Live Demo →</a>
+                </div>
+                <div class="work-image">
+                    <img src="../../hackathon/mission-match/web/public/mm2-logo.png" alt="Mission Match Logo">
+                </div>
+            </div>
+
+            <!-- 1-Hour-A-Week Machine -->
+            <div class="work-item fade-in">
+                <div class="work-content">
+                    <span class="work-category">Productized Service</span>
+                    <h3 class="work-title">1-Hour-A-Week Machine</h3>
+                    <p class="work-description">
+                        Research-informed content system turning one interview into a month of assets. Generated $100K first-year revenue and 500% client view growth through intelligent automation and systems design.
+                    </p>
+                    <div class="work-tags">
+                        <span class="tag">Systems Design</span>
+                        <span class="tag">Automation</span>
+                        <span class="tag">Content</span>
+                    </div>
+                    <a href="https://podcast-farm.com" target="_blank" class="work-link">Learn More →</a>
+                </div>
+                <div class="work-image">
+                    <img src="content machine logo.jpg" alt="Content Machine">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Articles Section -->
+    <section id="articles">
+        <div class="section-header fade-in">
+            <div class="section-label">Writing</div>
+            <h2 class="section-title">Articles & Research</h2>
+        </div>
+
+        <div class="prototypes-grid">
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">Personal Operating Systems</h4>
+                    </div>
+                    <span class="prototype-badge" style="background: rgba(0, 217, 255, 0.2); color: var(--accent-cyan);">Analysis</span>
+                </div>
+                <p class="prototype-description">
+                    The future of operating systems is deeply personal. They've moved beyond optimizing output — now they help regulate emotion, attention, and context.
+                </p>
+                <a href="../../ckelimarks.github.io/personal-os-analysis-complete.html" target="_blank" class="prototype-link">Read Analysis →</a>
+            </div>
+
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">Building for Human Connection</h4>
+                    </div>
+                    <span class="prototype-badge" style="background: rgba(255, 0, 170, 0.2); color: var(--accent-magenta);">Product</span>
+                </div>
+                <p class="prototype-description">
+                    How AI-powered systems can strengthen relationships by creating low-friction connection rituals.
+                </p>
+                <a href="lovenotes-case-study.html" class="prototype-link" style="color: var(--accent-magenta);">Read Case Study →</a>
+            </div>
+
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">0→1 Product Strategy</h4>
+                    </div>
+                    <span class="prototype-badge" style="background: rgba(255, 214, 0, 0.2); color: var(--accent-yellow);">Strategy</span>
+                </div>
+                <p class="prototype-description">
+                    Lessons from building and launching products from scratch in the AI era.
+                </p>
+                <a href="https://www.linkedin.com/in/k-lee-marks-3693512b/" target="_blank" class="prototype-link">Read Article →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Prototypes Section -->
+    <section id="prototypes">
+        <div class="section-header fade-in">
+            <div class="section-label">Experiments</div>
+            <h2 class="section-title">Side Quests & Prototypes</h2>
+        </div>
+
+        <div class="prototypes-grid">
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">Prototype Hour</h4>
+                    </div>
+                    <span class="prototype-badge">Live Builds</span>
+                </div>
+                <p class="prototype-description">
+                    Weekly live sessions building prototypes from scratch — AI music production, personal OS tools, and creative experiments.
+                </p>
+                <a href="https://www.youtube.com/@k-leemarks" target="_blank" class="prototype-link">Watch Episodes →</a>
+            </div>
+
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">HarmonySync</h4>
+                    </div>
+                    <span class="prototype-badge">Biometric AI</span>
+                </div>
+                <p class="prototype-description">
+                    Biometric conversation tool helping couples navigate conflict with heart rate monitoring and AI support.
+                </p>
+                <span class="prototype-link">View Demo →</span>
+            </div>
+
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">Jobi</h4>
+                    </div>
+                    <span class="prototype-badge">AI Automation</span>
+                </div>
+                <p class="prototype-description">
+                    AI-powered job search optimizer with automated matching and ATS-optimized resume generation.
+                </p>
+                <a href="https://www.loom.com/share/50324e09ee014be6baad8dec0bd2ee12" target="_blank" class="prototype-link">Watch Demo →</a>
+            </div>
+
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">RAGA</h4>
+                    </div>
+                    <span class="prototype-badge">Audio Tech</span>
+                </div>
+                <p class="prototype-description">
+                    Official Ableton Live pack with 1300+ loops and custom instrument racks. Deep dive into sound design.
+                </p>
+                <a href="https://www.ableton.com/en/packs/indian-raga/" target="_blank" class="prototype-link">Ableton Store →</a>
+            </div>
+
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">EchoSonia</h4>
+                    </div>
+                    <span class="prototype-badge">WebXR</span>
+                </div>
+                <p class="prototype-description">
+                    VR exploration game using echolocation mechanics. Built with Three.js and WebXR.
+                </p>
+                <a href="https://www.loom.com/share/aba73d2f6cc24e25ba08b82884d145e4" target="_blank" class="prototype-link">Watch Gameplay →</a>
+            </div>
+
+            <div class="prototype-card fade-in">
+                <div class="prototype-header">
+                    <div>
+                        <h4 class="prototype-title">Root Code</h4>
+                    </div>
+                    <span class="prototype-badge">Game Dev</span>
+                </div>
+                <p class="prototype-description">
+                    3D isometric soulslike exploring humanity's future and AI. Built in Godot 4.
+                </p>
+                <a href="https://youtu.be/E2m-VFpzggg" target="_blank" class="prototype-link">Watch Devlog →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <div class="contact-section fade-in">
+            <div class="contact-content">
+                <h2 class="contact-title">
+                    Let's build something<br>
+                    <span class="gradient-text">meaningful.</span>
+                </h2>
+                <p class="contact-description">
+                    I'm always open to new opportunities, collaborations, or just a friendly chat about the intersection of humanity and technology.
+                </p>
+                <div class="contact-links">
+                    <a href="https://www.linkedin.com/in/k-lee-marks-3693512b/" target="_blank" class="social-link">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        LinkedIn
+                    </a>
+                    <a href="https://github.com/k-lee-marks" target="_blank" class="social-link">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                    <a href="https://www.youtube.com/@k-leemarks" target="_blank" class="social-link">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        YouTube
+                    </a>
+                    <a href="https://open.spotify.com/artist/5JswE3yJjoqWuEdFEHpXqa" target="_blank" class="social-link">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                        Spotify
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; <span id="year"></span> Christopher K-Lee Marks. Built with passion & code.</p>
+    </footer>
+
+    <script>
+        // Update year
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Initialize Swiper Carousel with continuous smooth scrolling
+        const swiper = new Swiper('.portfolioSwiper', {
+            slidesPerView: 'auto',
+            spaceBetween: 30,
+            speed: 5000,
+            loop: true,
+            autoplay: {
+                delay: 0,
+                disableOnInteraction: false,
+            },
+            freeMode: {
+                enabled: true,
+                momentum: false,
+            },
+            grabCursor: true,
+            centeredSlides: false,
+            allowTouchMove: true,
+        });
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

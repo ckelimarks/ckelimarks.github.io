@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoveNotes Case Study — Christopher K-Lee Marks</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Deep dive into LoveNotes: An SMS-first relationship health product that uses daily micro-rituals to combat emotional drift. Product management case study by Christopher Marks.">
+    <meta name="keywords" content="LoveNotes, Product Management, Case Study, SMS Product, Relationship Tech, AI Product, Christopher Marks">
+    <meta name="author" content="Christopher K-Lee Marks">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://ckelimarks.github.io/lovenotes-case-study.html">
+    <meta property="og:title" content="LoveNotes Case Study — Building an SMS-First Relationship Health Product">
+    <meta property="og:description" content="How research, behavioral science, and technical execution came together to create a product that helps couples stay connected.">
+    <meta property="og:image" content="https://ckelimarks.github.io/LoveNotesPreview.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://ckelimarks.github.io/lovenotes-case-study.html">
+    <meta name="twitter:title" content="LoveNotes Case Study — Building an SMS-First Relationship Health Product">
+    <meta name="twitter:description" content="How research, behavioral science, and technical execution came together to create a product that helps couples stay connected.">
+    <meta name="twitter:image" content="https://ckelimarks.github.io/LoveNotesPreview.png">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --dark-bg: #0a0e12;
+            --dark-card: #12171d;
+            --dark-border: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00d9ff;
+            --accent-magenta: #ff00aa;
+            --accent-yellow: #ffd600;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+            --text-muted: rgba(255, 255, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Back Button */
+        .back-link {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 1000;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-cyan);
+            transform: translateX(-5px);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 8rem 4rem 4rem 4rem;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.15) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        }
+
+        .hero-content {
+            max-width: 1000px;
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 2rem;
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 900;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-magenta) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        .hero-meta {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Section Styling */
+        section {
+            padding: 6rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 900;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-description {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .stat-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            transform: translateX(-100%);
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 217, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 217, 255, 0.15);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .stat-context {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Problem Layers */
+        .problem-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .problem-layer {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 0 12px 12px 0;
+            transition: all 0.3s ease;
+        }
+
+        .problem-layer:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(10px);
+        }
+
+        .problem-layer-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .problem-layer-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .feature-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 217, 255, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 217, 255, 0.15);
+        }
+
+        .feature-number {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            color: var(--dark-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Quote Block */
+        .quote-block {
+            margin: 4rem 0;
+            padding: 3rem;
+            background: rgba(0, 217, 255, 0.05);
+            border-left: 4px solid var(--accent-cyan);
+            border-radius: 12px;
+        }
+
+        .quote-text {
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        /* Timeline */
+        .timeline {
+            display: flex;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .timeline-item {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-magenta));
+            border-radius: 2px;
+        }
+
+        .timeline-phase {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .timeline-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Learning Items */
+        .learnings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .learning-item {
+            padding: 1.5rem;
+            background: rgba(0, 217, 255, 0.05);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 0 12px 12px 0;
+        }
+
+        .learning-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .learning-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Highlight Text */
+        .highlight {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 6rem 2rem 3rem 2rem;
+            }
+
+            section {
+                padding: 4rem 2rem;
+            }
+
+            .back-link {
+                top: 1rem;
+                left: 1rem;
+            }
+
+            .timeline {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="noco-inspired-portfolio.html" class="back-link">← Back to Portfolio</a>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">Product Management Case Study</div>
+            <h1 class="hero-title">LoveNotes</h1>
+            <p class="hero-subtitle">
+                How I built an SMS-first product that helps couples combat emotional drift through daily micro-rituals, combining behavioral science, AI, and product strategy.
+            </p>
+            <p class="hero-meta">Christopher K-Lee Marks • Product Manager & Founder</p>
+        </div>
+    </section>
+
+    <!-- Overview Stats -->
+    <section>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">80-90%</div>
+                <div class="stat-label">Daily Engagement</div>
+                <div class="stat-context">11 beta couples</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">98%</div>
+                <div class="stat-label">SMS Open Rate</div>
+                <div class="stat-context">vs 2-8% app retention</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">70%</div>
+                <div class="stat-label">Gross Margin</div>
+                <div class="stat-context">Sustainable from day 1</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Problem -->
+    <section>
+        <div class="section-label">The Problem</div>
+        <h2 class="section-title">Emotional Drift Is Costly and Systemic</h2>
+        <p class="section-description">
+            Couples don't separate from lack of love—they drift from <span class="highlight">lack of connection</span>. Small relationship stressors compound when unattended.
+        </p>
+
+        <div class="problem-layers">
+            <div class="problem-layer">
+                <div class="problem-layer-title">Surface Problem</div>
+                <p class="problem-layer-text">"We don't have time or structure for meaningful conversations"</p>
+            </div>
+
+            <div class="problem-layer">
+                <div class="problem-layer-title">Behavioral Problem</div>
+                <p class="problem-layer-text">"We avoid vulnerable topics because they feel risky or draining"</p>
+            </div>
+
+            <div class="problem-layer">
+                <div class="problem-layer-title">Emotional Problem</div>
+                <p class="problem-layer-text">"We worry we're drifting apart, but don't know how to fix it"</p>
+            </div>
+
+            <div class="problem-layer">
+                <div class="problem-layer-title">Systemic Problem</div>
+                <p class="problem-layer-text">"Existing tools are inconvenient, performative, or overwhelming"</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">$15-20k</div>
+                <div class="stat-label">Avg Divorce Cost</div>
+                <div class="stat-context">Per person, legal fees alone</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">77%</div>
+                <div class="stat-label">Wealth Drop</div>
+                <div class="stat-context">For women post-divorce</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Research -->
+    <section>
+        <div class="section-label">The Research</div>
+        <h2 class="section-title">Small Daily Moments Matter More Than Big Conversations</h2>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-title">The Science of Appreciation (Gottman Institute)</div>
+                <p class="feature-description">
+                    Regular gratitude and admiration predict staying together. Lack of appreciation predicts divorce more than conflict. "Turning toward" partner's bids for connection has <span class="highlight">94% accuracy</span> in predicting relationship success.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-title">Qualitative Research</div>
+                <p class="feature-description">
+                    Analyzed 2,000+ Reddit posts to understand relationship pain points. Top pattern: <span class="highlight">Trust erosion from small disconnections</span>. Couples follow a path of avoidance → silent withdrawal → crisis. Without consistent low-friction rituals, couples drift.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-title">Why Existing Solutions Fail</div>
+                <p class="feature-description">
+                    Lifestyle/wellness apps have 2-8% 30-day retention. Push notifications get 4-15% open rates. Apps require downloads, logins, and constant engagement. <span class="highlight">SMS delivers 98% open rates</span> with no friction.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Solution -->
+    <section>
+        <div class="section-label">The Solution</div>
+        <h2 class="section-title">SMS-First Micro-Rituals</h2>
+        <p class="section-description">
+            LoveNotes reframes relationship health as a <span class="highlight">habit-formation challenge</span>, not a software problem. Software should support human connection, not replace it.
+        </p>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-number">1</div>
+                <div class="feature-title">Daily SMS Prompt</div>
+                <p class="feature-description">
+                    Each partner receives a science-backed reflection prompt via text message. Questions are grounded in Gottman research and designed to build appreciation.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-number">2</div>
+                <div class="feature-title">Private Exchange</div>
+                <p class="feature-description">
+                    Partners see each other's responses directly—no AI interpretation, no algorithmic filtering. Your words, unmodified, delivered to your partner.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-number">3</div>
+                <div class="feature-title">Weekly LoveLetter</div>
+                <p class="feature-description">
+                    Every Sunday, couples receive a compiled reflection of their week together. A moment to pause, reflect, and appreciate the connection they've built.
+                </p>
+            </div>
+        </div>
+
+        <div class="quote-block">
+            <p class="quote-text">
+                "How can we help love flourish in tiny, consistent ways—without pressure, without demands, without surveillance?"
+            </p>
+        </div>
+    </section>
+
+    <!-- Market Opportunity -->
+    <section>
+        <div class="section-label">Market Opportunity</div>
+        <h2 class="section-title">Capital-Efficient SaaS Economics</h2>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">$8</div>
+                <div class="stat-label">Price/Month</div>
+                <div class="stat-context">Per couple ($96/year)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">$2.50</div>
+                <div class="stat-label">COGS</div>
+                <div class="stat-context">SMS + infrastructure</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">70%</div>
+                <div class="stat-label">Gross Margin</div>
+                <div class="stat-context">Sustainable from day 1</div>
+            </div>
+        </div>
+
+        <p class="section-description">
+            <strong>Target Market:</strong> 63M married/cohabiting couples in the US. Serviceable market: 15.6M tech-savvy couples actively seeking relationship tools ($1.5B market value). 3-year goal: 15,600 couples (0.1% market capture) = $1.5M ARR.
+        </p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">$70-93</div>
+                <div class="stat-label">Customer LTV</div>
+                <div class="stat-context">6-8% monthly churn</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">$30-40</div>
+                <div class="stat-label">Target CAC</div>
+                <div class="stat-context">Organic + paid</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">2-3x</div>
+                <div class="stat-label">LTV:CAC Ratio</div>
+                <div class="stat-context">Baseline target</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Execution -->
+    <section>
+        <div class="section-label">Technical Execution</div>
+        <h2 class="section-title">Challenges Solved</h2>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-number">1</div>
+                <div class="feature-title">Technical Complexity & Edge Cases</div>
+                <p class="feature-description">
+                    SMS scheduling, state machines, and time zones are fragile. Built comprehensive testing tools, simulated couple logic, and multi-LLM debugging workflows.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-number">2</div>
+                <div class="feature-title">Data Pairing & AI Safety</div>
+                <p class="feature-description">
+                    Late responses need correct pairing; prevent hallucinations. Implemented structured JSON responses, pairing buffers, and strict prompt engineering.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-number">3</div>
+                <div class="feature-title">Emotional Safety vs. Engagement</div>
+                <p class="feature-description">
+                    Balance gratitude themes without inducing shame. Created science-backed curriculum with recurring appreciation and habit-focused messaging.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-number">4</div>
+                <div class="feature-title">Trials & Cost Control</div>
+                <p class="feature-description">
+                    Free trials vs. SMS cost risk. Implemented capped trial volume, value-first pricing, and sustainable cost modeling.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section>
+        <div class="section-label">Execution</div>
+        <h2 class="section-title">From Validation to Scale</h2>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-phase">Phase 1 — Q3 2025</div>
+                <div class="timeline-title">Research</div>
+                <p class="timeline-description">
+                    Validated pain points through qualitative research. Pivoted away from complex biometric tools toward simple prompts grounded in behavioral science.
+                </p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-phase">Phase 2 — Q4 2025 – Q1 2026</div>
+                <div class="timeline-title">MVP</div>
+                <p class="timeline-description">
+                    Built SMS infrastructure with Twilio, Supabase, and Gemini AI. Closed beta with 11 couples, tested state machine logic and prompt effectiveness.
+                </p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-phase">Phase 3 — Q2 2026</div>
+                <div class="timeline-title">Open Beta</div>
+                <p class="timeline-description">
+                    Target: 50+ active couples and first paying subscribers. Refining onboarding flow and payment integration.
+                </p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-phase">Phase 4 — Q3 2026</div>
+                <div class="timeline-title">Growth</div>
+                <p class="timeline-description">
+                    Goal: 240 couples, $23k ARR. Establish repeatable acquisition channels through content marketing and partnerships.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Learnings -->
+    <section>
+        <div class="section-label">Key Learnings</div>
+        <h2 class="section-title">PM Growth & Insights</h2>
+
+        <div class="learnings-list">
+            <div class="learning-item">
+                <div class="learning-title">1. Research Redirected the Vision</div>
+                <p class="learning-description">
+                    Early assumptions about biometric/AI-driven conflict tools were unrealistic. Research revealed simple prompts are validated and powerful—prevented "cool but not useful" product bloat.
+                </p>
+            </div>
+
+            <div class="learning-item">
+                <div class="learning-title">2. Minimalism Became a Strategy, Not a Compromise</div>
+                <p class="learning-description">
+                    Reducing onboarding complexity created trust. Postponing features drove focus. Constraint forced commitment to honoring users' words over AI interpretations.
+                </p>
+            </div>
+
+            <div class="learning-item">
+                <div class="learning-title">3. User Feedback Transformed the Product</div>
+                <p class="learning-description">
+                    Users rejected complex workflows and embraced lightweight prompts. Learned to prioritize real value over novelty—the best features are often the simplest ones.
+                </p>
+            </div>
+
+            <div class="learning-item">
+                <div class="learning-title">4. Systems Complexity Is Hidden Until You Build</div>
+                <p class="learning-description">
+                    State machines, cron logic, and edge cases created unexpected complexity. SMS is far less flexible than an app—every constraint forced better design decisions.
+                </p>
+            </div>
+
+            <div class="learning-item">
+                <div class="learning-title">5. New Opportunities Emerge Through Use</div>
+                <p class="learning-description">
+                    "LoveStory" (Spotify-wrapped style recap) emerged organically from usage patterns. Designing for vulnerability and trust revealed opportunities beyond the initial roadmap.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- North Star -->
+    <section>
+        <div class="section-label">North Star</div>
+        <h2 class="section-title">Meaningful Engagement Over Time</h2>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-title">Commercial Success</div>
+                <ul style="color: var(--text-secondary); line-height: 1.8; margin-top: 1rem;">
+                    <li>Sustainable unit economics</li>
+                    <li>Capital-efficient growth</li>
+                    <li>$770k-$1.5M ARR at 0.05-0.1% market penetration</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-title">Behavioral Outcomes</div>
+                <ul style="color: var(--text-secondary); line-height: 1.8; margin-top: 1rem;">
+                    <li>Increased closeness index</li>
+                    <li>High ritual completion rate</li>
+                    <li>Qualitative signals of emotional impact</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="quote-block">
+            <p class="quote-text">
+                "How can we help love flourish in tiny, consistent ways—without pressure, without demands, without surveillance, without manipulation?"
+            </p>
+        </div>
+    </section>
+
+    <footer style="padding: 4rem 2rem; text-align: center; border-top: 1px solid var(--dark-border); color: var(--text-muted);">
+        <p>&copy; 2026 Christopher K-Lee Marks. Built with passion & code.</p>
+    </footer>
+</body>
+</html>
