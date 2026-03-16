@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Match PRD v2.0 - Digital Twin Handshake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0a0a0f;
+            --paper: #fafaf8;
+            --accent: #ff3366;
+            --code-bg: #f5f5f3;
+            --border: #e0e0dd;
+            --heading: #1a1a1f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--paper);
+            color: var(--ink);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 32px 120px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--heading);
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--heading);
+            margin: 64px 0 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--heading);
+            margin: 40px 0 16px;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--heading);
+            margin: 24px 0 12px;
+        }
+
+        p {
+            margin: 16px 0;
+            line-height: 1.7;
+        }
+
+        strong {
+            font-weight: 600;
+            color: var(--heading);
+        }
+
+        ul, ol {
+            margin: 16px 0;
+            padding-left: 28px;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.7;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: var(--ink);
+            color: white;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid var(--ink);
+        }
+
+        td {
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+            background: var(--code-bg);
+        }
+
+        code, pre {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            display: block;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 32px 0;
+            padding: 24px;
+            background: var(--code-bg);
+            border-left: 4px solid var(--accent);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        .meta-value {
+            font-weight: 500;
+            color: var(--heading);
+        }
+
+        .highlight {
+            background: #fff8dc;
+            border-left: 4px solid #ffd700;
+            padding: 16px 20px;
+            margin: 24px 0;
+        }
+
+        .toc {
+            background: var(--code-bg);
+            padding: 24px;
+            margin: 40px 0;
+            border: 2px solid var(--border);
+        }
+
+        .toc h3 {
+            margin-top: 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: var(--ink);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--accent);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--accent);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 3px;
+            margin-left: 12px;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 48px 0;
+        }
+
+        .emoji {
+            margin-right: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px 80px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 8px 12px;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .toc {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mission Match: Digital Twin Handshake</h1>
+        <h2 style="margin-top: 0; border: none;">Product Requirements Document v2.0<span class="status-badge">Draft</span></h2>
+
+        <div class="meta">
+            <div class="meta-item">
+                <div class="meta-label">Owner</div>
+                <div class="meta-value">Christopher K-Lee Marks</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Last Updated</div>
+                <div class="meta-value">2026-02-25</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Target Launch</div>
+                <div class="meta-value">2026-03-09 (Hackathon Demo)</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Status</div>
+                <div class="meta-value">Hackathon Build</div>
+            </div>
+        </div>
+
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#executive-summary">1. Executive Summary</a></li>
+                <li><a href="#business-context">2. Business Context</a></li>
+                <li><a href="#problem-statement">3. Problem Statement</a></li>
+                <li><a href="#goals-metrics">4. Goals & Success Metrics</a></li>
+                <li><a href="#target-users">5. Target Users</a></li>
+                <li><a href="#user-stories">6. User Stories & Jobs to Be Done</a></li>
+                <li><a href="#functional-requirements">7. Functional Requirements</a></li>
+                <li><a href="#nfrs">8. Non-Functional Requirements</a></li>
+                <li><a href="#technical-approach">9. Technical Approach & Constraints</a></li>
+                <li><a href="#dependencies-risks">10. Dependencies & Risks</a></li>
+                <li><a href="#scope">11. Scope Definition</a></li>
+                <li><a href="#prioritization">12. Prioritization Framework</a></li>
+                <li><a href="#open-questions">13. Open Questions & Assumptions</a></li>
+                <li><a href="#timeline">14. Timeline & Milestones</a></li>
+                <li><a href="#appendix">15. Appendix</a></li>
+            </ul>
+        </div>
+
+        <h2 id="executive-summary">1. Executive Summary</h2>
+
+        <h3>The Headline</h3>
+        <p>Mission Match enables instant, privacy-first collaboration assessment by having your AI meet their AI — a "digital twin handshake" where agents negotiate consent and exchange profiles to surface high-confidence opportunities.</p>
+
+        <h3>Problem</h3>
+        <p>Networking events are chaotic and inefficient:</p>
+        <ul>
+            <li><strong>Signal/noise problem</strong>: Hard to assess technical depth, values alignment, and collaboration fit in quick conversations</li>
+            <li><strong>Trust barrier</strong>: People hesitate to share personal info or scan random QR codes from strangers</li>
+            <li><strong>Lock-in anxiety</strong>: Talking to one person means missing conversations with others</li>
+            <li><strong>Manual friction</strong>: Business cards, LinkedIn requests, and follow-up messages have high drop-off</li>
+        </ul>
+        <p>Current solution (Mission Match v1.0): QR-scan → copy prompt → AI analyzes fit. But it still requires <strong>manual data entry</strong> by users filling out questions.</p>
+
+        <h3>Solution</h3>
+        <p><strong>Digital Twin Handshake</strong>: Your AI already knows you from your conversation history. When you meet someone:</p>
+        <ol>
+            <li>Scan their QR code</li>
+            <li>See <strong>consent screen</strong> showing what will be shared</li>
+            <li>Your agents exchange structured profiles (digital twins)</li>
+            <li>Both receive instant compatibility analysis</li>
+            <li>Get your own shareable profile for future networking</li>
+        </ol>
+        <p><strong>Key innovation</strong>: Trust flows through the <strong>agent</strong>, not direct human-to-human data sharing. Your AI mediates consent on your behalf.</p>
+
+        <h3>Success</h3>
+        <div class="highlight">
+            <h4>Hackathon Demo Success (March 9):</h4>
+            <ul>
+                <li>✅ Working end-to-end demo: 2 people scan → consent → results in &lt;60 seconds</li>
+                <li>✅ Clear visual showing agent-mediated consent (not direct data share)</li>
+                <li>✅ Real compatibility analysis from Claude API with actionable opportunities</li>
+                <li>✅ Judges understand the "digital twin" concept and infrastructure vision</li>
+            </ul>
+        </div>
+
+        <p><strong>Post-Hackathon Metrics</strong> (if built as real product):</p>
+        <ul>
+            <li>50+ active users within first month</li>
+            <li>80%+ consent completion rate (people approve after seeing consent screen)</li>
+            <li>4+ average collaboration matches per user</li>
+        </ul>
+
+        <h3>Investment</h3>
+        <p><strong>Hackathon Sprint</strong>: 2 weeks (Feb 25 - Mar 9)</p>
+        <ul>
+            <li>~40 hours engineering (Christopher)</li>
+            <li>Design: Use existing neo-brutalist aesthetic from v1.0</li>
+            <li>Infrastructure: Supabase for profiles, Claude API for matching</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="business-context">2. Business Context</h2>
+
+        <h3>2.1 Strategic Alignment</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Strategic Goal</th>
+                    <th>How This PRD Supports It</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Track 2: AI Companions with Purpose</strong></td>
+                    <td>AI uses personal conversation data (Claude context) to provide collaboration matching value. Value flows to user via better networking outcomes.</td>
+                </tr>
+                <tr>
+                    <td><strong>Build technology that deepens human connection</strong></td>
+                    <td>Mission Match uses AI to accelerate trust formation and surface genuine collaboration opportunities based on values/mission alignment.</td>
+                </tr>
+                <tr>
+                    <td><strong>Heartware positioning</strong></td>
+                    <td>Proof-of-concept for "Human API" — first endpoint for agent-mediated human coordination.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.2 Business Impact</h3>
+        <p><strong>Hackathon Outcomes</strong>:</p>
+        <ul>
+            <li>Win Track 2 or place top 3</li>
+            <li>Validate "digital twin handshake" concept with real users</li>
+            <li>Generate investor/founder interest for post-hackathon development</li>
+        </ul>
+
+        <p><strong>If Built as Product</strong>:</p>
+        <ul>
+            <li><strong>Revenue</strong>: Freemium SaaS - Free for individuals, $99/mo for event organizers, $499/mo for recruiters/enterprises</li>
+            <li><strong>Strategic Value</strong>: Establish Heartware as the OAuth for AI-to-AI consent</li>
+            <li><strong>Market Expansion</strong>: Dating apps, recruiting platforms, co-founder matching beyond just hackathons</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="problem-statement">3. Problem Statement</h2>
+
+        <h3>3.1 Current State</h3>
+        <p><strong>At networking events today</strong>, people:</p>
+        <ol>
+            <li>Exchange business cards or LinkedIn QR codes</li>
+            <li>Have 2-5 minute surface-level conversations</li>
+            <li>Follow up manually later (high drop-off)</li>
+            <li>Waste time on poor-fit connections</li>
+        </ol>
+
+        <p><strong>Mission Match v1.0</strong> improved this with AI-powered matching, but still required:</p>
+        <ul>
+            <li>Manual data entry (4 questions)</li>
+            <li>Copying/pasting prompts</li>
+            <li>Both people standing there while AI analyzes</li>
+        </ul>
+
+        <h3>3.2 User Pain Points</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pain Point</th>
+                    <th>User Segment</th>
+                    <th>Severity</th>
+                    <th>Evidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Can't assess technical depth quickly</td>
+                    <td>Founders seeking technical co-founders</td>
+                    <td>High</td>
+                    <td>Observed at hackathon: "I talked to 10 people claiming to be 'technical' but couldn't tell who actually ships"</td>
+                </tr>
+                <tr>
+                    <td>Hesitant to scan random QR codes</td>
+                    <td>Privacy-conscious professionals</td>
+                    <td>High</td>
+                    <td>User feedback: "I don't scan QR codes from people I just met"</td>
+                </tr>
+                <tr>
+                    <td>Data entry friction kills momentum</td>
+                    <td>All users</td>
+                    <td>Medium</td>
+                    <td>v1.0 analytics: 40% drop-off at question 2 of 4</td>
+                </tr>
+                <tr>
+                    <td>No portable profile for reuse</td>
+                    <td>Frequent networkers</td>
+                    <td>Medium</td>
+                    <td>Feature request: "Can I save my answers so I don't re-enter at every event?"</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h2 id="goals-metrics">4. Goals & Success Metrics</h2>
+
+        <h3>4.1 Goals</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Goal</th>
+                    <th>Measurement</th>
+                    <th>Target</th>
+                    <th>Timeline</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>G1</td>
+                    <td>Deliver working demo for hackathon</td>
+                    <td>Demo completion time (scan → results)</td>
+                    <td>&lt;60 seconds end-to-end</td>
+                    <td>March 9, 2026</td>
+                </tr>
+                <tr>
+                    <td>G2</td>
+                    <td>Demonstrate agent-mediated consent</td>
+                    <td>Judge comprehension survey post-demo</td>
+                    <td>100% of judges understand consent flow</td>
+                    <td>March 9, 2026</td>
+                </tr>
+                <tr>
+                    <td>G3</td>
+                    <td>Validate digital twin extraction</td>
+                    <td>Profile completeness score (% fields populated from Claude context)</td>
+                    <td>&gt;80% of profile fields auto-populated</td>
+                    <td>March 9, 2026</td>
+                </tr>
+                <tr>
+                    <td>G4</td>
+                    <td>Win or place in Track 2</td>
+                    <td>Hackathon results</td>
+                    <td>Top 3 placement</td>
+                    <td>March 9, 2026</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>4.2 Key Metrics</h3>
+        <p><strong>North Star Metric</strong>: Time from "meet someone" to "high-confidence collaboration opportunity identified"</p>
+
+        <p><strong>Primary Metrics</strong> (Hackathon Demo):</p>
+        <ul>
+            <li><strong>Demo flow completion time</strong>: Target &lt;60 seconds (scan → consent → results)</li>
+            <li><strong>Consent approval rate</strong>: Target &gt;90% (people approve after seeing consent screen)</li>
+            <li><strong>Match quality score</strong>: Target 70+ collaboration potential score from Claude</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="target-users">5. Target Users</h2>
+
+        <h3>5.1 User Personas</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Persona</th>
+                    <th>Description</th>
+                    <th>% of Users</th>
+                    <th>Primary Need</th>
+                    <th>Pain Level (1-10)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Technical Founder</strong></td>
+                    <td>Building AI products, seeking technical co-founders or collaborators</td>
+                    <td>40%</td>
+                    <td>Quickly assess if someone can actually ship code</td>
+                    <td>9/10</td>
+                </tr>
+                <tr>
+                    <td><strong>Product Builder</strong></td>
+                    <td>Designers, PMs, creators looking for technical partners</td>
+                    <td>30%</td>
+                    <td>Find builders who align on mission/values</td>
+                    <td>8/10</td>
+                </tr>
+                <tr>
+                    <td><strong>Investor/Scout</strong></td>
+                    <td>Identifying promising founders at events</td>
+                    <td>15%</td>
+                    <td>Fast signal on founder quality and traction</td>
+                    <td>7/10</td>
+                </tr>
+                <tr>
+                    <td><strong>Event Organizer</strong></td>
+                    <td>Running hackathons, conferences, networking events</td>
+                    <td>15%</td>
+                    <td>Help attendees make valuable connections</td>
+                    <td>6/10</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h2 id="user-stories">6. User Stories & Jobs to Be Done</h2>
+
+        <h3>User Story US-01: Digital Twin Profile Creation</h3>
+        <p><strong>As a</strong> frequent networker<br>
+        <strong>I want</strong> my AI to automatically create a collaboration profile from my conversation history<br>
+        <strong>So that</strong> I don't have to manually fill out forms at every event</p>
+
+        <p><strong>Acceptance Criteria</strong>:</p>
+        <ul>
+            <li>User can trigger profile creation from Claude interface</li>
+            <li>System extracts: role, mission, proof points, looking-for from recent conversations</li>
+            <li>User can review and edit auto-populated profile before finalizing</li>
+            <li>Profile is stored and reusable across future handshakes</li>
+            <li>Profile includes consent preferences (what data to share)</li>
+        </ul>
+        <p><strong>Priority</strong>: Must Have</p>
+
+        <hr>
+
+        <h3>User Story US-02: Agent-Mediated Consent Flow</h3>
+        <p><strong>As a</strong> privacy-conscious professional<br>
+        <strong>I want</strong> to see exactly what data will be shared before approving<br>
+        <strong>So that</strong> I can trust the handshake process and maintain control</p>
+
+        <p><strong>Acceptance Criteria</strong>:</p>
+        <ul>
+            <li>Consent screen shows: recipient name, data fields being shared, purpose</li>
+            <li>User can select which fields to share (e.g., share role + mission but not LinkedIn)</li>
+            <li>Visual clearly shows "Your AI → Their AI" (not direct human share)</li>
+            <li>User can deny consent without awkwardness (soft "not now" option)</li>
+            <li>Consent is time-limited (expires in 24 hours unless extended)</li>
+        </ul>
+        <p><strong>Priority</strong>: Must Have</p>
+
+        <hr>
+
+        <h2 id="functional-requirements">7. Functional Requirements</h2>
+
+        <h3>Feature Area: Digital Twin Profile Creation</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Req ID</th>
+                    <th>Requirement</th>
+                    <th>Priority</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>FR-01</td>
+                    <td>System SHALL extract profile data from Claude conversation history when user triggers "Create Profile"</td>
+                    <td>Must Have</td>
+                </tr>
+                <tr>
+                    <td>FR-02</td>
+                    <td>System SHALL present auto-populated profile to user for review and editing</td>
+                    <td>Must Have</td>
+                </tr>
+                <tr>
+                    <td>FR-03</td>
+                    <td>System SHALL store validated profile in database with unique user ID</td>
+                    <td>Must Have</td>
+                </tr>
+                <tr>
+                    <td>FR-04</td>
+                    <td>System SHALL generate unique QR code URL for profile (format: missionmatch.app/h/{userId})</td>
+                    <td>Must Have</td>
+                </tr>
+                <tr>
+                    <td>FR-05</td>
+                    <td>System SHALL allow user to update profile fields after creation</td>
+                    <td>Should Have</td>
+                </tr>
+                <tr>
+                    <td>FR-06</td>
+                    <td>System SHALL set default consent preferences (all fields shared unless user opts out)</td>
+                    <td>Should Have</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h2 id="technical-approach">9. Technical Approach & Constraints</h2>
+
+        <h3>9.1 Proposed Technical Approach (Two Options)</h3>
+        <p>We'll explore both options in parallel during the first week, then commit to one for final implementation.</p>
+
+        <h4>Option A: Simple API + Claude API (Pragmatic Path)</h4>
+        <p><strong>Architecture</strong>:</p>
+        <pre>Mobile Web UI (React/Next.js)
+    ↓
+Backend API (Node.js + Supabase)
+    ↓
+Claude API (profile extraction + matching)
+    ↓
+Supabase Database (profiles, handshakes, analyses)</pre>
+
+        <p><strong>Tech Stack</strong>:</p>
+        <ul>
+            <li><strong>Frontend</strong>: Next.js (mobile-first), Tailwind CSS (neo-brutalist design from v1.0)</li>
+            <li><strong>Backend</strong>: Next.js API routes (serverless functions)</li>
+            <li><strong>Database</strong>: Supabase (PostgreSQL)</li>
+            <li><strong>AI</strong>: Claude API (Sonnet 3.5 for speed, Opus 4.5 if need deeper analysis)</li>
+            <li><strong>QR Codes</strong>: QRServer API or qrcode.js library</li>
+            <li><strong>Hosting</strong>: Vercel (free tier for hackathon)</li>
+        </ul>
+
+        <p><strong>Pros</strong>:</p>
+        <ul>
+            <li>✅ Fast to build (can ship in 1 week)</li>
+            <li>✅ Works with any AI assistant (not just Claude)</li>
+            <li>✅ Hosted infrastructure (no local setup required)</li>
+            <li>✅ Easy to demo on stage (just show QR code)</li>
+        </ul>
+
+        <p><strong>Cons</strong>:</p>
+        <ul>
+            <li>❌ Not leveraging Anthropic-specific tech (MCP)</li>
+            <li>❌ Less novel from infrastructure perspective</li>
+            <li>❌ Requires internet connection for handshakes</li>
+        </ul>
+
+        <hr>
+
+        <h4>Option B: MCP Extension (Novel Path)</h4>
+        <p><strong>Architecture</strong>:</p>
+        <pre>Local MCP Server (Your Machine)
+    ↓
+Claude Desktop App
+    ↓
+Handshake Coordination API (Cloud)
+    ↓
+Remote MCP Server (Their Machine)</pre>
+
+        <p><strong>Pros</strong>:</p>
+        <ul>
+            <li>✅ Novel use of MCP (could influence Anthropic's roadmap)</li>
+            <li>✅ Positions as infrastructure play (not just app)</li>
+            <li>✅ Local data control (privacy-first)</li>
+            <li>✅ Shows deep technical chops to judges</li>
+        </ul>
+
+        <p><strong>Cons</strong>:</p>
+        <ul>
+            <li>❌ Requires both users running MCP servers locally (not realistic for demo)</li>
+            <li>❌ Complex setup for hackathon timeline</li>
+            <li>❌ Risk: May not finish in time for March 9</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="timeline">14. Timeline & Milestones</h2>
+
+        <h3>Two-Week Sprint (Feb 25 - Mar 9)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Description</th>
+                    <th>Dates</th>
+                    <th>Deliverables</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Week 1: Prototyping</strong></td>
+                    <td>Parallel exploration of both technical approaches</td>
+                    <td>Feb 25 - Mar 3</td>
+                    <td>Working prototypes of Option A and Option B; decision on which to pursue</td>
+                </tr>
+                <tr>
+                    <td><strong>Week 2: Polish & Demo Prep</strong></td>
+                    <td>Build final version, practice demo, prepare pitch</td>
+                    <td>Mar 3 - Mar 9</td>
+                    <td>Polished demo, pitch deck, video walkthrough</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Detailed Milestones</h3>
+
+        <h4>Week 1: Prototyping (Feb 25 - Mar 3)</h4>
+
+        <p><strong>🚩 Day 1-2 (Feb 25-26): Setup & Basic Infrastructure</strong></p>
+        <ul>
+            <li>✅ Write this PRD</li>
+            <li>Set up Supabase project + tables (profiles, handshakes, analyses)</li>
+            <li>Create Next.js project with Tailwind (use neo-brutalist design from v1.0)</li>
+            <li>Basic mobile UI: profile creation form</li>
+        </ul>
+
+        <p><strong>🚩 Day 3-4 (Feb 27-28): Option A Prototype</strong></p>
+        <ul>
+            <li>Build consent screen UI</li>
+            <li>Integrate Claude API for matching analysis</li>
+            <li>QR code generation + scanning flow</li>
+            <li>End-to-end test: create 2 profiles → scan → consent → results</li>
+        </ul>
+
+        <p><strong>🚩 Day 5-6 (Mar 1-2): Option B Prototype (Parallel)</strong></p>
+        <ul>
+            <li>Build basic MCP server in Python</li>
+            <li>Test extracting profile from Claude conversation history</li>
+            <li>Build handshake coordination API</li>
+            <li>Test MCP server ↔ coordination API ↔ MCP server flow</li>
+        </ul>
+
+        <p><strong>🚩 Day 7 (Mar 3): Decision Point</strong></p>
+        <ul>
+            <li>Compare Option A vs Option B: which is more demo-ready?</li>
+            <li><strong>COMMIT to one approach</strong> for final week</li>
+            <li>Write decision rationale (for PRD appendix)</li>
+        </ul>
+
+        <hr>
+
+        <h4>Week 2: Polish & Demo Prep (Mar 3 - Mar 9)</h4>
+
+        <p><strong>🚩 Day 8-9 (Mar 4-5): Core Feature Polish</strong></p>
+        <ul>
+            <li>Implement all "Must Have" features from chosen approach</li>
+            <li>Add consent visual: "Your AI ⇄ Their AI" diagram</li>
+            <li>Polish mobile UI (smooth animations, clear CTAs)</li>
+            <li>Test on multiple devices (iPhone, Android)</li>
+        </ul>
+
+        <p><strong>🚩 Day 10-11 (Mar 6-7): Demo Preparation</strong></p>
+        <ul>
+            <li>Create sample profiles for demo (Christopher + demo partner)</li>
+            <li>Practice demo flow: &lt;60 seconds, no errors</li>
+            <li>Record backup video in case live demo fails</li>
+            <li>Test offline mode (what happens if WiFi drops?)</li>
+        </ul>
+
+        <p><strong>🚩 Day 12 (Mar 8): Pitch & Materials</strong></p>
+        <ul>
+            <li>Write pitch deck (10 slides max)</li>
+            <li>Prepare demo script</li>
+            <li>Film 2-minute explainer video</li>
+            <li>Write hackathon submission form</li>
+        </ul>
+
+        <p><strong>🚩 Day 13 (Mar 9): Hackathon Demo Day 🎉</strong></p>
+        <ul>
+            <li>Deliver live demo on stage</li>
+            <li>Present pitch to judges</li>
+            <li>Network with other hackers using Mission Match</li>
+            <li>Submit final materials</li>
+        </ul>
+
+        <hr>
+
+        <h2 id="appendix">15. Appendix</h2>
+
+        <h3>Supporting Documents</h3>
+        <ul>
+            <li><strong>Mission Match v1.0</strong>: <a href="https://ckelimarks.github.io/mission-match.html" target="_blank">ckelimarks.github.io/mission-match.html</a></li>
+            <li><strong>Session state from Feb 25</strong>: <code>/Users/christopherk.marks/Downloads/personal-os-main/.context/sessions/2026-02-25-1450.md</code></li>
+            <li><strong>Design doc (infrastructure options)</strong>: <code>/Users/christopherk.marks/Downloads/personal-os-main/Projects/prototypes/mission-match/Mission Match Design Doc.md</code></li>
+            <li><strong>Neo-brutalist design system</strong>: Mission Match v1.0 HTML file (Syne + IBM Plex Mono fonts, acid yellow + punch pink colors)</li>
+        </ul>
+
+        <h3>Glossary</h3>
+        <ul>
+            <li><strong>Digital Twin</strong>: Structured profile representing a person, auto-generated from their AI conversation history</li>
+            <li><strong>Handshake</strong>: The bilateral consent flow where two people agree to exchange profiles</li>
+            <li><strong>Agent-Mediated Consent</strong>: Trust model where AI agents negotiate data sharing on behalf of users (not direct human-to-human)</li>
+            <li><strong>Heartware</strong>: Positioning concept - "API for human context" or "OAuth for AI-to-AI consent"</li>
+            <li><strong>MCP (Model Context Protocol)</strong>: Anthropic's open protocol for Claude to connect to external data sources</li>
+            <li><strong>Track 2</strong>: Hackathon track "AI Companions with Purpose" - AI uses personal data to provide value to user</li>
+        </ul>
+
+        <hr>
+
+        <h2>Next Steps</h2>
+        <ol>
+            <li><strong>Review this PRD</strong> with yourself (Christopher) - any gaps or changes?</li>
+            <li><strong>Set up Supabase</strong> project and create tables</li>
+            <li><strong>Start Week 1 prototyping</strong>: Build Option A (simple API) first since it's lower risk</li>
+            <li><strong>Daily check-ins</strong>: Review progress at end of each day, adjust timeline if needed</li>
+            <li><strong>Decision by Mar 3</strong>: Commit to Option A or Option B based on prototype results</li>
+        </ol>
+
+        <hr>
+
+        <p style="text-align: center; color: #999; font-size: 0.9rem; margin-top: 60px;">
+            <em>This PRD is a living document. Update as you learn during prototyping.</em><br>
+            Last updated: 2026-02-25
+        </p>
+    </div>
+</body>
+</html>
