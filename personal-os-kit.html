@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Personal OS — Sutra</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark: #0a0e12;
+    --dark-card: #12171d;
+    --cyan: #00d9ff;
+    --magenta: #ff00aa;
+    --white: #ffffff;
+    --white-secondary: rgba(255, 255, 255, 0.65);
+    --border: rgba(255, 255, 255, 0.08);
+    --cyan-subtle: rgba(0, 217, 255, 0.1);
+    --magenta-subtle: rgba(255, 0, 170, 0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--dark);
+    color: var(--white);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 2rem;
+    max-width: 720px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: -60px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0,217,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    border: 1.5px solid var(--cyan);
+    padding: 0.35rem 0.9rem;
+    border-radius: 100px;
+    margin-bottom: 2rem;
+    width: fit-content;
+  }
+
+  h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--white);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em { font-style: italic; color: var(--cyan); }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--white-secondary);
+    max-width: 560px;
+    margin-bottom: 2.5rem;
+  }
+
+  .scroll-cue {
+    margin-top: 3rem;
+    font-size: 0.8rem;
+    color: var(--white-secondary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .scroll-cue::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--white-secondary);
+  }
+
+  /* ── Sections ── */
+  section {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  .divider {
+    width: 40px;
+    height: 2px;
+    background: var(--cyan);
+    margin-bottom: 2rem;
+  }
+
+  h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    letter-spacing: -0.01em;
+  }
+
+  p { margin-bottom: 1.2rem; }
+
+  .pain-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 2rem;
+  }
+
+  .pain-list li {
+    position: relative;
+    padding-left: 1.6rem;
+    margin-bottom: 0.9rem;
+    color: var(--white-secondary);
+    font-size: 1rem;
+  }
+
+  .pain-list li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--cyan);
+    font-weight: 600;
+  }
+
+  /* ── Steps ── */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--cyan);
+    color: var(--dark);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-top: 2px;
+  }
+
+  .step-content strong { display: block; margin-bottom: 0.25rem; }
+  .step-content p { margin: 0; color: var(--white-secondary); font-size: 0.95rem; }
+
+  /* ── Terminal ── */
+  .terminal {
+    background: #000000;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 2rem 0;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    border: 1px solid var(--border);
+  }
+
+  .terminal-bar {
+    background: var(--dark-card);
+    padding: 0.6rem 1rem;
+    display: flex;
+    gap: 6px;
+  }
+
+  .terminal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .terminal-body { padding: 1.2rem 1.4rem; color: rgba(255,255,255,0.75); }
+  .terminal-body .cmd { color: var(--cyan); }
+  .terminal-body .dim { color: rgba(255,255,255,0.4); }
+
+  /* ── Accordion ── */
+  .accordion {
+    margin: 2rem 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    background: var(--dark-card);
+  }
+
+  .accordion-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.3rem 1.5rem;
+    background: var(--dark-card);
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+    text-align: left;
+    transition: background 0.2s;
+  }
+
+  .accordion-header:hover { background: rgba(255,255,255,0.03); }
+
+  .accordion-header .acc-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .accordion-header .acc-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    background: var(--cyan-subtle);
+    padding: 0.2rem 0.6rem;
+    border-radius: 100px;
+  }
+
+  .accordion-chevron {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+    color: var(--white-secondary);
+    flex-shrink: 0;
+  }
+
+  .accordion.open .accordion-chevron {
+    transform: rotate(180deg);
+  }
+
+  .accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+
+  .accordion.open .accordion-body {
+    max-height: 3000px;
+  }
+
+  .accordion-content {
+    padding: 0 1.5rem 1.5rem;
+    font-size: 0.92rem;
+    color: var(--white-secondary);
+    line-height: 1.75;
+  }
+
+  .accordion-content h4 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .accordion-content h4:first-child { margin-top: 0.5rem; }
+
+  .accordion-content p {
+    margin-bottom: 0.8rem;
+    font-size: 0.92rem;
+  }
+
+  .accordion-content code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: rgba(0,217,255,0.1);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    color: var(--cyan);
+  }
+
+  .accordion-content .code-block {
+    background: #000000;
+    color: rgba(255,255,255,0.85);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+  }
+
+  .accordion-content .code-block .cmd { color: var(--cyan); }
+
+  .accordion-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 1rem;
+  }
+
+  .accordion-content li {
+    padding-left: 1.2rem;
+    position: relative;
+    margin-bottom: 0.4rem;
+  }
+
+  .accordion-content li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--cyan);
+    font-size: 0.85rem;
+  }
+
+  .accordion-content a {
+    color: var(--cyan);
+    text-decoration: none;
+  }
+
+  .accordion-content a:hover {
+    text-decoration: underline;
+  }
+
+  .guide-card {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin: 0.8rem 0;
+    border: 1px solid var(--border);
+  }
+
+  .guide-card strong {
+    display: block;
+    color: var(--white);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+  }
+
+  .guide-card p {
+    margin: 0;
+    font-size: 0.88rem;
+  }
+
+  /* ── Tier toggle ── */
+  .tier-toggle {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2rem;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    background: var(--dark-card);
+  }
+
+  .tier-btn {
+    flex: 1;
+    padding: 1.2rem 1.5rem;
+    border: none;
+    background: var(--dark-card);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--white-secondary);
+    transition: all 0.25s;
+    text-align: left;
+  }
+
+  .tier-btn:first-child { border-right: 1.5px solid var(--border); }
+
+  .tier-btn.active {
+    background: rgba(0,217,255,0.1);
+    color: var(--cyan);
+  }
+
+  .tier-btn strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .tier-btn.active strong { color: var(--cyan); }
+  .tier-btn small { font-size: 0.78rem; opacity: 0.7; }
+
+  /* ── Prompt boxes ── */
+  .prompt-section {
+    background: var(--dark-card);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    margin: 0 0 2rem;
+    position: relative;
+    overflow: hidden;
+    display: none;
+    border: 1px solid var(--border);
+  }
+
+  .prompt-section.active { display: block; }
+
+  .prompt-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .prompt-starter::before {
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  }
+
+  .prompt-advanced::before {
+    background: linear-gradient(90deg, var(--magenta), var(--cyan), #ffaa00);
+  }
+
+  .prompt-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--white-secondary);
+    margin-bottom: 1.2rem;
+  }
+
+  .prompt-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: rgba(255,255,255,0.85);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+
+  .prompt-text::-webkit-scrollbar { width: 4px; }
+  .prompt-text::-webkit-scrollbar-track { background: transparent; }
+  .prompt-text::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 0.65rem 1.4rem;
+    background: var(--cyan);
+    color: var(--dark);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .copy-btn:hover { background: #00b8dd; }
+  .copy-btn.copied { background: var(--magenta); }
+
+  /* ── Comparison table ── */
+  .comparison {
+    margin: 2rem 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+  }
+
+  .comparison table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  .comparison th {
+    background: var(--dark-card);
+    color: var(--cyan);
+    padding: 0.8rem 1.2rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .comparison td {
+    padding: 0.7rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .comparison tr:last-child td { border-bottom: none; }
+  .comparison td:first-child { color: var(--white); font-weight: 500; }
+
+  .comparison td:nth-child(2),
+  .comparison td:nth-child(3) {
+    text-align: center;
+    color: var(--white-secondary);
+    width: 100px;
+  }
+
+  .check { color: var(--cyan); font-weight: 700; }
+  .maybe { color: var(--white-secondary); font-style: italic; font-size: 0.82rem; }
+
+  /* ── Honest box ── */
+  .honest {
+    background: rgba(255,0,170,0.05);
+    border-radius: 10px;
+    padding: 2rem;
+    margin: 2rem 0;
+    border: 1px solid rgba(255,0,170,0.2);
+  }
+
+  .honest h4 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    color: var(--magenta);
+  }
+
+  .honest ul { list-style: none; padding: 0; }
+
+  .honest li {
+    padding-left: 1.4rem;
+    position: relative;
+    margin-bottom: 0.5rem;
+    font-size: 0.92rem;
+    color: var(--white-secondary);
+  }
+
+  .honest li::before {
+    content: '×';
+    position: absolute;
+    left: 0;
+    color: var(--magenta);
+    font-weight: 700;
+  }
+
+  /* ── Footer ── */
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+    text-align: center;
+    color: var(--white-secondary);
+    font-size: 0.85rem;
+  }
+
+  footer a { color: var(--cyan); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 3rem 1.5rem; min-height: 80vh; }
+    section { padding: 3rem 1.5rem; }
+    .prompt-section { padding: 1.8rem 1.4rem; }
+    .tier-toggle { flex-direction: column; }
+    .tier-btn:first-child { border-right: none; border-bottom: 1.5px solid var(--border); }
+    .accordion-content { padding: 0 1.2rem 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <div class="badge">Free prompt kit</div>
+  <h1>Build a Personal OS<br>designed for <em>your</em> brain</h1>
+  <p class="hero-sub">
+    One prompt. A 30-minute interview with Claude. A system of markdown files on your computer that actually fits how you think, work, and live.
+  </p>
+  <div class="scroll-cue">Keep reading</div>
+</div>
+
+<!-- ═══════════ THE PROBLEM ═══════════ -->
+<section>
+  <div class="divider"></div>
+  <h2>The problem isn't your willpower.<br>It's your tools.</h2>
+  <ul class="pain-list">
+    <li>Your thoughts are scattered across five apps and three AI chats</li>
+    <li>You forget what you decided last week and why</li>
+    <li>Switching projects erases your mental state</li>
+    <li>Every system you've tried is either too rigid or too loose</li>
+    <li>Nothing accounts for the fact that you're a human, not a task list</li>
+  </ul>
+  <p>
+    Most productivity systems hand you a template and say good luck. This is different. You paste one prompt into Claude Code, and it <em>interviews you</em> — about your workflow, your rhythms, your chaos, your rituals. Then it builds a system around your answers. Not a template. Not someone else's framework. Yours.
+  </p>
+</section>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section>
+  <div class="divider"></div>
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <strong>Install Claude Code</strong>
+        <p>One terminal command. Takes about 2 minutes.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <strong>Paste the prompt</strong>
+        <p>Pick your tier — Starter for simplicity, Advanced for the full operating system — and paste it in.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <strong>Answer the interview</strong>
+        <p>Claude asks about how you work, what you're juggling, your daily rhythms, and what your dream system looks like. 20-30 minutes of honest conversation.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <strong>Watch it build</strong>
+        <p>Claude creates your system in real time — folders, files, commands, rituals — all based on your answers.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setup guide accordion -->
+  <div class="accordion" id="acc-setup">
+    <button class="accordion-header" onclick="toggleAccordion('acc-setup')">
+      <span class="acc-label">
+        New to Claude Code? Setup guide
+        <span class="acc-badge">5 min</span>
+      </span>
+      <svg class="accordion-chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="accordion-body">
+      <div class="accordion-content">
+        <h4>What is Claude Code?</h4>
+        <p>Claude Code is a tool from Anthropic that lets you work with Claude directly in your terminal. Unlike the chat interface, Claude Code can read and write real files on your computer, run commands, and build things <em>with</em> you — not just talk at you.</p>
+        <p>Your Personal OS lives in actual folders and markdown files that you own. Not locked inside someone else's app. Local, private, yours.</p>
+
+        <h4>What you need</h4>
+        <ul>
+          <li>A Claude Pro or Max subscription (the free plan doesn't include Claude Code)</li>
+          <li>A computer — Mac, Windows, or Linux all work</li>
+        </ul>
+        <p>That's it — no other dependencies. There's also a <a href="https://claude.com/product/claude-code">Desktop app</a> if you'd prefer a graphical interface over the terminal.</p>
+
+        <h4>Opening your terminal (the hardest part, honestly)</h4>
+        <p>This is the step that trips people up, but it's simpler than it sounds. You just need to open the app on your computer that lets you type commands:</p>
+        <ul>
+          <li><strong>Mac:</strong> Open <strong>Terminal</strong> (search for it in Spotlight with ⌘+Space) or use iTerm2 if you have it</li>
+          <li><strong>Windows:</strong> Open <strong>PowerShell</strong> (search for it in the Start menu) — or if you have Git for Windows, Git Bash works great too</li>
+          <li><strong>Linux:</strong> Open your terminal app — Bash, Zsh, whatever you normally use</li>
+        </ul>
+        <p>You'll see a window with a blinking cursor. That's where you type the commands below.</p>
+
+        <h4>Install Claude Code</h4>
+        <p>Copy-paste this into your terminal and hit Enter:</p>
+        <div class="code-block">
+          <span class="dim"># Mac / Linux</span><br>
+          <span class="cmd">curl -fsSL https://claude.ai/install.sh | bash</span><br><br>
+          <span class="dim"># Windows (PowerShell)</span><br>
+          <span class="cmd">irm https://claude.ai/install.ps1 | iex</span>
+        </div>
+        <p>It'll ask you to log in with your Claude account in your browser. Follow the prompts — takes about a minute.</p>
+
+        <h4>Start your Personal OS</h4>
+        <p>Once installed, create a folder for your system and launch Claude Code inside it:</p>
+        <div class="code-block">
+          <span class="cmd">mkdir my-personal-os && cd my-personal-os</span><br>
+          <span class="cmd">claude</span>
+        </div>
+        <p>Paste your chosen prompt, and you're off.</p>
+
+        <h4>What to expect</h4>
+        <p>Claude will interview you — not a form, not a quiz, a real conversation about how your brain works. Then it builds your system around your answers. The whole process takes 20-40 minutes for the interview, then Claude builds in real time.</p>
+        <p>For the full official docs, see the <a href="https://code.claude.com/docs/en/overview">Claude Code documentation</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="terminal-dot"></div>
+      <div class="terminal-dot"></div>
+      <div class="terminal-dot"></div>
+    </div>
+    <div class="terminal-body">
+      <span class="dim">$</span> <span class="cmd">curl -fsSL https://claude.ai/install.sh | bash</span><br>
+      <span class="dim">$</span> <span class="cmd">mkdir my-personal-os && cd my-personal-os</span><br>
+      <span class="dim">$</span> <span class="cmd">claude</span><br>
+      <br>
+      <span class="dim">Claude Code ▸</span> Ready. Paste your prompt to begin.<br>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PICK YOUR TIER + PROMPTS ═══════════ -->
+<section>
+  <div class="divider"></div>
+  <h2>Pick your tier</h2>
+
+  <div class="tier-toggle">
+    <button class="tier-btn active" onclick="switchTier('starter')">
+      <strong>Starter</strong>
+      <small>New to the terminal. Keep it simple.</small>
+    </button>
+    <button class="tier-btn" onclick="switchTier('advanced')">
+      <strong>Advanced</strong>
+      <small>Comfortable in a terminal. Build it right.</small>
+    </button>
+  </div>
+
+  <!-- STARTER PROMPT -->
+  <div class="prompt-section prompt-starter active" id="prompt-starter">
+    <div class="prompt-label">Starter prompt — copy &amp; paste into Claude Code</div>
+    <div class="prompt-text" id="starter-content">I want to build a Personal OS — a system that fits my brain, my life, and my way of working. This is my first time using Claude Code, so guide me through everything as we go.
+
+Here's why I need this:
+
+- My thoughts, tasks, and decisions are scattered across too many places
+- I lose track of what I decided, where I left off, and why I made certain choices
+- I switch between projects and the context evaporates
+- Every productivity system I've tried either ignores the human side (rest, reflection, wins) or falls apart within a week
+
+I don't want a template. I want you to interview me, understand how I actually think and work, then build a system designed specifically for me.
+
+## INTERVIEW ME
+
+Ask me discovery questions across these five areas. Go one area at a time — don't dump them all at once. Listen to my answers before moving on.
+
+**1. How I Work**
+How does my day actually flow? Am I structured or chaotic? What makes me feel disorganized? How do I currently decide what to work on?
+
+**2. What I'm Juggling**
+What projects and life areas am I managing? Walk me through what it looks like when I switch between them. What gets lost in the transition?
+
+**3. My Rhythms**
+Do I have rituals that ground me? How do I want to start and end my day? What's the difference between feeling accomplished and feeling burned out?
+
+**4. What I Forget**
+What kinds of decisions and insights slip through the cracks? How much logging helps vs. overwhelms me? What's signal vs. noise?
+
+**5. The Dream Day**
+If this system worked perfectly, walk me through a full day — from waking up to shutting down. Don't worry about what's technically possible. Just describe the dream.
+
+## THEN BUILD IT
+
+After the interview, design and build my Personal OS right here. Use markdown files and a clean folder structure. Make it simple enough that I can maintain it, powerful enough that it actually changes how I work.
+
+Build it in stages — show me what you're creating as you go, explain your choices, and check in with me. If something doesn't fit, we adjust.
+
+The system should grow with me. Start lean. I can always add more later.</div>
+    <button class="copy-btn" onclick="copyPrompt('starter-content', this)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Copy starter prompt</span>
+    </button>
+  </div>
+
+  <!-- ADVANCED PROMPT -->
+  <div class="prompt-section prompt-advanced" id="prompt-advanced">
+    <div class="prompt-label">Advanced prompt — copy &amp; paste into Claude Code</div>
+    <div class="prompt-text" id="advanced-content">I want to build a Personal OS — a full operating system for my life, built on Claude Code's native capabilities. I'm comfortable in a terminal. Don't simplify — build it right.
+
+Here's why I need this:
+
+- My thoughts, tasks, and decisions are scattered across too many tools and AI conversations
+- I lose track of what I decided, where I left off, and the reasoning behind choices
+- I switch between projects and the context evaporates
+- Every productivity system I've tried either ignores the human side (rest, reflection, wins) or falls apart within a week
+- I want a system that persists across sessions, manages its own memory, and supports multi-agent workflows
+
+I don't want a template. Interview me first, then build a system designed for how my brain actually works — using the full architecture below.
+
+## INTERVIEW ME FIRST
+
+Before you build anything, ask me discovery questions across these five areas. Go one area at a time. Listen to my answers before moving on. Your architectural decisions should be informed by what you learn.
+
+**1. How I Work**
+How does my day actually flow? Am I structured or chaotic? What makes me feel disorganized? How do I currently decide what to work on?
+
+**2. What I'm Juggling**
+What projects and life areas am I managing? Walk me through what it looks like when I switch between them. What gets lost in the transition?
+
+**3. My Rhythms**
+Do I have rituals that ground me? How do I want to start and end my day? What's the difference between feeling accomplished and feeling burned out?
+
+**4. What I Forget**
+What kinds of decisions and insights slip through the cracks? How much logging helps vs. overwhelms me? What's signal vs. noise?
+
+**5. The Dream Day**
+If this system worked perfectly, walk me through a full day — from waking up to shutting down. Don't worry about what's technically possible. Just describe the dream.
+
+## THEN BUILD THE FULL SYSTEM
+
+After the interview, build my Personal OS using the following architecture. Adapt the specifics to my interview answers — the structure below is the skeleton, not the final form.
+
+### CLAUDE.md — The Persistent Brain
+
+Create a CLAUDE.md at the project root. This is the file you read every time a session starts. It should contain:
+
+- **Who I am**: A concise profile based on interview answers (work style, priorities, values, rhythms)
+- **Active projects**: Each project with its current status, last decision made, next action, and open questions
+- **Session history**: A rolling log of the last 5-10 sessions — what was worked on, what was decided, what's pending
+- **Compaction seeds**: When context gets long, these seeds preserve the essential state. Write them as compressed summaries that let a future session reconstruct full context from minimal text. Include: current project states, active decisions and their reasoning, unresolved questions, and anything I explicitly said to remember. Update these at the end of every session.
+- **My preferences and patterns**: Things you've learned about how I work that should persist (e.g., "prefers bullet-point check-ins over long prose," "gets overwhelmed by more than 3 active priorities")
+
+Design CLAUDE.md so that a fresh Claude Code session reading only this file can orient itself within 30 seconds.
+
+### agents.md — Subagent Definitions
+
+Create an agents.md that defines specialized subagents I can invoke. Base these on my actual needs from the interview, but here are common patterns to consider:
+
+- **Daily Ops agent**: Handles morning check-ins, end-of-day summaries, and daily log generation
+- **Project Context agent**: Manages context switching — saves state on current project, loads state on target project, surfaces where I left off and what decisions are pending
+- **Review agent**: Runs weekly reviews — aggregates daily logs, surfaces patterns, flags stalled projects, generates a "state of the system" summary
+- **Capture agent**: Quick-capture for ideas, decisions, and insights that need to be filed into the right project or log without interrupting current flow
+
+Each agent definition should include: its role, what files it reads/writes, what triggers it, and any constraints (e.g., "keep summaries under 10 lines").
+
+### Custom Slash Commands
+
+Create slash commands based on my rituals and workflow from the interview. At minimum, build:
+
+- **/morning** — My morning ritual. Should read CLAUDE.md, surface today's priorities, run any grounding ritual I described in the interview (breathing, gratitude, intention-setting), and set the day's focus.
+- **/switch [project]** — Context switch. Auto-commits current work, updates the current project's state in CLAUDE.md, loads the target project's context, and tells me where I left off and what's pending.
+- **/end-day** — End-of-day summary. Logs what was accomplished, what decisions were made, updates CLAUDE.md session history and compaction seeds, and sets up tomorrow's context.
+- **/capture [text]** — Quick capture without breaking flow. Routes the input to the right place based on content.
+- **/review** — Weekly review. Aggregates the week's daily logs, surfaces wins and patterns, flags anything stalled.
+
+Add or modify commands based on what I tell you in the interview. If I describe a ritual or repeated workflow, it should probably become a command.
+
+### Git Infrastructure
+
+Initialize a Git repo with:
+
+- A `.gitignore` that protects sensitive files (journal entries, private notes, anything I flag during the interview)
+- Logical commit conventions (e.g., `daily: 2025-03-18`, `switch: project-a → project-b`, `capture: idea for X`)
+
+### Hooks
+
+Set up Claude Code hooks for:
+
+- **Session start**: Auto-read CLAUDE.md, surface today's priorities, note any pending items from last session
+- **Pre-commit**: Validate that CLAUDE.md compaction seeds are current before committing
+- **Post-commit**: Update session log in CLAUDE.md with what was just committed
+
+### Folder Structure
+
+Design the folder structure based on my interview answers — mirror how I think, not a generic template. But ensure it includes dedicated spaces for:
+
+- Each active project
+- Daily logs (dated)
+- A capture inbox
+- Personal/reflection space (journal, wins, gratitude — whatever I described in the interview)
+
+## BUILD IN STAGES
+
+Don't dump everything at once. Build in this order:
+
+1. **Foundation**: Folder structure + CLAUDE.md + git init
+2. **Core commands**: /morning, /switch, /end-day
+3. **Agents**: agents.md with subagent definitions
+4. **Hooks**: Session start, pre-commit, post-commit
+5. **Extras**: /capture, /review, and any custom commands from the interview
+
+Show me what you're creating at each stage. Explain your decisions. Check in with me. If something doesn't fit how I described my workflow, adjust before moving on.
+
+The system should be lean enough to maintain, powerful enough to change how I work, and designed to evolve as my life changes.</div>
+    <button class="copy-btn" onclick="copyPrompt('advanced-content', this)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Copy advanced prompt</span>
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════ COMPARISON + REFERENCE ═══════════ -->
+<section>
+  <div class="divider"></div>
+  <h2>What each tier builds</h2>
+
+  <div class="comparison">
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Starter</th>
+          <th>Advanced</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Discovery interview</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Custom folder structure</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Markdown files you own</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Daily logs</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>CLAUDE.md persistent context</td><td class="maybe">maybe</td><td class="check">✓</td></tr>
+        <tr><td>Memory management &amp; compaction seeds</td><td>—</td><td class="check">✓</td></tr>
+        <tr><td>Subagent definitions (agents.md)</td><td>—</td><td class="check">✓</td></tr>
+        <tr><td>Custom slash commands</td><td class="maybe">maybe</td><td class="check">✓</td></tr>
+        <tr><td>Git + smart .gitignore</td><td>—</td><td class="check">✓</td></tr>
+        <tr><td>Session &amp; commit hooks</td><td>—</td><td class="check">✓</td></tr>
+        <tr><td>Context switching automation</td><td>—</td><td class="check">✓</td></tr>
+        <tr><td>Weekly review command</td><td>—</td><td class="check">✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size: 0.9rem; color: var(--white-secondary);">
+    You can always start with Starter and upgrade to Advanced later — the interview answers carry over.
+  </p>
+
+  <!-- Builder's reference accordion -->
+  <div class="accordion" id="acc-reference">
+    <button class="accordion-header" onclick="toggleAccordion('acc-reference')">
+      <span class="acc-label">
+        What's under the hood? Builder's reference
+        <span class="acc-badge">For the curious</span>
+      </span>
+      <svg class="accordion-chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="accordion-body">
+      <div class="accordion-content">
+        <p>You don't need to read this before using the prompt — it's here for people who want to understand the architecture.</p>
+
+        <div class="guide-card">
+          <strong>CLAUDE.md — The persistent brain</strong>
+          <p>A markdown file at the project root that Claude reads every time you start a session. Holds your profile, active projects, session history, and compaction seeds (compressed state summaries that let a new session reconstruct context fast). This is how Claude "remembers" across sessions without any external database.</p>
+        </div>
+
+        <div class="guide-card">
+          <strong>Compaction seeds</strong>
+          <p>When your context gets long, Claude compresses the essential state into dense summaries — project statuses, active decisions, unresolved questions, and things you explicitly said to remember. These seeds live in CLAUDE.md and get updated at the end of every session, so nothing critical is lost even as conversations roll forward.</p>
+        </div>
+
+        <div class="guide-card">
+          <strong>agents.md — Subagent definitions</strong>
+          <p>A file that defines specialized agents you can invoke for specific tasks — a Daily Ops agent for morning check-ins, a Project Context agent for switching between work, a Review agent for weekly summaries. Each definition includes what files it reads/writes, what triggers it, and any constraints. Think of it as a team of specialists you can call on.</p>
+        </div>
+
+        <div class="guide-card">
+          <strong>Slash commands</strong>
+          <p>Custom commands you type in the terminal — like <code>/morning</code> to start your day, <code>/switch projectname</code> to change context, or <code>/end-day</code> to wrap up. These automate the rituals and workflows you described in the interview so they're one keystroke away.</p>
+        </div>
+
+        <div class="guide-card">
+          <strong>Hooks</strong>
+          <p>Automated triggers that fire at specific moments — when you start a session (load context), before a commit (validate memory is current), after a commit (update the session log). These handle the housekeeping so you don't have to think about it.</p>
+        </div>
+
+        <h4>What it uses</h4>
+        <ul>
+          <li><strong>Markdown</strong> — Plain text files you can read anywhere, forever. No vendor lock-in.</li>
+          <li><strong>Git</strong> — Version control so every change is tracked. You can always go back.</li>
+          <li><strong>Local files</strong> — Everything on your machine. Nothing sent anywhere unless you choose.</li>
+          <li><strong>Claude Code</strong> — The engine that reads, writes, and orchestrates everything.</li>
+        </ul>
+
+        <h4>How to evolve it</h4>
+        <p>Your system is just files. Edit them in any text editor. Ask Claude to add features or restructure things. Share your setup with others. Back it up however you back up anything else. You own it — it's not a subscription, it's not an app that might shut down.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="honest">
+    <h4>What it won't do — let's be straight</h4>
+    <ul>
+      <li>It doesn't run in the background. Claude is active when you're using it.</li>
+      <li>It doesn't sync across devices automatically (unless you add a Git remote).</li>
+      <li>It doesn't replace your calendar, email, or task app. It's a thinking layer alongside them.</li>
+      <li>It's files on your computer. You own them completely — but you maintain them too.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  Created by Christopher Marks<br>
+  <a href="#">Newsletter</a> · <a href="#">Twitter/X</a>
+</footer>
+
+<script>
+function switchTier(tier) {
+  document.querySelectorAll('.tier-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', (tier === 'starter' && i === 0) || (tier === 'advanced' && i === 1));
+  });
+  document.getElementById('prompt-starter').classList.toggle('active', tier === 'starter');
+  document.getElementById('prompt-advanced').classList.toggle('active', tier === 'advanced');
+}
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const span = btn.querySelector('span');
+    const orig = span.textContent;
+    btn.classList.add('copied');
+    span.textContent = 'Copied!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      span.textContent = orig;
+    }, 2500);
+  });
+}
+
+function toggleAccordion(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+</script>
+
+</body>
+</html>
