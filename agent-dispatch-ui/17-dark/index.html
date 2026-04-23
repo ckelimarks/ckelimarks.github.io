@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<!--
+  Desk × Bases (17). Synthesis: takes the Desk mechanic from 16 (four horizontal life-area
+  lanes with R→L time flow past a NOW line, top dispatch bar, arc-in agents) and re-skins
+  it with the Bases aesthetic from 15 (dark inky palette, muted per-base glows, real
+  force-directed node graphs as the accretion on each lane's right edge). Resource meters
+  (Context / Tokens / Spend / Memory) live top-right and tick up as agents complete work.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Desk · Dark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Base palette — Bases inky dark */
+  --bg-0:       #07080c;
+  --bg-1:       #0b0d14;
+  --bg-2:       #11131c;
+  --bg-3:       #161927;
+  --ink-0:      #e7e9f2;
+  --ink-1:      #b8bccf;
+  --ink-2:      #70748b;
+  --ink-3:      #3a3d4f;
+  --ink-4:      #252836;
+  --line:       #1c1f2b;
+  --line-2:     #262a39;
+
+  --accent:     #f5b73d;            /* warm amber — single accent */
+  --accent-soft:rgba(245,183,61,0.15);
+  --accent-glow:rgba(245,183,61,0.55);
+  --alert:      #ef5a5a;
+  --ok:         #6fe1b1;
+
+  /* Lane hues (Bases) — muted tint applied as radial glow */
+  --ln-hue: 320;    /* LoveNotes — magenta/rose */
+  --hg-hue: 190;    /* HG — cool cyan-teal */
+  --content-hue: 50; /* Content — amber-gold */
+  --life-hue: 150;  /* Life — sage green */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--bg-0);
+  color: var(--ink-0);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  font-weight: 400;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+}
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+/* faint galaxy ambience behind everything */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 18% 28%, rgba(80,60,180,0.06), transparent 55%),
+    radial-gradient(ellipse at 82% 78%, rgba(40,120,180,0.05), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(20,20,35,0.55), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 68px 1fr 30px 30px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============ TOP BAR ============ */
+.top {
+  display: grid;
+  grid-template-columns: 190px 1fr 640px;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(to bottom, rgba(7,8,12,0.92), rgba(7,8,12,0.6));
+  backdrop-filter: blur(12px);
+  position: relative;
+  z-index: 20;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  padding-right: 18px;
+  border-right: 1px solid var(--line);
+  height: 100%;
+}
+.brand-mark {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+}
+.brand-mark svg { width: 22px; height: 22px; }
+.brand-text .name {
+  font-size: 13px; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-0);
+}
+.brand-text .sub {
+  font-size: 10px; color: var(--ink-2); letter-spacing: 0.14em; text-transform: uppercase;
+  margin-top: -1px;
+}
+.brand .date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  margin-left: 12px;
+  text-transform: uppercase;
+}
+
+/* Dispatch input */
+.dispatch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  padding: 7px 12px;
+  margin: 0 18px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.dispatch:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft), 0 0 18px rgba(245,183,61,0.15);
+}
+.dispatch .prefix {
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+.dispatch input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--ink-0);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 4px 0;
+  letter-spacing: -0.005em;
+}
+.dispatch input::placeholder { color: var(--ink-3); }
+.dispatch .lane-pick {
+  display: flex;
+  gap: 4px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line-2);
+}
+.dispatch .lane-pick button {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-2);
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.dispatch .lane-pick button:hover { color: var(--ink-0); background: var(--bg-3); }
+.dispatch .lane-pick button.on {
+  background: var(--accent);
+  color: #1a1306;
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(245,183,61,0.4);
+}
+.dispatch .enter-hint {
+  color: var(--ink-3);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid var(--line-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-1);
+}
+
+/* resource meters — Bases style */
+.meters {
+  display: flex;
+  gap: 22px;
+  justify-content: flex-end;
+  align-items: center;
+  padding-left: 20px;
+  border-left: 1px solid var(--line);
+  height: 100%;
+}
+.meter {
+  display: flex; flex-direction: column; gap: 4px;
+  min-width: 118px;
+}
+.meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.meter .lbl {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  color: var(--ink-2);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.meter .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-0);
+  font-weight: 500;
+}
+.meter .val .sub { color: var(--ink-2); font-weight: 400; }
+.meter .bar {
+  width: 100%; height: 3px; background: var(--line-2);
+  border-radius: 2px; overflow: hidden; position: relative;
+}
+.meter .bar > span {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--ink-1), var(--ink-0));
+  border-radius: 2px;
+  transition: width .6s ease;
+}
+.meter.context .bar > span { background: linear-gradient(90deg, #6366a8, #9ba0e0); }
+.meter.tokens  .bar > span { background: linear-gradient(90deg, #6b7aa1, #b8bccf); }
+.meter.money   .bar > span { background: linear-gradient(90deg, #4a8e6b, #6fe1b1); }
+.meter.memory  .bar > span { background: linear-gradient(90deg, #8c6cc0, #b99ae0); }
+.meter.warn .bar > span {
+  background: linear-gradient(90deg, var(--accent), #ffd672);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* ============ STAGE ============ */
+.stage {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* NOW line — thin, glowing pale gold */
+.playhead {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent 0%, rgba(255,232,180,0.9) 10%, rgba(255,232,180,0.75) 90%, transparent 100%);
+  box-shadow: 0 0 8px rgba(245,183,61,0.55), 0 0 20px rgba(245,183,61,0.25);
+  opacity: 0.9;
+  z-index: 8;
+  pointer-events: none;
+}
+.playhead::before {
+  content: "NOW";
+  position: absolute;
+  top: 8px;
+  left: -20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: rgba(255,232,180,0.85);
+  background: var(--bg-0);
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(245,183,61,0.22);
+}
+.playhead::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -3px;
+  width: 7px; height: 7px;
+  background: #fff3cc;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(245,183,61,0.8), 0 0 18px rgba(245,183,61,0.5);
+}
+
+/* four lanes */
+.lanes {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+}
+.lane {
+  position: relative;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+.lane:last-child { border-bottom: none; }
+
+/* Subtle per-lane radial glow — very muted */
+.lane[data-id="lovenotes"] {
+  background:
+    radial-gradient(ellipse at 15% 50%, hsla(var(--ln-hue), 55%, 40%, 0.11), transparent 55%),
+    linear-gradient(180deg, hsla(var(--ln-hue), 30%, 10%, 0.3), transparent 90%);
+}
+.lane[data-id="hg"] {
+  background:
+    radial-gradient(ellipse at 15% 50%, hsla(var(--hg-hue), 55%, 40%, 0.10), transparent 55%),
+    linear-gradient(180deg, hsla(var(--hg-hue), 30%, 10%, 0.3), transparent 90%);
+}
+.lane[data-id="content"] {
+  background:
+    radial-gradient(ellipse at 15% 50%, hsla(var(--content-hue), 55%, 38%, 0.10), transparent 55%),
+    linear-gradient(180deg, hsla(var(--content-hue), 28%, 10%, 0.28), transparent 90%);
+}
+.lane[data-id="life"] {
+  background:
+    radial-gradient(ellipse at 15% 50%, hsla(var(--life-hue), 50%, 38%, 0.10), transparent 55%),
+    linear-gradient(180deg, hsla(var(--life-hue), 28%, 10%, 0.28), transparent 90%);
+}
+
+.lane-head {
+  position: absolute;
+  top: 12px; left: 20px;
+  z-index: 4;
+  display: flex; align-items: baseline; gap: 12px;
+}
+.lane-head .name {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-0);
+}
+.lane[data-id="lovenotes"] .lane-head .name { color: hsl(var(--ln-hue), 50%, 78%); }
+.lane[data-id="hg"] .lane-head .name        { color: hsl(var(--hg-hue), 50%, 78%); }
+.lane[data-id="content"] .lane-head .name   { color: hsl(var(--content-hue), 55%, 74%); }
+.lane[data-id="life"] .lane-head .name      { color: hsl(var(--life-hue), 45%, 74%); }
+
+.lane-head .meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ghost ticks */
+.lane .ticks {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 100%;
+  pointer-events: none;
+}
+.lane .tick {
+  position: absolute;
+  top: 0; bottom: 0; width: 1px;
+  background: var(--line);
+  opacity: 0.5;
+}
+
+/* Task blocks — dark, filled, glowing border in lane accent */
+.task {
+  position: absolute;
+  height: 34px;
+  background: rgba(13,15,22,0.85);
+  border: 1px solid;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px 0 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--ink-0);
+  overflow: hidden;
+  z-index: 5;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: box-shadow .25s ease, transform .2s ease, border-color .25s ease;
+}
+.lane[data-id="lovenotes"] .task {
+  border-color: hsla(var(--ln-hue), 55%, 55%, 0.5);
+  box-shadow: 0 0 0 1px hsla(var(--ln-hue), 60%, 45%, 0.08), 0 4px 18px rgba(0,0,0,0.45);
+}
+.lane[data-id="hg"] .task {
+  border-color: hsla(var(--hg-hue), 55%, 55%, 0.5);
+  box-shadow: 0 0 0 1px hsla(var(--hg-hue), 60%, 45%, 0.08), 0 4px 18px rgba(0,0,0,0.45);
+}
+.lane[data-id="content"] .task {
+  border-color: hsla(var(--content-hue), 55%, 55%, 0.5);
+  box-shadow: 0 0 0 1px hsla(var(--content-hue), 60%, 45%, 0.08), 0 4px 18px rgba(0,0,0,0.45);
+}
+.lane[data-id="life"] .task {
+  border-color: hsla(var(--life-hue), 50%, 55%, 0.5);
+  box-shadow: 0 0 0 1px hsla(var(--life-hue), 60%, 45%, 0.08), 0 4px 18px rgba(0,0,0,0.45);
+}
+.task:hover {
+  transform: translateY(calc(-50% - 1px));
+  z-index: 6;
+}
+
+/* Active (running) tasks: subtle pulse */
+.task.active {
+  animation: activePulse 3.4s ease-in-out infinite;
+}
+@keyframes activePulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 4px 18px rgba(0,0,0,0.45); }
+  50%      { box-shadow: 0 0 0 2px rgba(255,232,180,0.08), 0 4px 26px rgba(245,183,61,0.10); }
+}
+
+.task .glyph {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 9px;
+  color: #0e1019;
+  margin-right: 9px;
+  flex-shrink: 0;
+  letter-spacing: 0;
+  background: var(--ink-2);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.03);
+}
+.lane[data-id="lovenotes"] .task .glyph { background: hsl(var(--ln-hue), 55%, 65%); }
+.lane[data-id="hg"] .task .glyph        { background: hsl(var(--hg-hue), 55%, 65%); }
+.lane[data-id="content"] .task .glyph   { background: hsl(var(--content-hue), 60%, 62%); }
+.lane[data-id="life"] .task .glyph      { background: hsl(var(--life-hue), 50%, 62%); }
+
+.task .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+  color: var(--ink-0);
+}
+.task .fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(245,183,61,0.00), rgba(245,183,61,0.08));
+  z-index: 0;
+  transition: width .6s linear;
+}
+.task > * { position: relative; z-index: 1; }
+
+.task.needs-input {
+  border-color: var(--alert) !important;
+  box-shadow: 0 0 0 2px rgba(239,90,90,0.18), 0 0 22px rgba(239,90,90,0.25) !important;
+  animation: pulseNeeds 2.0s ease-in-out infinite;
+}
+.task.needs-input .glyph { background: var(--alert); color: #fff; }
+.task.needs-input::after {
+  content: "needs you";
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--alert);
+  background: rgba(239,90,90,0.10);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(239,90,90,0.4);
+  z-index: 2;
+}
+@keyframes pulseNeeds {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(239,90,90,0.16), 0 0 16px rgba(239,90,90,0.2); }
+  50%      { box-shadow: 0 0 0 4px rgba(239,90,90,0.10), 0 0 30px rgba(239,90,90,0.4); }
+}
+
+.task.done {
+  background: rgba(15,18,26,0.6);
+  color: var(--ink-2);
+  border-color: var(--line-2) !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+.task.done .label { text-decoration: line-through; text-decoration-color: var(--ink-3); color: var(--ink-2); }
+.task.done .glyph { background: var(--ink-3) !important; color: var(--ink-1); }
+
+/* Growth graph (Bases-style force graph) on each lane's right edge */
+.growth {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 260px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(to right, transparent, rgba(7,8,12,0.35) 40%, rgba(7,8,12,0.6));
+}
+.growth svg { width: 100%; height: 100%; display: block; }
+.growth .node {
+  opacity: 0;
+  transform-origin: center;
+  transition: opacity .6s ease, r .4s ease;
+  filter: url(#nodeGlow);
+}
+.growth .node.show { opacity: 1; }
+.growth .node-halo {
+  fill: none;
+  stroke-width: 1;
+  opacity: 0;
+  transition: opacity 1.2s ease, r .8s ease;
+}
+.growth .node-halo.show { opacity: 0.35; }
+.growth .edge {
+  fill: none;
+  stroke-width: 0.7;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.growth .edge.show { opacity: 0.38; }
+
+/* Agent arc dot */
+.flight-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.flight-dot {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #1a1306;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 16px rgba(245,183,61,0.6), 0 0 32px rgba(245,183,61,0.3);
+  transform: translate(-50%, -50%);
+  transition:
+    left .9s cubic-bezier(0.4,0,0.2,1),
+    top .9s cubic-bezier(0.4,0,0.2,1),
+    opacity .3s ease,
+    width .3s ease, height .3s ease, font-size .3s ease;
+}
+/* light-trail left by arc */
+.flight-trail {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,232,180,0.85);
+  box-shadow: 0 0 8px rgba(245,183,61,0.7);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: trailFade .5s ease-out forwards;
+  z-index: 9;
+}
+@keyframes trailFade {
+  0%   { opacity: 0.9; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(0.3); }
+}
+
+/* Completion burst */
+.burst {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,232,180,0.9);
+  box-shadow: 0 0 18px rgba(245,183,61,0.8);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: burst .9s ease-out forwards;
+  z-index: 9;
+}
+@keyframes burst {
+  0%   { opacity: 0.95; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;    transform: translate(-50%,-50%) scale(7); }
+}
+
+/* Bench */
+.bench {
+  border-top: 1px solid var(--line);
+  background: rgba(7,8,12,0.8);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center;
+  padding: 0 24px;
+  gap: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  z-index: 15;
+  position: relative;
+}
+.bench .bench-label { color: var(--ink-3); }
+.bench .agents { display: flex; gap: 6px; }
+.bench .agent {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--ink-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: default;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.bench .agent.busy {
+  opacity: 0.4;
+  background: var(--bg-1);
+}
+.bench .agent.free {
+  background: var(--bg-3);
+  border-color: var(--ink-3);
+  color: var(--ink-0);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.02);
+}
+.bench .agent:hover { transform: translateY(-2px); }
+.bench .right { margin-left: auto; color: var(--ink-3); }
+
+/* footer status */
+.footer {
+  border-top: 1px solid var(--line);
+  background: rgba(5,6,10,0.85);
+  display: flex; align-items: center;
+  padding: 0 24px;
+  gap: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.footer .sep { color: var(--ink-4); }
+.footer .tip { margin-left: auto; color: var(--ink-3); }
+.footer .hot { color: var(--accent); }
+
+@keyframes taskIn {
+  from { opacity: 0; transform: translate(0, calc(-50% - 6px)); }
+  to   { opacity: 1; transform: translate(0, -50%); }
+}
+.task.fresh { animation: taskIn .4s ease-out; }
+
+.kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--bg-1);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-1);
+  margin: 0 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="top">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="6" cy="6" r="2.2" stroke="#f5b73d" stroke-width="1.4"/>
+          <circle cx="18" cy="7" r="1.6" stroke="#b8bccf" stroke-width="1.4"/>
+          <circle cx="13" cy="17" r="2" stroke="#b8bccf" stroke-width="1.4"/>
+          <circle cx="5" cy="17" r="1.2" fill="#f5b73d"/>
+          <path d="M6 6 L18 7 M6 6 L13 17 M18 7 L13 17 M5 17 L13 17" stroke="#3a3d4f" stroke-width="0.8"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="name">Desk</div>
+        <div class="sub mono" id="dateLabel">THU · APR 23</div>
+      </div>
+    </div>
+
+    <div class="dispatch" id="dispatch">
+      <span class="prefix">&gt;</span>
+      <input id="taskInput" type="text"
+             placeholder="Type an idea — then Enter…"
+             autocomplete="off" spellcheck="false" />
+      <div class="lane-pick" id="lanePick">
+        <button data-lane="lovenotes">LoveNotes</button>
+        <button data-lane="hg">HG</button>
+        <button data-lane="content">Content</button>
+        <button data-lane="life">Life</button>
+      </div>
+      <span class="enter-hint mono">&#9166;</span>
+    </div>
+
+    <div class="meters">
+      <div class="meter context" id="m-context">
+        <div class="meter-head">
+          <span class="lbl">Context</span>
+          <span class="val mono"><span id="mv-context">38.0k</span><span class="sub"> / 200k</span></span>
+        </div>
+        <span class="bar"><span style="width:19%"></span></span>
+      </div>
+      <div class="meter tokens" id="m-tokens">
+        <div class="meter-head">
+          <span class="lbl">Tokens</span>
+          <span class="val mono" id="mv-tokens">212.4k</span>
+        </div>
+        <span class="bar"><span style="width:21%"></span></span>
+      </div>
+      <div class="meter money" id="m-money">
+        <div class="meter-head">
+          <span class="lbl">Spend</span>
+          <span class="val mono">$<span id="mv-money">1.04</span></span>
+        </div>
+        <span class="bar"><span style="width:10%"></span></span>
+      </div>
+      <div class="meter memory" id="m-memory">
+        <div class="meter-head">
+          <span class="lbl">Memory</span>
+          <span class="val mono"><span id="mv-memory">38</span><span class="sub"> entries</span></span>
+        </div>
+        <span class="bar"><span style="width:38%"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage" id="stage">
+    <div class="lanes" id="lanes">
+
+      <div class="lane" data-id="lovenotes">
+        <div class="lane-head">
+          <span class="name">LoveNotes</span>
+          <span class="meta mono" data-count-for="lovenotes">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth">
+          <svg viewBox="0 0 260 200" preserveAspectRatio="none">
+            <defs>
+              <filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="1.2" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g class="edges"></g>
+            <g class="halos"></g>
+            <g class="nodes"></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="lane" data-id="hg">
+        <div class="lane-head">
+          <span class="name">HG</span>
+          <span class="meta mono" data-count-for="hg">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth">
+          <svg viewBox="0 0 260 200" preserveAspectRatio="none">
+            <g class="edges"></g>
+            <g class="halos"></g>
+            <g class="nodes"></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="lane" data-id="content">
+        <div class="lane-head">
+          <span class="name">Content</span>
+          <span class="meta mono" data-count-for="content">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth">
+          <svg viewBox="0 0 260 200" preserveAspectRatio="none">
+            <g class="edges"></g>
+            <g class="halos"></g>
+            <g class="nodes"></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="lane" data-id="life">
+        <div class="lane-head">
+          <span class="name">Life</span>
+          <span class="meta mono" data-count-for="life">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth">
+          <svg viewBox="0 0 260 200" preserveAspectRatio="none">
+            <g class="edges"></g>
+            <g class="halos"></g>
+            <g class="nodes"></g>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="playhead" id="playhead"></div>
+    <div class="flight-layer" id="flightLayer"></div>
+  </div>
+
+  <!-- BENCH -->
+  <div class="bench">
+    <span class="bench-label mono">Bench</span>
+    <div class="agents" id="bench"></div>
+    <span class="right mono"><span id="freeCount">0</span> free &middot; <span id="busyCount">0</span> busy</span>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>runtime <span class="mono hot" id="runtime">0:00</span></span>
+    <span class="sep">·</span>
+    <span><span class="mono" id="builtCount">0</span> built this session</span>
+    <span class="sep">·</span>
+    <span>NOW line is live — tasks drift R → L through it</span>
+    <span class="tip">press <span class="kbd">/</span> to dispatch · <span class="kbd">Tab</span> to cycle lanes</span>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   DESK × BASES (17) — dark synthesis
+   Mechanics from 16, palette + force-graph accretion from 15.
+   ============================================================ */
+
+const LANES = [
+  { id: 'lovenotes', name: 'LoveNotes', hue: 320 },
+  { id: 'hg',        name: 'HG',        hue: 190 },
+  { id: 'content',   name: 'Content',   hue: 50  },
+  { id: 'life',      name: 'Life',      hue: 150 },
+];
+
+const AGENTS = [
+  { id: 'A1', name: 'AR', spec: 'lovenotes' },
+  { id: 'A2', name: 'BK', spec: 'hg' },
+  { id: 'A3', name: 'CV', spec: 'content' },
+  { id: 'A4', name: 'DL', spec: 'life' },
+  { id: 'A5', name: 'EM', spec: 'lovenotes' },
+  { id: 'A6', name: 'FP', spec: 'content' },
+  { id: 'A7', name: 'GN', spec: null },
+  { id: 'A8', name: 'HS', spec: null },
+];
+
+const state = {
+  tasks: [],
+  selectedLane: 'lovenotes',
+  now: Date.now(),
+  startedAt: Date.now(),
+  resources: {
+    context: 38000,
+    contextMax: 200000,
+    tokens: 212400,
+    spend: 1.04,
+    memory: 38,
+  },
+  builtThisSession: 0,
+};
+
+const LOOKBACK_MS  = 90 * 1000;
+const LOOKAHEAD_MS = 40 * 1000;
+
+const SEED_TASKS = [
+  { lane:'lovenotes', label:'Review PR #482 — reminder scheduler refactor', agent:'A1', startOffset:-22000, dur: 55000, progress: 0.40 },
+  { lane:'lovenotes', label:'Draft reply to Sarah re: contract redlines',    agent:'A5', startOffset:-8000,  dur: 28000, progress: 0.28, needsInput:true },
+  { lane:'lovenotes', label:'Triage Supabase auth errors (last 24h)',        agent:null, startOffset:12000,  dur: 35000, progress: 0 },
+  { lane:'hg', label:'Summarize client intake call — action items', agent:'A2', startOffset:-30000, dur: 40000, progress: 0.75 },
+  { lane:'hg', label:'Draft Q2 OKRs — coaching program',            agent:null, startOffset:8000,   dur: 50000, progress: 0 },
+  { lane:'content', label:'Outline essay: "Attention is the asset"',     agent:'A3', startOffset:-45000, dur: 60000, progress: 0.85 },
+  { lane:'content', label:'Edit Substack draft — "Notes on dispatch"',    agent:'A6', startOffset:-12000, dur: 30000, progress: 0.38 },
+  { lane:'life', label:'Book dentist appt — Dr. Keller',          agent:'A4', startOffset:-6000, dur: 18000, progress: 0.30 },
+  { lane:'life', label:'Pull receipts for April reimbursements',  agent:null, startOffset:24000, dur: 22000, progress: 0 },
+];
+
+const SEED_DONE = {
+  lovenotes: 9,
+  hg: 5,
+  content: 11,
+  life: 6,
+};
+
+let taskIdCounter = 0;
+function nextTaskId() { return 'T' + (++taskIdCounter); }
+
+/* ---------- DOM ---------- */
+const laneEls = {};
+LANES.forEach(l => laneEls[l.id] = document.querySelector(`.lane[data-id="${l.id}"]`));
+
+const stageEl = document.getElementById('stage');
+const flightLayer = document.getElementById('flightLayer');
+const playheadEl = document.getElementById('playhead');
+const taskInput = document.getElementById('taskInput');
+const lanePickEl = document.getElementById('lanePick');
+const benchEl = document.getElementById('bench');
+const freeCountEl = document.getElementById('freeCount');
+const busyCountEl = document.getElementById('busyCount');
+const dateLabel = document.getElementById('dateLabel');
+const runtimeEl = document.getElementById('runtime');
+const builtCountEl = document.getElementById('builtCount');
+
+/* ---------- Date label ---------- */
+(function(){
+  const d = new Date();
+  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
+  const mo  = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()];
+  dateLabel.textContent = `${dow} · ${mo} ${d.getDate()}`;
+})();
+
+/* ---------- Lane picker ---------- */
+function setLane(id) {
+  state.selectedLane = id;
+  Array.from(lanePickEl.querySelectorAll('button')).forEach(b => {
+    b.classList.toggle('on', b.dataset.lane === id);
+  });
+}
+lanePickEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  setLane(btn.dataset.lane);
+  taskInput.focus();
+});
+setLane('lovenotes');
+
+/* ---------- Dispatch input ---------- */
+taskInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && taskInput.value.trim().length > 0) {
+    const label = taskInput.value.trim();
+    taskInput.value = '';
+    dispatchNewTask(label, state.selectedLane);
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    const idx = LANES.findIndex(l => l.id === state.selectedLane);
+    setLane(LANES[(idx + 1) % LANES.length].id);
+  }
+});
+
+taskInput.addEventListener('input', () => {
+  const v = taskInput.value.toLowerCase();
+  if (/\b(pr|supabase|sms|reminder|twilio|auth|love\s*notes|lovenotes)\b/.test(v)) setLane('lovenotes');
+  else if (/\b(hg|client|coaching|intake|okr|session)\b/.test(v)) setLane('hg');
+  else if (/\b(essay|post|substack|draft|outline|article|newsletter)\b/.test(v)) setLane('content');
+  else if (/\b(dentist|appt|bill|grocery|receipt|life|household|book\s)\b/.test(v)) setLane('life');
+});
+
+window.addEventListener('load', () => taskInput.focus());
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== taskInput) {
+    e.preventDefault();
+    taskInput.focus();
+  }
+});
+
+/* ---------- Bench render ---------- */
+function renderBench() {
+  benchEl.innerHTML = '';
+  AGENTS.forEach(a => {
+    const busy = state.tasks.some(t => t.agent === a.id && !t.done);
+    const el = document.createElement('div');
+    el.className = 'agent ' + (busy ? 'busy' : 'free');
+    el.title = `${a.name}${a.spec ? ' — ' + a.spec : ''}${busy ? ' (busy)' : ' (free)'}`;
+    el.textContent = a.name;
+    el.dataset.agentId = a.id;
+    benchEl.appendChild(el);
+  });
+  const freeN = AGENTS.filter(a => !state.tasks.some(t => t.agent === a.id && !t.done)).length;
+  freeCountEl.textContent = freeN;
+  busyCountEl.textContent = AGENTS.length - freeN;
+}
+
+/* ---------- Coord helpers ---------- */
+function timeToX(ms) {
+  const rect = stageEl.getBoundingClientRect();
+  const W = rect.width;
+  const PLAYHEAD_FRAC = 0.70;
+  const playX = W * PLAYHEAD_FRAC;
+  const pxPerMsLeft  = playX / LOOKBACK_MS;
+  const pxPerMsRight = (W - playX) / LOOKAHEAD_MS;
+  if (ms <= 0) return playX + ms * pxPerMsLeft;
+  return playX + ms * pxPerMsRight;
+}
+function playheadX() {
+  const rect = stageEl.getBoundingClientRect();
+  return rect.width * 0.70;
+}
+function positionPlayhead() {
+  playheadEl.style.left = playheadX() + 'px';
+}
+
+/* ---------- Task helpers ---------- */
+function pickAgent(laneId) {
+  const free = AGENTS.filter(a => !state.tasks.some(t => t.agent === a.id && !t.done));
+  const fit = free.find(a => a.spec === laneId);
+  return (fit || free[0] || null)?.id || null;
+}
+function agentInitials(agentId) {
+  const a = AGENTS.find(x => x.id === agentId);
+  return a ? a.name : '··';
+}
+
+function buildTaskEl(t) {
+  const el = document.createElement('div');
+  el.className = 'task fresh';
+  el.dataset.id = t.id;
+  el.innerHTML = `
+    <span class="fill"></span>
+    <span class="glyph">${t.agent ? agentInitials(t.agent) : '··'}</span>
+    <span class="label"></span>
+  `;
+  el.querySelector('.label').textContent = t.label;
+  el.addEventListener('click', () => {
+    if (t.needsInput) {
+      t.needsInput = false;
+      t.startedAt = Date.now() - t.progress * t.dur;
+      render();
+    }
+  });
+  return el;
+}
+
+function dispatchNewTask(label, laneId) {
+  const agent = pickAgent(laneId);
+  const now = Date.now();
+  const t = {
+    id: nextTaskId(),
+    lane: laneId,
+    label,
+    agent,
+    startedAt: now,
+    dur: 20000 + Math.random() * 35000,
+    progress: 0,
+    done: false,
+    needsInput: false,
+    justCreated: true,
+  };
+  state.tasks.push(t);
+  if (agent) arcAgentToLane(agent, laneId);
+  render();
+}
+
+/* ---------- Agent arc animation with trail ---------- */
+function arcAgentToLane(agentId, laneId) {
+  const benchAgentEl = benchEl.querySelector(`[data-agent-id="${agentId}"]`);
+  if (!benchAgentEl) return;
+
+  const startRect = benchAgentEl.getBoundingClientRect();
+  const appRect   = stageEl.getBoundingClientRect();
+  const laneEl = laneEls[laneId];
+  const laneRect = laneEl.getBoundingClientRect();
+
+  const x0 = startRect.left + startRect.width/2 - appRect.left;
+  const y0 = startRect.top  + startRect.height/2 - appRect.top;
+  const x1 = playheadX();
+  const y1 = laneRect.top + laneRect.height/2 - appRect.top;
+
+  const dot = document.createElement('div');
+  dot.className = 'flight-dot';
+  dot.textContent = agentInitials(agentId);
+  dot.style.left = x0 + 'px';
+  dot.style.top  = y0 + 'px';
+  flightLayer.appendChild(dot);
+
+  // Trail: periodically drop sparks along the current visible dot position
+  const trailInterval = setInterval(() => {
+    const r = dot.getBoundingClientRect();
+    const ap = stageEl.getBoundingClientRect();
+    const cx = r.left + r.width/2 - ap.left;
+    const cy = r.top + r.height/2 - ap.top;
+    const spark = document.createElement('div');
+    spark.className = 'flight-trail';
+    spark.style.left = cx + 'px';
+    spark.style.top  = cy + 'px';
+    flightLayer.appendChild(spark);
+    setTimeout(() => spark.remove(), 520);
+  }, 40);
+
+  requestAnimationFrame(() => {
+    const midX = (x0 + x1) / 2;
+    const midY = Math.min(y0, y1) - 70;
+    dot.style.transition = 'left .42s cubic-bezier(0.22,1,0.36,1), top .42s cubic-bezier(0.22,1,0.36,1)';
+    dot.style.left = midX + 'px';
+    dot.style.top  = midY + 'px';
+    setTimeout(() => {
+      dot.style.left = x1 + 'px';
+      dot.style.top  = y1 + 'px';
+      setTimeout(() => {
+        clearInterval(trailInterval);
+        dot.style.opacity = '0';
+        dot.style.transform = 'translate(-50%,-50%) scale(0.5)';
+        setTimeout(() => { dot.remove(); }, 280);
+      }, 420);
+    }, 420);
+  });
+}
+
+/* ---------- Render loop ---------- */
+let taskElCache = {};
+
+function render() {
+  state.now = Date.now();
+  positionPlayhead();
+
+  LANES.forEach(l => {
+    const active = state.tasks.filter(t => t.lane === l.id && !t.done).length;
+    const el = document.querySelector(`[data-count-for="${l.id}"]`);
+    if (el) el.textContent = active + ' active';
+  });
+
+  const liveIds = new Set();
+  state.tasks.forEach(t => {
+    liveIds.add(t.id);
+    const elapsed = t.needsInput
+      ? (t.dur * t.progress)
+      : (state.now - t.startedAt);
+    let frac;
+    if (t.needsInput) frac = t.progress;
+    else frac = Math.max(0, Math.min(1, elapsed / t.dur));
+
+    if (!t.done && frac >= 1) {
+      t.done = true;
+      t.doneAt = state.now;
+      onTaskComplete(t);
+    }
+
+    const taskStartMs = t.startedAt - state.now;
+    const taskEndMs   = t.startedAt + t.dur - state.now;
+    let leftX = timeToX(taskStartMs);
+    let rightX = timeToX(taskEndMs);
+    let width = Math.max(180, rightX - leftX);
+
+    if (t.done) {
+      leftX = timeToX((t.doneAt - t.dur) - state.now);
+      rightX = timeToX(t.doneAt - state.now);
+      width = Math.max(180, rightX - leftX);
+    }
+
+    if (rightX < -300) {
+      if (taskElCache[t.id]) { taskElCache[t.id].remove(); delete taskElCache[t.id]; }
+      return;
+    }
+
+    let el = taskElCache[t.id];
+    if (!el) {
+      el = buildTaskEl(t);
+      laneEls[t.lane].appendChild(el);
+      taskElCache[t.id] = el;
+    }
+    el.style.left = leftX + 'px';
+    el.style.top = '50%';
+    el.style.transform = 'translateY(-50%)';
+    el.style.width = width + 'px';
+    el.classList.toggle('needs-input', !!t.needsInput);
+    el.classList.toggle('done', !!t.done);
+    // Active: task is currently crossing playhead (running live work)
+    const crossing = leftX <= playheadX() && rightX >= playheadX() && !t.done && !t.needsInput;
+    el.classList.toggle('active', crossing);
+
+    const fillEl = el.querySelector('.fill');
+    if (fillEl) {
+      const fillW = Math.max(0, Math.min(width, playheadX() - leftX));
+      fillEl.style.width = (t.done ? width : fillW) + 'px';
+    }
+  });
+
+  Object.keys(taskElCache).forEach(id => {
+    if (!liveIds.has(id)) { taskElCache[id].remove(); delete taskElCache[id]; }
+  });
+
+  renderBench();
+}
+
+/* ---------- Completion handling ---------- */
+function onTaskComplete(t) {
+  const rect = stageEl.getBoundingClientRect();
+  const laneRect = laneEls[t.lane].getBoundingClientRect();
+  const px = playheadX();
+  const py = laneRect.top + laneRect.height/2 - rect.top;
+  const b = document.createElement('div');
+  b.className = 'burst';
+  b.style.left = px + 'px';
+  b.style.top  = py + 'px';
+  flightLayer.appendChild(b);
+  setTimeout(() => b.remove(), 950);
+
+  addGrowthNode(t.lane);
+
+  // resource tick-up on completion
+  state.resources.context += 1800 + Math.floor(Math.random() * 2200);
+  state.resources.tokens  += 3200 + Math.floor(Math.random() * 2400);
+  state.resources.spend   += 0.04 + Math.random() * 0.04;
+  state.resources.memory  += 1;
+  state.builtThisSession  += 1;
+  updateResourceUI();
+}
+
+/* ---------- Force-directed growth graph (Bases-style) ---------- */
+const growthState = {};
+LANES.forEach(l => growthState[l.id] = { nodes: [], edges: [] });
+
+function addGrowthNode(laneId) {
+  const g = growthState[laneId];
+  const lane = LANES.find(l => l.id === laneId);
+  const hue = lane.hue;
+  const svg = laneEls[laneId].querySelector('.growth svg');
+  const nodesLayer = svg.querySelector('.nodes');
+  const halosLayer = svg.querySelector('.halos');
+  const edgesLayer = svg.querySelector('.edges');
+
+  const vb = { w: 260, h: 200 };
+
+  // Place near existing cluster (force-graph feel) or seed center
+  let x, y, parent;
+  if (g.nodes.length === 0) {
+    x = vb.w * 0.5 + (Math.random() - 0.5) * 30;
+    y = vb.h * 0.5 + (Math.random() - 0.5) * 30;
+  } else {
+    // prefer attaching to a newer / higher-degree node sometimes
+    const weightByDegree = Math.random() < 0.4;
+    let parentIdx;
+    if (weightByDegree) {
+      const degs = g.nodes.map(n => n.deg || 1);
+      const total = degs.reduce((a, b) => a + b, 0);
+      let r = Math.random() * total;
+      parentIdx = 0;
+      for (let i = 0; i < degs.length; i++) { r -= degs[i]; if (r <= 0) { parentIdx = i; break; } }
+    } else {
+      parentIdx = Math.floor(Math.random() * g.nodes.length);
+    }
+    parent = g.nodes[parentIdx];
+    const angle = Math.random() * Math.PI * 2;
+    const r = 14 + Math.random() * 22;
+    x = Math.max(16, Math.min(vb.w - 16, parent.x + Math.cos(angle) * r));
+    y = Math.max(16, Math.min(vb.h - 16, parent.y + Math.sin(angle) * r));
+  }
+
+  // Decision-type occasionally
+  const kind = Math.random() < 0.22 ? 'decision' : (Math.random() < 0.45 ? 'doc' : 'note');
+  const radius = kind === 'decision' ? 3.4 : (kind === 'doc' ? 2.9 : 2.4);
+
+  // Halo for "fresh" growth feel
+  const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  halo.setAttribute('class', 'node-halo');
+  halo.setAttribute('cx', x); halo.setAttribute('cy', y);
+  halo.setAttribute('r', radius + 6);
+  halo.setAttribute('stroke', `hsla(${hue}, 70%, 65%, 0.9)`);
+  halosLayer.appendChild(halo);
+  setTimeout(() => halo.classList.add('show'), 30);
+  setTimeout(() => halo.classList.remove('show'), 3200);
+
+  // Edge from parent
+  if (parent) {
+    const mx = (parent.x + x) / 2;
+    const my = (parent.y + y) / 2;
+    const dx = x - parent.x, dy = y - parent.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    const curve = Math.min(10, len * 0.1);
+    const cx = mx + nx * curve;
+    const cy = my + ny * curve;
+    const edgeEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    edgeEl.setAttribute('class', 'edge');
+    edgeEl.setAttribute('d', `M ${parent.x} ${parent.y} Q ${cx} ${cy} ${x} ${y}`);
+    edgeEl.setAttribute('stroke', `hsla(${hue}, 55%, 60%, 0.9)`);
+    edgesLayer.appendChild(edgeEl);
+    setTimeout(() => edgeEl.classList.add('show'), 40);
+    g.edges.push({ el: edgeEl, a: parent, b: null });
+    parent.deg = (parent.deg || 1) + 1;
+
+    // Occasionally form a second edge to another nearby node
+    if (Math.random() < 0.35 && g.nodes.length > 2) {
+      const others = g.nodes.filter(n => n !== parent);
+      const near = others.sort((u, v) => Math.hypot(u.x - x, u.y - y) - Math.hypot(v.x - x, v.y - y))[0];
+      if (near) {
+        const mx2 = (near.x + x) / 2;
+        const my2 = (near.y + y) / 2;
+        const dx2 = x - near.x, dy2 = y - near.y;
+        const len2 = Math.hypot(dx2, dy2) || 1;
+        const nx2 = -dy2 / len2, ny2 = dx2 / len2;
+        const curve2 = Math.min(10, len2 * 0.1);
+        const cx2 = mx2 + nx2 * curve2;
+        const cy2 = my2 + ny2 * curve2;
+        const e2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        e2.setAttribute('class', 'edge');
+        e2.setAttribute('d', `M ${near.x} ${near.y} Q ${cx2} ${cy2} ${x} ${y}`);
+        e2.setAttribute('stroke', `hsla(${hue}, 50%, 55%, 0.7)`);
+        edgesLayer.appendChild(e2);
+        setTimeout(() => e2.classList.add('show'), 140);
+        g.edges.push({ el: e2, a: near, b: null });
+        near.deg = (near.deg || 1) + 1;
+      }
+    }
+  }
+
+  // The node itself
+  let nodeEl;
+  if (kind === 'decision') {
+    nodeEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    nodeEl.setAttribute('x', x - radius);
+    nodeEl.setAttribute('y', y - radius);
+    nodeEl.setAttribute('width', radius * 2);
+    nodeEl.setAttribute('height', radius * 2);
+    nodeEl.setAttribute('transform', `rotate(45 ${x} ${y})`);
+    nodeEl.setAttribute('fill', `hsl(${hue}, 35%, 24%)`);
+    nodeEl.setAttribute('stroke', `hsla(${hue}, 65%, 65%, 0.95)`);
+    nodeEl.setAttribute('stroke-width', 0.9);
+  } else {
+    nodeEl = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    nodeEl.setAttribute('cx', x); nodeEl.setAttribute('cy', y);
+    nodeEl.setAttribute('r', radius);
+    nodeEl.setAttribute('fill', kind === 'doc' ? `hsl(${hue}, 35%, 28%)` : `hsl(${hue}, 28%, 20%)`);
+    nodeEl.setAttribute('stroke', `hsla(${hue}, 60%, 65%, 0.85)`);
+    nodeEl.setAttribute('stroke-width', 0.8);
+  }
+  nodeEl.setAttribute('class', 'node');
+  nodesLayer.appendChild(nodeEl);
+  setTimeout(() => nodeEl.classList.add('show'), 40);
+
+  g.nodes.push({ x, y, el: nodeEl, deg: 1, kind });
+
+  // cap — remove oldest when too dense
+  while (g.nodes.length > 80) {
+    const d = g.nodes.shift();
+    d.el.remove();
+  }
+  while (g.edges.length > 160) {
+    const d = g.edges.shift();
+    d.el.remove();
+  }
+}
+
+/* ---------- Resource UI ---------- */
+function updateResourceUI() {
+  const r = state.resources;
+  document.getElementById('mv-context').textContent = (r.context / 1000).toFixed(1) + 'k';
+  const ctxPct = r.context / r.contextMax;
+  const ctxMeter = document.getElementById('m-context');
+  ctxMeter.querySelector('.bar > span').style.width = Math.min(100, ctxPct * 100) + '%';
+  ctxMeter.classList.toggle('warn', ctxPct > 0.7);
+
+  document.getElementById('mv-tokens').textContent = (r.tokens / 1000).toFixed(1) + 'k';
+  document.getElementById('m-tokens').querySelector('.bar > span').style.width = Math.min(100, (r.tokens / 1000000) * 100) + '%';
+
+  document.getElementById('mv-money').textContent = r.spend.toFixed(2);
+  document.getElementById('m-money').querySelector('.bar > span').style.width = Math.min(100, (r.spend / 10) * 100) + '%';
+
+  document.getElementById('mv-memory').textContent = r.memory;
+  document.getElementById('m-memory').querySelector('.bar > span').style.width = Math.min(100, (r.memory / 100) * 100) + '%';
+
+  builtCountEl.textContent = state.builtThisSession;
+
+  const mins = Math.floor((Date.now() - state.startedAt) / 60000);
+  const secs = Math.floor(((Date.now() - state.startedAt) % 60000) / 1000);
+  runtimeEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/* ---------- Seed ---------- */
+function seed() {
+  const now = Date.now();
+  SEED_TASKS.forEach(s => {
+    const t = {
+      id: nextTaskId(),
+      lane: s.lane,
+      label: s.label,
+      agent: s.agent,
+      startedAt: now + s.startOffset,
+      dur: s.dur,
+      progress: s.progress,
+      done: false,
+      needsInput: !!s.needsInput,
+    };
+    state.tasks.push(t);
+  });
+
+  LANES.forEach(l => {
+    const n = SEED_DONE[l.id] || 0;
+    for (let i = 0; i < n; i++) addGrowthNode(l.id);
+  });
+}
+
+/* ---------- Simulation ---------- */
+function simTick() {
+  if (Math.random() < 0.08) {
+    const candidates = state.tasks.filter(t =>
+      !t.done && !t.needsInput && t.agent &&
+      (Date.now() - t.startedAt) / t.dur > 0.15 &&
+      (Date.now() - t.startedAt) / t.dur < 0.85
+    );
+    const anyAlready = state.tasks.some(t => t.needsInput);
+    if (!anyAlready && candidates.length > 0 && Math.random() < 0.6) {
+      const t = candidates[Math.floor(Math.random() * candidates.length)];
+      t.needsInput = true;
+      t.progress = (Date.now() - t.startedAt) / t.dur;
+    }
+  }
+
+  if (Math.random() < 0.05) {
+    const lanes = ['lovenotes','hg','content','life'];
+    const laneId = lanes[Math.floor(Math.random() * lanes.length)];
+    const phr = {
+      lovenotes: ['patch Twilio rate limit bug','write release notes v0.9','reply to beta user #12','audit reminder queue'],
+      hg:        ['prep next client session','draft check-in email','review coaching recording','update client roadmap'],
+      content:   ['outline next post','pull quotes from book','schedule Substack','draft tweet thread'],
+      life:      ['renew car registration','reply to mom','pay internet bill','plan weekend']
+    };
+    const label = phr[laneId][Math.floor(Math.random() * phr[laneId].length)];
+    dispatchNewTask(label, laneId);
+  }
+
+  // background drift
+  const workingCount = state.tasks.filter(t => !t.done).length;
+  if (workingCount > 0) {
+    state.resources.context += workingCount * 120;
+    state.resources.tokens  += workingCount * 220;
+    state.resources.spend   += workingCount * 0.006;
+  }
+  updateResourceUI();
+}
+
+/* ---------- Resize ---------- */
+window.addEventListener('resize', () => { render(); });
+
+/* ---------- Init ---------- */
+seed();
+render();
+renderBench();
+updateResourceUI();
+
+function tick() {
+  render();
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+setInterval(simTick, 2000);
+
+// Periodic graph growth (subtle background accretion — "still being thought about")
+setInterval(() => {
+  const roll = Math.random();
+  if (roll < 0.4) addGrowthNode('lovenotes');
+  else if (roll < 0.7) addGrowthNode('content');
+  else if (roll < 0.85) addGrowthNode('hg');
+  else addGrowthNode('life');
+}, 6500);
+
+// runtime ticker
+setInterval(updateResourceUI, 1000);
+</script>
+</body>
+</html>
