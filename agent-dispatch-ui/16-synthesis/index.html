@@ -306,8 +306,12 @@ html, body {
   cursor: pointer;
   transition: box-shadow .2s ease, transform .2s ease;
 }
+.task {
+  transform: translateY(calc(-50% + var(--slot-dy, 0px)));
+}
 .task:hover {
   box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+  transform: translateY(calc(-50% + var(--slot-dy, 0px) - 2px));
   z-index: 6;
 }
 .task .glyph {
@@ -827,6 +831,17 @@ function buildTaskEl(t) {
 }
 
 /* Dispatch a new task */
+const SLOT_OFFSETS = [-38, 0, 38]; // px from lane center, max 3 per lane
+
+function getSlot(laneId) {
+  const used = state.tasks
+    .filter(t => t.lane === laneId && !t.done)
+    .map(t => t.slot)
+    .filter(s => s !== undefined);
+  for (let i = 0; i < 3; i++) if (!used.includes(i)) return i;
+  return 1;
+}
+
 function dispatchNewTask(label, laneId) {
   const agent = pickAgent(laneId);
   const now = Date.now();
@@ -835,12 +850,13 @@ function dispatchNewTask(label, laneId) {
     lane: laneId,
     label,
     agent,
-    startedAt: now,        // work begins now
+    startedAt: now,
     dur: 20000 + Math.random() * 35000,
     progress: 0,
     done: false,
     needsInput: false,
     justCreated: true,
+    slot: getSlot(laneId),
   };
   state.tasks.push(t);
 
@@ -972,7 +988,7 @@ function render() {
     }
     el.style.left = leftX + 'px';
     el.style.top = '50%';
-    el.style.transform = 'translateY(-50%)';
+    el.style.setProperty('--slot-dy', (SLOT_OFFSETS[t.slot ?? 0]) + 'px');
     el.style.width = width + 'px';
     el.classList.toggle('needs-input', !!t.needsInput);
     el.classList.toggle('done', !!t.done);
@@ -1059,7 +1075,11 @@ function addGrowthNode(laneId) {
 /* ---------- Seed ---------- */
 function seed() {
   const now = Date.now();
+  const seedSlots = {};
   SEED_TASKS.forEach(s => {
+    if (!seedSlots[s.lane]) seedSlots[s.lane] = 0;
+    const slot = seedSlots[s.lane] % 3;
+    seedSlots[s.lane]++;
     const t = {
       id: nextTaskId(),
       lane: s.lane,
@@ -1070,6 +1090,7 @@ function seed() {
       progress: s.progress,
       done: false,
       needsInput: !!s.needsInput,
+      slot,
     };
     state.tasks.push(t);
   });

@@ -391,8 +391,11 @@ body::before {
   border-color: hsla(var(--life-hue), 50%, 55%, 0.5);
   box-shadow: 0 0 0 1px hsla(var(--life-hue), 60%, 45%, 0.08), 0 4px 18px rgba(0,0,0,0.45);
 }
+.task {
+  transform: translateY(calc(-50% + var(--slot-dy, 0px)));
+}
 .task:hover {
-  transform: translateY(calc(-50% - 1px));
+  transform: translateY(calc(-50% + var(--slot-dy, 0px) - 2px));
   z-index: 6;
 }
 
@@ -1010,6 +1013,17 @@ function buildTaskEl(t) {
   return el;
 }
 
+const SLOT_OFFSETS = [-38, 0, 38]; // px from lane center, 3 max per lane
+
+function getSlot(laneId) {
+  const used = state.tasks
+    .filter(t => t.lane === laneId && !t.done)
+    .map(t => t.slot)
+    .filter(s => s !== undefined);
+  for (let i = 0; i < 3; i++) if (!used.includes(i)) return i;
+  return 1;
+}
+
 function dispatchNewTask(label, laneId) {
   const agent = pickAgent(laneId);
   const now = Date.now();
@@ -1024,6 +1038,7 @@ function dispatchNewTask(label, laneId) {
     done: false,
     needsInput: false,
     justCreated: true,
+    slot: getSlot(laneId),
   };
   state.tasks.push(t);
   if (agent) arcAgentToLane(agent, laneId);
@@ -1139,7 +1154,7 @@ function render() {
     }
     el.style.left = leftX + 'px';
     el.style.top = '50%';
-    el.style.transform = 'translateY(-50%)';
+    el.style.setProperty('--slot-dy', (SLOT_OFFSETS[t.slot ?? 0]) + 'px');
     el.style.width = width + 'px';
     el.classList.toggle('needs-input', !!t.needsInput);
     el.classList.toggle('done', !!t.done);
@@ -1166,7 +1181,7 @@ function onTaskComplete(t) {
   const rect = stageEl.getBoundingClientRect();
   const laneRect = laneEls[t.lane].getBoundingClientRect();
   const px = playheadX();
-  const py = laneRect.top + laneRect.height/2 - rect.top;
+  const py = laneRect.top + laneRect.height/2 + (SLOT_OFFSETS[t.slot ?? 0]) - rect.top;
   const b = document.createElement('div');
   b.className = 'burst';
   b.style.left = px + 'px';
@@ -1348,7 +1363,11 @@ function updateResourceUI() {
 /* ---------- Seed ---------- */
 function seed() {
   const now = Date.now();
+  const seedSlots = {};
   SEED_TASKS.forEach(s => {
+    if (!seedSlots[s.lane]) seedSlots[s.lane] = 0;
+    const slot = seedSlots[s.lane] % 3;
+    seedSlots[s.lane]++;
     const t = {
       id: nextTaskId(),
       lane: s.lane,
@@ -1359,6 +1378,7 @@ function seed() {
       progress: s.progress,
       done: false,
       needsInput: !!s.needsInput,
+      slot,
     };
     state.tasks.push(t);
   });
