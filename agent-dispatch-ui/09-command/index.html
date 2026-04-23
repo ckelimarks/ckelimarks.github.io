@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command — Agent Dispatch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #0f1419;
+            color: #e1e8ed;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* ===== RESOURCE TICKER ===== */
+        .ticker {
+            background: rgba(15, 20, 25, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ticker-label {
+            color: #90a4ae;
+        }
+
+        .ticker-value {
+            color: #26c6da;
+            font-weight: 600;
+        }
+
+        .ticker-bar {
+            width: 60px;
+            height: 4px;
+            background: rgba(38, 198, 218, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .ticker-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #26c6da, #00bcd4);
+            border-radius: 2px;
+        }
+
+        /* ===== DISPATCH INPUT ===== */
+        .dispatch-bar {
+            background: rgba(15, 20, 25, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .dispatch-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e1e8ed;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .dispatch-input:focus {
+            outline: none;
+            border-color: rgba(38, 198, 218, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .dispatch-input::placeholder {
+            color: rgba(225, 232, 237, 0.4);
+        }
+
+        .dispatch-hint {
+            color: #90a4ae;
+            font-size: 11px;
+            padding-right: 10px;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 20, 25, 0.8);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #90a4ae;
+            margin-bottom: 12px;
+        }
+
+        .agent-info {
+            background: rgba(38, 198, 218, 0.08);
+            border: 1px solid rgba(38, 198, 218, 0.2);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .agent-info-label {
+            color: #90a4ae;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .agent-info-value {
+            color: #e1e8ed;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .agent-info-value:last-child {
+            margin-bottom: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(38, 198, 218, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #26c6da, #00bcd4);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .command-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cmd-btn {
+            background: rgba(38, 198, 218, 0.15);
+            border: 1px solid rgba(38, 198, 218, 0.3);
+            color: #26c6da;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .cmd-btn:hover {
+            background: rgba(38, 198, 218, 0.25);
+            border-color: rgba(38, 198, 218, 0.5);
+        }
+
+        .cmd-btn.primary {
+            background: rgba(38, 198, 218, 0.3);
+            border-color: rgba(38, 198, 218, 0.6);
+        }
+
+        .cmd-btn.danger {
+            background: rgba(244, 67, 54, 0.15);
+            border-color: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+
+        .cmd-btn.danger:hover {
+            background: rgba(244, 67, 54, 0.25);
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+
+        .queue-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-left: 2px solid rgba(38, 198, 218, 0.4);
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            border-radius: 2px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .queue-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-left-color: rgba(38, 198, 218, 0.8);
+        }
+
+        /* Central Canvas */
+        .canvas-wrapper {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(135deg, #0f1419 0%, #141920 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Minimap */
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 140px;
+            height: 140px;
+            background: rgba(15, 20, 25, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        .minimap canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Zone Queue Overlay */
+        .zone-queue {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 160px;
+            background: rgba(15, 20, 25, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .zone-queue-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #90a4ae;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        .queue-stack {
+            margin-bottom: 16px;
+        }
+
+        .queue-zone-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #90a4ae;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .queue-task {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #e1e8ed;
+            cursor: move;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .queue-task:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Alerts */
+        .alert-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #f44336;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(244, 67, 54, 0.1);
+            }
+        }
+
+        .no-selection {
+            color: #90a4ae;
+            font-size: 13px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Hotkey hint */
+        .hotkey-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 10px;
+            color: #90a4ae;
+            text-align: right;
+            line-height: 1.6;
+            background: rgba(15, 20, 25, 0.9);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .hotkey-hint div {
+            margin-bottom: 4px;
+        }
+
+        .hotkey-hint kbd {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-family: monospace;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Ticker -->
+        <div class="ticker">
+            <div class="ticker-item">
+                <span class="ticker-label">TOKENS</span>
+                <span class="ticker-value">12/20</span>
+                <div class="ticker-bar">
+                    <div class="ticker-bar-fill" style="width: 60%"></div>
+                </div>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">CONTEXT</span>
+                <span class="ticker-value">6/8</span>
+                <div class="ticker-bar">
+                    <div class="ticker-bar-fill" style="width: 75%"></div>
+                </div>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">TODAY</span>
+                <span class="ticker-value">9 done</span>
+            </div>
+        </div>
+
+        <!-- Dispatch Input -->
+        <div class="dispatch-bar">
+            <input
+                type="text"
+                class="dispatch-input"
+                id="dispatchInput"
+                placeholder="New task (press Enter to dispatch)"
+            />
+            <span class="dispatch-hint">or press d</span>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Selected Agent</div>
+                    <div id="sidebarContent" class="no-selection">
+                        Click an agent to select
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="canvas-wrapper">
+                <canvas id="mainCanvas"></canvas>
+
+                <!-- Minimap -->
+                <div class="minimap">
+                    <canvas id="minimapCanvas"></canvas>
+                </div>
+
+                <!-- Zone Queue -->
+                <div class="zone-queue">
+                    <div class="zone-queue-title">📋 Queue</div>
+                    <div id="zoneQueueContent"></div>
+                </div>
+
+                <!-- Alert Badge -->
+                <div id="alertBadge" class="alert-badge" style="display: none;">
+                    !
+                </div>
+
+                <!-- Hotkey Hint -->
+                <div class="hotkey-hint">
+                    <div><kbd>1–4</kbd> Zone</div>
+                    <div><kbd>d</kbd> Dispatch</div>
+                    <div><kbd>SPACE</kbd> Pause All</div>
+                    <div><kbd>ESC</kbd> Deselect</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE =====
+        const state = {
+            selectedAgent: null,
+            zones: {
+                0: { name: "LoveNotes", color: "#4a90b8", agents: [], tasks: [], queue: [] },
+                1: { name: "HG", color: "#c97d4a", agents: [], tasks: [], queue: [] },
+                2: { name: "Content", color: "#d4a54a", agents: [], tasks: [], queue: [] },
+                3: { name: "Life", color: "#6aa979", agents: [], tasks: [], queue: [] },
+            },
+            agents: [],
+            allTasks: [],
+            alerts: new Set(),
+        };
+
+        // ===== UTILS =====
+        function randomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function dist(p1, p2) {
+            return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        }
+
+        function ease(t) {
+            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+
+        // ===== AGENT & TASK CLASSES =====
+        class Agent {
+            constructor(id, zoneId, x, y) {
+                this.id = id;
+                this.zoneId = zoneId;
+                this.x = x;
+                this.y = y;
+                this.targetX = x;
+                this.targetY = y;
+                this.currentTask = null;
+                this.progress = 0;
+                this.paused = false;
+                this.needsInput = false;
+                this.speed = 80; // pixels per second
+                this.label = String.fromCharCode(83 + id); // S, A, B, C
+            }
+
+            update(dt) {
+                if (this.paused || !this.currentTask) return;
+
+                // Move toward target
+                const dx = this.targetX - this.x;
+                const dy = this.targetY - this.y;
+                const d = Math.hypot(dx, dy);
+
+                if (d > 2) {
+                    const step = Math.min(this.speed * dt, d);
+                    this.x += (dx / d) * step;
+                    this.y += (dy / d) * step;
+                } else {
+                    this.x = this.targetX;
+                    this.y = this.targetY;
+                    // Arrived at node, tick progress
+                    if (this.progress < 100) {
+                        this.progress += 3;
+                    }
+                }
+            }
+
+            assignTask(task) {
+                this.currentTask = task;
+                this.progress = 0;
+                task.assignedAgent = this.id;
+            }
+
+            moveTo(x, y) {
+                this.targetX = x;
+                this.targetY = y;
+            }
+
+            pause() {
+                this.paused = true;
+            }
+
+            resume() {
+                this.paused = false;
+            }
+        }
+
+        class Task {
+            constructor(id, name, zoneId, x, y) {
+                this.id = id;
+                this.name = name;
+                this.zoneId = zoneId;
+                this.x = x;
+                this.y = y;
+                this.assignedAgent = null;
+                this.completed = false;
+            }
+        }
+
+        // ===== INITIALIZATION =====
+        function initState() {
+            let taskId = 0;
+            let agentId = 0;
+
+            // Create task nodes in zones
+            Object.keys(state.zones).forEach((zoneKey) => {
+                const zone = state.zones[zoneKey];
+                const zoneIndex = parseInt(zoneKey);
+                const col = zoneIndex % 2;
+                const row = Math.floor(zoneIndex / 2);
+                const baseX = 200 + col * 400;
+                const baseY = 100 + row * 300;
+
+                // 2-3 tasks per zone
+                const taskCount = Math.random() > 0.5 ? 3 : 2;
+                for (let i = 0; i < taskCount; i++) {
+                    const x = baseX + randomRange(-80, 80);
+                    const y = baseY + randomRange(-80, 80);
+                    const taskNames = [
+                        "write SMS",
+                        "review metrics",
+                        "sync data",
+                        "process batch",
+                        "audit logs",
+                        "update schema",
+                    ];
+                    const task = new Task(
+                        taskId++,
+                        taskNames[Math.floor(Math.random() * taskNames.length)],
+                        zoneIndex,
+                        x,
+                        y
+                    );
+                    zone.tasks.push(task);
+                    state.allTasks.push(task);
+                }
+
+                // 1-2 queue items
+                const queueCount = Math.random() > 0.5 ? 2 : 1;
+                for (let i = 0; i < queueCount; i++) {
+                    const queueTasks = [
+                        "write SMS",
+                        "review metrics",
+                        "sync data",
+                        "process batch",
+                    ];
+                    zone.queue.push(queueTasks[Math.floor(Math.random() * queueTasks.length)]);
+                }
+            });
+
+            // Create agents
+            const agentStartPos = [
+                { x: 250, y: 120, zone: 0 },
+                { x: 650, y: 380, zone: 2 },
+                { x: 420, y: 250, zone: 1 },
+            ];
+
+            agentStartPos.forEach((pos) => {
+                const agent = new Agent(agentId++, pos.zone, pos.x, pos.y);
+                state.agents.push(agent);
+                state.zones[pos.zone].agents.push(agent);
+
+                // Assign initial task
+                const zone = state.zones[pos.zone];
+                if (zone.tasks.length > 0) {
+                    const task = zone.tasks[Math.floor(Math.random() * zone.tasks.length)];
+                    agent.assignTask(task);
+                    agent.moveTo(task.x, task.y);
+                }
+            });
+
+            // One agent paused with alert
+            state.agents[1].paused = true;
+            state.agents[1].needsInput = true;
+            state.alerts.add(state.agents[1].id);
+        }
+
+        // ===== CANVAS DRAWING =====
+        const canvas = document.getElementById("mainCanvas");
+        const ctx = canvas.getContext("2d");
+        const minimapCanvas = document.getElementById("minimapCanvas");
+        const minimapCtx = minimapCanvas.getContext("2d");
+
+        function resizeCanvas() {
+            const wrapper = canvas.parentElement;
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            minimapCanvas.width = minimapCanvas.offsetWidth;
+            minimapCanvas.height = minimapCanvas.offsetHeight;
+        }
+
+        function drawZones() {
+            let zoneIndex = 0;
+            for (let row = 0; row < 2; row++) {
+                for (let col = 0; col < 2; col++) {
+                    const x = col * (canvas.width / 2);
+                    const y = row * (canvas.height / 2);
+                    const w = canvas.width / 2;
+                    const h = canvas.height / 2;
+
+                    const zone = state.zones[zoneIndex];
+                    const zoneColor = zone.color;
+
+                    // Zone background
+                    ctx.fillStyle = `${zoneColor}08`;
+                    ctx.fillRect(x, y, w, h);
+
+                    // Zone border
+                    ctx.strokeStyle = `${zoneColor}20`;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, w, h);
+
+                    // Zone label
+                    ctx.fillStyle = `${zoneColor}60`;
+                    ctx.font = "11px monospace";
+                    ctx.fillText(zone.name, x + 12, y + 20);
+
+                    zoneIndex++;
+                }
+            }
+        }
+
+        function drawTasks() {
+            state.allTasks.forEach((task) => {
+                if (task.completed) return;
+
+                const zone = state.zones[task.zoneId];
+                const isActive = task.assignedAgent !== null;
+
+                // Task node circle
+                ctx.fillStyle = isActive ? `${zone.color}40` : `${zone.color}20`;
+                ctx.beginPath();
+                ctx.arc(task.x, task.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Task node outline
+                ctx.strokeStyle = `${zone.color}80`;
+                ctx.lineWidth = 2;
+                if (isActive) {
+                    // Glow effect
+                    ctx.shadowColor = `${zone.color}60`;
+                    ctx.shadowBlur = 10;
+                }
+                ctx.stroke();
+                ctx.shadowColor = "transparent";
+            });
+        }
+
+        function drawAgents() {
+            state.agents.forEach((agent) => {
+                const zone = state.zones[agent.zoneId];
+
+                // Connection line to task
+                if (agent.currentTask) {
+                    ctx.strokeStyle = `${zone.color}40`;
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(agent.x, agent.y);
+                    ctx.lineTo(agent.currentTask.x, agent.currentTask.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // Agent circle
+                ctx.fillStyle = agent.needsInput
+                    ? "#f4433640"
+                    : agent.paused
+                      ? "#ffa72660"
+                      : `${zone.color}60`;
+                ctx.beginPath();
+                ctx.arc(agent.x, agent.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Agent border
+                ctx.strokeStyle = zone.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Agent label
+                ctx.fillStyle = "#0f1419";
+                ctx.font = "bold 9px monospace";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(agent.label, agent.x, agent.y);
+
+                // Alert indicator
+                if (agent.needsInput) {
+                    ctx.fillStyle = "#f44336";
+                    ctx.font = "bold 10px sans-serif";
+                    ctx.fillText("!", agent.x, agent.y - 16);
+                }
+
+                ctx.textAlign = "left";
+                ctx.textBaseline = "top";
+            });
+        }
+
+        function drawMinimap() {
+            const scale = minimapCanvas.width / canvas.width;
+
+            // Background
+            minimapCtx.fillStyle = "#1a1f26";
+            minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            minimapCtx.strokeStyle = "#404a56";
+            minimapCtx.lineWidth = 1;
+            minimapCtx.strokeRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+
+            // Zones
+            let zoneIndex = 0;
+            for (let row = 0; row < 2; row++) {
+                for (let col = 0; col < 2; col++) {
+                    const x = col * (minimapCanvas.width / 2);
+                    const y = row * (minimapCanvas.height / 2);
+                    const w = minimapCanvas.width / 2;
+                    const h = minimapCanvas.height / 2;
+
+                    const zone = state.zones[zoneIndex];
+                    minimapCtx.strokeStyle = `${zone.color}40`;
+                    minimapCtx.lineWidth = 1;
+                    minimapCtx.strokeRect(x, y, w, h);
+
+                    zoneIndex++;
+                }
+            }
+
+            // Agents
+            state.agents.forEach((agent) => {
+                const zone = state.zones[agent.zoneId];
+                minimapCtx.fillStyle = agent.needsInput
+                    ? "#f4433680"
+                    : agent.paused
+                      ? "#ffa72680"
+                      : `${zone.color}80`;
+                minimapCtx.beginPath();
+                minimapCtx.arc(agent.x * scale, agent.y * scale, 3, 0, Math.PI * 2);
+                minimapCtx.fill();
+            });
+        }
+
+        function draw() {
+            // Clear
+            ctx.fillStyle = "#0f1419";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawZones();
+            drawTasks();
+            drawAgents();
+            drawMinimap();
+        }
+
+        // ===== UI UPDATES =====
+        function updateSidebar() {
+            const sidebar = document.getElementById("sidebarContent");
+
+            if (!state.selectedAgent) {
+                sidebar.innerHTML = `<div class="no-selection">Click an agent to select</div>`;
+                return;
+            }
+
+            const agent = state.selectedAgent;
+            const zone = state.zones[agent.zoneId];
+
+            let html = `
+                <div class="agent-info">
+                    <div class="agent-info-label">Agent</div>
+                    <div class="agent-info-value">${agent.label}</div>
+
+                    <div class="agent-info-label">Task</div>
+                    <div class="agent-info-value">${agent.currentTask ? agent.currentTask.name : "—"}</div>
+
+                    <div class="agent-info-label">Zone</div>
+                    <div class="agent-info-value">${zone.name}</div>
+
+                    <div class="agent-info-label">Progress</div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width: ${agent.progress}%"></div>
+                    </div>
+
+                    <div style="margin-top: 12px; border-top: 1px solid rgba(38, 198, 218, 0.15); padding-top: 12px;">
+                        <div class="command-card">
+                            ${agent.paused ? `<button class="cmd-btn primary" onclick="resumeAgent(${agent.id})">Resume</button>` : `<button class="cmd-btn" onclick="pauseAgent(${agent.id})">Pause</button>`}
+                            <button class="cmd-btn" onclick="requeueAgent(${agent.id})">Requeue</button>
+                            <button class="cmd-btn" onclick="splitAgent(${agent.id})">Split</button>
+                            <button class="cmd-btn danger" onclick="cancelAgent(${agent.id})">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            sidebar.innerHTML = html;
+        }
+
+        function updateQueueDisplay() {
+            const queueContainer = document.getElementById("zoneQueueContent");
+            let html = "";
+
+            Object.keys(state.zones).forEach((zoneKey) => {
+                const zone = state.zones[zoneKey];
+                if (zone.queue.length === 0) return;
+
+                html += `
+                    <div class="queue-stack">
+                        <div class="queue-zone-label">${zone.name}</div>
+                        ${zone.queue
+                            .slice(0, 3)
+                            .map(
+                                (task, idx) =>
+                                    `<div class="queue-task" style="border-left-color: ${zone.color}60">[${idx + 1}] ${task}</div>`
+                            )
+                            .join("")}
+                    </div>
+                `;
+            });
+
+            queueContainer.innerHTML = html || '<div class="no-selection" style="font-size: 11px;">No pending tasks</div>';
+        }
+
+        function updateAlertBadge() {
+            const badge = document.getElementById("alertBadge");
+            if (state.alerts.size > 0) {
+                badge.style.display = "flex";
+                badge.textContent = state.alerts.size;
+            } else {
+                badge.style.display = "none";
+            }
+        }
+
+        // ===== INTERACTIONS =====
+        function selectAgent(agentId) {
+            state.selectedAgent = state.agents[agentId] || null;
+            updateSidebar();
+        }
+
+        function pauseAgent(agentId) {
+            const agent = state.agents[agentId];
+            if (agent) {
+                agent.pause();
+                agent.needsInput = false;
+                state.alerts.delete(agentId);
+                updateAlertBadge();
+                updateSidebar();
+            }
+        }
+
+        function resumeAgent(agentId) {
+            const agent = state.agents[agentId];
+            if (agent) {
+                agent.resume();
+                agent.needsInput = false;
+                state.alerts.delete(agentId);
+                updateAlertBadge();
+                updateSidebar();
+            }
+        }
+
+        function requeueAgent(agentId) {
+            const agent = state.agents[agentId];
+            if (agent && agent.currentTask) {
+                agent.progress = 0;
+                agent.currentTask.assignedAgent = null;
+                agent.currentTask = null;
+                updateSidebar();
+            }
+        }
+
+        function splitAgent(agentId) {
+            // Create new agent in same zone
+            const sourceAgent = state.agents[agentId];
+            const newAgent = new Agent(state.agents.length, sourceAgent.zoneId, sourceAgent.x, sourceAgent.y);
+            state.agents.push(newAgent);
+            state.zones[sourceAgent.zoneId].agents.push(newAgent);
+
+            // Assign a task
+            const availableTask = state.zones[sourceAgent.zoneId].tasks.find((t) => !t.assignedAgent);
+            if (availableTask) {
+                newAgent.assignTask(availableTask);
+                newAgent.moveTo(availableTask.x, availableTask.y);
+            }
+
+            selectAgent(agentId);
+        }
+
+        function cancelAgent(agentId) {
+            const agent = state.agents[agentId];
+            if (agent && agent.currentTask) {
+                agent.currentTask.assignedAgent = null;
+                agent.currentTask = null;
+                agent.progress = 0;
+            }
+            selectAgent(null);
+        }
+
+        function pauseAll() {
+            state.agents.forEach((a) => a.pause());
+            updateSidebar();
+        }
+
+        function resumeAll() {
+            state.agents.forEach((a) => a.resume());
+            updateSidebar();
+        }
+
+        function dispatchTask() {
+            const input = document.getElementById("dispatchInput");
+            const taskName = input.value.trim();
+
+            if (!taskName) return;
+
+            // Determine zone (cycle through or prompt)
+            let zone = state.zones[0];
+            const zoneNum = parseInt(taskName.charAt(0));
+            if (!isNaN(zoneNum) && zoneNum >= 0 && zoneNum < 4) {
+                zone = state.zones[zoneNum];
+                const cleanName = taskName.substring(1).trim() || "new task";
+                zone.queue.push(cleanName);
+            } else {
+                zone.queue.push(taskName);
+            }
+
+            input.value = "";
+            updateQueueDisplay();
+        }
+
+        // ===== CANVAS INTERACTION =====
+        canvas.addEventListener("click", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Check if clicked on an agent
+            for (let agent of state.agents) {
+                if (dist({ x: agent.x, y: agent.y }, { x, y }) < 12) {
+                    selectAgent(agent.id);
+                    return;
+                }
+            }
+
+            // Deselect
+            selectAgent(null);
+        });
+
+        // ===== HOTKEYS =====
+        document.addEventListener("keydown", (e) => {
+            if (e.target.id === "dispatchInput") return;
+
+            const key = e.key.toLowerCase();
+
+            if (key === "escape") {
+                selectAgent(null);
+                e.preventDefault();
+            } else if (key === "d") {
+                document.getElementById("dispatchInput").focus();
+                e.preventDefault();
+            } else if (key === " ") {
+                // Toggle pause
+                const allPaused = state.agents.every((a) => a.paused);
+                if (allPaused) {
+                    resumeAll();
+                } else {
+                    pauseAll();
+                }
+                e.preventDefault();
+            } else if (key >= "1" && key <= "4") {
+                const zoneId = parseInt(key) - 1;
+                const zoneAgents = state.zones[zoneId].agents;
+                if (zoneAgents.length > 0) {
+                    selectAgent(zoneAgents[0].id);
+                }
+                e.preventDefault();
+            }
+        });
+
+        document.getElementById("dispatchInput").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                dispatchTask();
+                e.preventDefault();
+            }
+        });
+
+        // ===== ANIMATION LOOP =====
+        let lastTime = performance.now();
+        function animate(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            // Update agents
+            state.agents.forEach((agent) => agent.update(dt));
+
+            // Randomly complete tasks
+            if (Math.random() < 0.02) {
+                const runningAgents = state.agents.filter((a) => a.currentTask && !a.paused);
+                if (runningAgents.length > 0) {
+                    const agent = runningAgents[Math.floor(Math.random() * runningAgents.length)];
+                    if (agent.progress >= 90) {
+                        agent.currentTask.completed = true;
+                        agent.currentTask.assignedAgent = null;
+
+                        // Assign new task from queue
+                        const zone = state.zones[agent.zoneId];
+                        if (zone.queue.length > 0) {
+                            zone.queue.shift();
+                        }
+                        const availableTask = zone.tasks.find((t) => !t.completed && !t.assignedAgent);
+                        if (availableTask) {
+                            agent.assignTask(availableTask);
+                            agent.moveTo(availableTask.x, availableTask.y);
+                        }
+
+                        updateQueueDisplay();
+                    }
+                }
+            }
+
+            // Random alerts
+            if (Math.random() < 0.01) {
+                const idleAgents = state.agents.filter((a) => !a.paused && !a.needsInput);
+                if (idleAgents.length > 0) {
+                    const agent = idleAgents[Math.floor(Math.random() * idleAgents.length)];
+                    agent.needsInput = true;
+                    state.alerts.add(agent.id);
+                    updateAlertBadge();
+                }
+            }
+
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        // ===== INIT =====
+        resizeCanvas();
+        initState();
+        updateQueueDisplay();
+        updateAlertBadge();
+
+        window.addEventListener("resize", resizeCanvas);
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>

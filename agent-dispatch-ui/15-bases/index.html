@@ -1,0 +1,1835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bases — Agent Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #07080c;
+    --bg-1: #0b0d14;
+    --bg-2: #11131c;
+    --ink-0: #e7e9f2;
+    --ink-1: #b8bccf;
+    --ink-2: #70748b;
+    --ink-3: #3a3d4f;
+    --line: #1c1f2b;
+    --line-2: #262a39;
+    --accent: #f5b73d;       /* warm amber — the one strong accent */
+    --accent-soft: rgba(245,183,61,0.15);
+    --accent-glow: rgba(245,183,61,0.55);
+    --danger: #ef5a5a;
+    --ok: #6fe1b1;
+    --lovenotes: 320;  /* hue for each base aura */
+    --hg: 190;
+    --content: 50;
+    --life: 150;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-0);
+    color: var(--ink-0);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-weight: 400;
+    overflow: hidden;
+    height: 100vh; width: 100vw;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  /* Background ambience — galaxy-like grain + slow gradient */
+  .stage {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(80,60,180,0.06), transparent 55%),
+      radial-gradient(ellipse at 80% 75%, rgba(40,120,180,0.05), transparent 55%),
+      radial-gradient(ellipse at 50% 50%, rgba(20,20,35,0.6), transparent 70%),
+      var(--bg-0);
+  }
+  .stars {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  /* Top resource bar */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 62px;
+    display: flex; align-items: center;
+    padding: 0 22px;
+    gap: 28px;
+    background: linear-gradient(to bottom, rgba(7,8,12,0.92), rgba(7,8,12,0.6));
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    z-index: 30;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding-right: 18px; border-right: 1px solid var(--line);
+    margin-right: 8px;
+  }
+  .brand-mark {
+    width: 22px; height: 22px; position: relative;
+    display: grid; place-items: center;
+  }
+  .brand-mark svg { width: 22px; height: 22px; }
+  .brand-name {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .brand-sub {
+    font-size: 10px; color: var(--ink-2); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-top: -1px;
+  }
+
+  .resources {
+    display: flex; align-items: center; gap: 22px; flex: 1;
+  }
+  .res {
+    display: flex; flex-direction: column; gap: 4px;
+    min-width: 150px;
+  }
+  .res-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px;
+  }
+  .res-label {
+    font-size: 10px; color: var(--ink-2);
+    text-transform: uppercase; letter-spacing: 0.15em;
+    font-weight: 500;
+  }
+  .res-value {
+    font-size: 13px; font-weight: 500; color: var(--ink-0);
+  }
+  .res-value .sub { color: var(--ink-2); font-weight: 400; }
+  .meter {
+    height: 3px; width: 100%;
+    background: var(--line-2);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ink-1), var(--ink-0));
+    border-radius: 2px;
+    transition: width 0.6s ease;
+    position: relative;
+  }
+  .meter.warn .meter-fill {
+    background: linear-gradient(90deg, var(--accent), #ffd672);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .meter.crit .meter-fill {
+    background: linear-gradient(90deg, #c9423f, var(--danger));
+    animation: pulseRed 1.6s ease-in-out infinite;
+  }
+  @keyframes pulseRed {
+    0%, 100% { box-shadow: 0 0 4px rgba(239,90,90,0.3); }
+    50% { box-shadow: 0 0 14px rgba(239,90,90,0.8); }
+  }
+
+  .tempo {
+    display: flex; flex-direction: column; gap: 4px;
+    padding-left: 22px;
+    border-left: 1px solid var(--line);
+    min-width: 130px;
+  }
+  .tempo-bar {
+    display: flex; gap: 2px; height: 14px; align-items: flex-end;
+  }
+  .tempo-bar span {
+    flex: 1; background: var(--line-2);
+    border-radius: 1px; transition: all 0.4s ease;
+  }
+  .tempo-bar span.on { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+  .session-clock {
+    font-size: 11px; color: var(--ink-2);
+  }
+  .session-clock strong { color: var(--ink-0); font-weight: 500; }
+
+  /* Main canvas container */
+  .canvas-wrap {
+    position: fixed;
+    top: 62px; bottom: 148px; left: 0; right: 0;
+    overflow: hidden;
+  }
+  #graph {
+    position: absolute; inset: 0;
+    transition: transform 0.8s cubic-bezier(0.7, 0.1, 0.25, 1);
+    transform-origin: 50% 50%;
+  }
+  .base-title {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    text-align: center;
+    z-index: 5;
+  }
+  .base-title .name {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-1);
+  }
+  .base-title .meta {
+    font-size: 10px; color: var(--ink-2);
+    margin-top: 4px; letter-spacing: 0.08em;
+  }
+  .base-title.active .name { color: var(--ink-0); }
+
+  .base-hit {
+    position: absolute;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 4;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    background: radial-gradient(circle, rgba(255,255,255,0.015), transparent 70%);
+  }
+  .base-hit:hover {
+    background: radial-gradient(circle, rgba(255,255,255,0.035), transparent 70%);
+  }
+  .base-hit.alert {
+    animation: alertAura 2.2s ease-in-out infinite;
+  }
+  @keyframes alertAura {
+    0%, 100% { box-shadow: inset 0 0 40px rgba(239,90,90,0.02); }
+    50% { box-shadow: inset 0 0 80px rgba(239,90,90,0.1); }
+  }
+
+  /* Zoom / observe mode overlay */
+  .observe-bar {
+    position: fixed; top: 74px; left: 22px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 14px;
+    background: rgba(11,13,20,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    font-size: 12px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 20;
+  }
+  .observe-bar.show { opacity: 1; pointer-events: auto; }
+  .back-btn {
+    background: none; border: none; color: var(--ink-1);
+    cursor: pointer; font-family: inherit; font-size: 12px;
+    display: flex; align-items: center; gap: 6px;
+    padding: 2px 0;
+  }
+  .back-btn:hover { color: var(--ink-0); }
+  .observe-bar .sep { color: var(--ink-3); }
+  .observe-bar .focus-name { font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  .observe-bar .task-now {
+    color: var(--ink-2); font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* Bottom command rail */
+  .bottom-rail {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 148px;
+    background: linear-gradient(to top, rgba(7,8,12,0.96), rgba(7,8,12,0.7));
+    backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 14px 22px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 30;
+  }
+  .rail-row {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .rail-label {
+    font-size: 10px; color: var(--ink-2); text-transform: uppercase;
+    letter-spacing: 0.15em; min-width: 90px;
+    font-weight: 500;
+  }
+
+  .dispatch {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    padding: 6px 10px 6px 14px;
+    transition: border-color 0.2s ease;
+  }
+  .dispatch:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-soft);
+  }
+  .dispatch-prefix {
+    color: var(--accent); font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 600;
+  }
+  .dispatch input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--ink-0); font-family: inherit; font-size: 13px;
+    padding: 6px 0;
+  }
+  .dispatch input::placeholder { color: var(--ink-3); }
+  .dispatch select {
+    background: var(--bg-1); color: var(--ink-1);
+    border: 1px solid var(--line-2); border-radius: 5px;
+    padding: 4px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    cursor: pointer;
+  }
+  .dispatch button {
+    background: var(--accent); color: #1a1306;
+    border: none; border-radius: 5px;
+    padding: 6px 14px;
+    font-family: inherit; font-weight: 600; font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: all 0.15s ease;
+  }
+  .dispatch button:hover {
+    background: #ffd672;
+    box-shadow: 0 0 14px var(--accent-glow);
+  }
+  .dispatch kbd {
+    color: var(--ink-3); font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid var(--line-2);
+    padding: 1px 5px; border-radius: 3px;
+  }
+
+  .agents-strip {
+    display: flex; gap: 6px; flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .agents-strip::-webkit-scrollbar { height: 0; }
+  .agent-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 10px 4px 7px;
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    font-size: 11px; color: var(--ink-1);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .agent-chip:hover { border-color: var(--ink-3); color: var(--ink-0); }
+  .agent-chip .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ink-2);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.03);
+  }
+  .agent-chip.working .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+  .agent-chip.idle .dot { background: var(--ink-3); }
+  .agent-chip.alert .dot {
+    background: var(--danger);
+    animation: chipAlert 1.4s ease-in-out infinite;
+  }
+  @keyframes chipAlert {
+    0%, 100% { box-shadow: 0 0 0 rgba(239,90,90,0.2); }
+    50% { box-shadow: 0 0 10px rgba(239,90,90,0.9); }
+  }
+  .agent-chip .base-tag {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-2); font-size: 10px;
+  }
+
+  .queue-row {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .queue-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-2);
+  }
+  .queue-item strong {
+    color: var(--ink-1); font-weight: 500;
+  }
+  .queue-count {
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    color: var(--ink-1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+  }
+  .queue-count.hot {
+    color: var(--accent); border-color: rgba(245,183,61,0.4);
+  }
+
+  /* Popovers */
+  .popover {
+    position: fixed;
+    background: rgba(13,15,22,0.98);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--ink-1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02);
+    z-index: 40;
+    min-width: 220px;
+    max-width: 280px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .popover.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .popover .pop-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-0);
+    font-weight: 500;
+    margin-bottom: 6px;
+    word-break: break-all;
+  }
+  .popover .pop-meta {
+    font-size: 10px; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+  .popover .pop-body {
+    font-size: 12px; color: var(--ink-1);
+    line-height: 1.5;
+  }
+  .popover .pop-author {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 10px; color: var(--ink-2);
+    display: flex; justify-content: space-between;
+  }
+
+  .command-panel {
+    position: fixed;
+    background: rgba(13,15,22,0.98);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    padding: 12px;
+    z-index: 45;
+    min-width: 240px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.7);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .command-panel.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .cmd-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .cmd-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent);
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700; color: #1a1306;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .cmd-name {
+    font-size: 13px; font-weight: 500;
+  }
+  .cmd-status {
+    font-size: 10px; color: var(--ink-2);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cmd-status.alert { color: var(--danger); }
+  .cmd-task {
+    font-size: 11px; color: var(--ink-1);
+    padding: 8px 10px;
+    background: var(--bg-1);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    margin-bottom: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.4;
+  }
+  .cmd-actions {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+  }
+  .cmd-actions.three { grid-template-columns: repeat(2, 1fr); }
+  .cmd-btn {
+    background: var(--bg-2); color: var(--ink-1);
+    border: 1px solid var(--line-2); border-radius: 6px;
+    padding: 7px 10px;
+    font-family: inherit; font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  .cmd-btn:hover {
+    border-color: var(--ink-3); color: var(--ink-0);
+    background: var(--bg-1);
+  }
+  .cmd-btn.primary {
+    background: var(--accent); color: #1a1306;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .cmd-btn.primary:hover { background: #ffd672; }
+  .cmd-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* Toast for dispatch confirmation */
+  .toast {
+    position: fixed;
+    bottom: 168px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-2);
+    border: 1px solid var(--accent);
+    color: var(--ink-0);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    box-shadow: 0 10px 30px rgba(245,183,61,0.2);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Node labels in observe mode */
+  .node-label {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-2);
+    pointer-events: none;
+    transform: translate(-50%, 0);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 8;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  }
+  .node-label.show { opacity: 1; }
+  .node-label.highlight { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <canvas class="stars" id="stars"></canvas>
+</div>
+
+<!-- TOP RESOURCE BAR -->
+<div class="top-bar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="6" cy="6" r="2.2" stroke="#f5b73d" stroke-width="1.4"/>
+        <circle cx="18" cy="7" r="1.6" stroke="#b8bccf" stroke-width="1.4"/>
+        <circle cx="13" cy="17" r="2" stroke="#b8bccf" stroke-width="1.4"/>
+        <circle cx="5" cy="17" r="1.2" fill="#f5b73d"/>
+        <path d="M6 6 L18 7 M6 6 L13 17 M18 7 L13 17 M5 17 L13 17" stroke="#3a3d4f" stroke-width="0.8"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Bases</div>
+      <div class="brand-sub mono">Ops Console</div>
+    </div>
+  </div>
+
+  <div class="resources">
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Context</span>
+        <span class="res-value mono"><span id="ctxCur">38.0k</span><span class="sub"> / 200k</span></span>
+      </div>
+      <div class="meter" id="ctxMeter"><div class="meter-fill" id="ctxFill" style="width:19%"></div></div>
+    </div>
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Tokens Today</span>
+        <span class="res-value mono" id="tokTotal">212.4k</span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="tokFill" style="width:42%;background:linear-gradient(90deg,#6b7aa1,#b8bccf)"></div></div>
+    </div>
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Spend</span>
+        <span class="res-value mono">$<span id="spendTotal">1.04</span></span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="spendFill" style="width:21%;background:linear-gradient(90deg,#4a8e6b,#6fe1b1)"></div></div>
+    </div>
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Memory</span>
+        <span class="res-value mono"><span id="memCount">38</span><span class="sub"> entries</span></span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="memFill" style="width:38%;background:linear-gradient(90deg,#6366a8,#9ba0e0)"></div></div>
+    </div>
+  </div>
+
+  <div class="tempo">
+    <div class="res-head">
+      <span class="res-label">Session Tempo</span>
+      <span class="res-value mono" id="builtCount">0 built</span>
+    </div>
+    <div class="tempo-bar" id="tempoBar">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="session-clock">runtime <strong class="mono" id="runtime">0:00</strong></div>
+  </div>
+</div>
+
+<!-- OBSERVE MODE BAR -->
+<div class="observe-bar" id="observeBar">
+  <button class="back-btn" id="backBtn">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2 L4 6 L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Command
+  </button>
+  <span class="sep">·</span>
+  <span class="focus-name mono" id="focusName">LOVENOTES</span>
+  <span class="sep">·</span>
+  <span class="task-now" id="focusTask">awaiting dispatch</span>
+</div>
+
+<!-- MAIN CANVAS -->
+<div class="canvas-wrap" id="canvasWrap">
+  <svg id="graph" width="100%" height="100%" style="display:block;">
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2.5" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="strongGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <radialGradient id="baseAura-lovenotes" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="hsla(320,65%,55%,0.16)"/>
+        <stop offset="55%" stop-color="hsla(320,45%,40%,0.05)"/>
+        <stop offset="100%" stop-color="hsla(320,30%,20%,0)"/>
+      </radialGradient>
+      <radialGradient id="baseAura-hg" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="hsla(190,70%,55%,0.14)"/>
+        <stop offset="55%" stop-color="hsla(190,50%,40%,0.05)"/>
+        <stop offset="100%" stop-color="hsla(190,30%,20%,0)"/>
+      </radialGradient>
+      <radialGradient id="baseAura-content" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="hsla(50,75%,55%,0.12)"/>
+        <stop offset="55%" stop-color="hsla(50,55%,40%,0.04)"/>
+        <stop offset="100%" stop-color="hsla(50,30%,20%,0)"/>
+      </radialGradient>
+      <radialGradient id="baseAura-life" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="hsla(150,60%,55%,0.13)"/>
+        <stop offset="55%" stop-color="hsla(150,40%,40%,0.04)"/>
+        <stop offset="100%" stop-color="hsla(150,30%,20%,0)"/>
+      </radialGradient>
+    </defs>
+    <g id="auraLayer"></g>
+    <g id="edgeLayer"></g>
+    <g id="nodeLayer"></g>
+    <g id="agentLayer"></g>
+  </svg>
+  <div id="labelLayer" style="position:absolute;inset:0;pointer-events:none;"></div>
+  <div id="titleLayer" style="position:absolute;inset:0;pointer-events:none;"></div>
+  <div id="hitLayer" style="position:absolute;inset:0;"></div>
+</div>
+
+<!-- BOTTOM COMMAND RAIL -->
+<div class="bottom-rail">
+  <div class="rail-row">
+    <div class="rail-label">Dispatch</div>
+    <form class="dispatch" id="dispatchForm">
+      <span class="dispatch-prefix">&gt;</span>
+      <input id="dispatchInput" type="text" placeholder="review PR #482 for auth flow…" autocomplete="off" />
+      <select id="dispatchBase">
+        <option value="lovenotes">LoveNotes</option>
+        <option value="hg">HG</option>
+        <option value="content">Content</option>
+        <option value="life">Life</option>
+      </select>
+      <button type="submit">Dispatch</button>
+      <kbd>⏎</kbd>
+    </form>
+  </div>
+  <div class="rail-row">
+    <div class="rail-label">Agents</div>
+    <div class="agents-strip" id="agentsStrip"></div>
+  </div>
+  <div class="rail-row">
+    <div class="rail-label">Queue</div>
+    <div class="queue-row" id="queueRow"></div>
+  </div>
+</div>
+
+<!-- POPOVERS / PANELS -->
+<div class="popover" id="nodePopover">
+  <div class="pop-title mono" id="popTitle">—</div>
+  <div class="pop-meta mono" id="popMeta">—</div>
+  <div class="pop-body" id="popBody">—</div>
+  <div class="pop-author">
+    <span id="popAuthor">—</span>
+    <span class="mono" id="popTime">—</span>
+  </div>
+</div>
+
+<div class="command-panel" id="cmdPanel">
+  <div class="cmd-head">
+    <div class="cmd-avatar" id="cmdAvatar">A</div>
+    <div class="cmd-name" id="cmdName">Agent</div>
+    <div class="cmd-status" id="cmdStatus">WORKING</div>
+  </div>
+  <div class="cmd-task mono" id="cmdTask">—</div>
+  <div class="cmd-actions">
+    <button class="cmd-btn" data-cmd="pause">Pause</button>
+    <button class="cmd-btn" data-cmd="refocus">Refocus</button>
+    <button class="cmd-btn" data-cmd="recall">Recall</button>
+    <button class="cmd-btn danger" data-cmd="cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">dispatched</div>
+
+<script>
+/* ================================================================
+   Bases — pure-frontend RTS-style agent dispatch prototype
+   ================================================================ */
+
+// ---------------- DATA MODEL ----------------
+const BASES = [
+  { id: 'lovenotes', name: 'LoveNotes', hue: 320, x: 0.26, y: 0.36, radius: 180 },
+  { id: 'hg',        name: 'HG',        hue: 190, x: 0.74, y: 0.34, radius: 165 },
+  { id: 'content',   name: 'Content',   hue: 50,  x: 0.30, y: 0.72, radius: 170 },
+  { id: 'life',      name: 'Life',      hue: 150, x: 0.72, y: 0.72, radius: 155 },
+];
+
+// Seed nodes. Each gets project, label, kind, and a brief description.
+const SEED_NODES = {
+  lovenotes: [
+    ['README.md', 'doc', 'Product overview — AI SMS for couples'],
+    ['schema.sql', 'code', 'Supabase table definitions for pairs & messages'],
+    ['sms-webhook.ts', 'code', 'Twilio inbound handler'],
+    ['prompt-library.md', 'doc', 'System prompts for tone calibration'],
+    ['pairing-flow', 'decision', 'Decision: 2-step verification via SMS code'],
+    ['rate-limit.ts', 'code', 'Per-pair rate limiting middleware'],
+    ['onboarding.tsx', 'code', 'Landing + signup funnel'],
+    ['retention-notes', 'note', 'Week-2 drop-off hypotheses'],
+    ['pricing-experiment', 'decision', 'Test $9 vs $12 tier'],
+    ['agent-tone.md', 'doc', 'Voice & POV guidelines'],
+    ['error-budget', 'note', 'SLO tracking for delivery'],
+    ['pair-insights.ts', 'code', 'Shared sentiment summary generator'],
+  ],
+  hg: [
+    ['client-roster.md', 'doc', 'Active coaching engagements'],
+    ['q2-plan.md', 'doc', 'Coaching arc for Q2'],
+    ['intake-form.tsx', 'code', 'New client onboarding form'],
+    ['session-notes-template', 'doc', 'Structured note capture'],
+    ['pricing-v2', 'decision', 'Move to outcome-based retainer'],
+    ['testimonial-draft.md', 'note', 'Three pending testimonials'],
+    ['scheduler.tsx', 'code', 'Calendly-alt scheduling widget'],
+    ['engagement-metrics', 'note', 'Adherence & check-in rates'],
+    ['coaching-framework.md', 'doc', 'Core methodology reference'],
+    ['referral-loop', 'decision', 'Launch referral incentive'],
+  ],
+  content: [
+    ['IDEAS.md', 'doc', 'Running list of post ideas'],
+    ['post-agents-at-home.md', 'note', 'Essay draft: Claude at home'],
+    ['publish-cadence', 'decision', 'Weekly long, daily short'],
+    ['audience-notes', 'note', 'Who reads me & why'],
+    ['newsletter-setup.ts', 'code', 'Resend integration'],
+    ['post-q2-okrs.md', 'note', 'Quarterly public retro'],
+    ['voice-guide.md', 'doc', 'Writing voice & constraints'],
+    ['twitter-threads', 'note', 'Top-performing threads catalog'],
+    ['syndication.md', 'doc', 'Cross-post checklist'],
+  ],
+  life: [
+    ['TELOS.md', 'doc', 'Life compass'],
+    ['TASKS.md', 'doc', 'Active P0-P3 tasks'],
+    ['dentist', 'note', 'Book 6-month cleaning'],
+    ['vendor-shortlist', 'note', 'Contractor quotes pending'],
+    ['home-maintenance', 'doc', 'Seasonal checklist'],
+    ['finances-q1.md', 'note', 'Quarterly review draft'],
+    ['reading-queue', 'note', 'Books & long-form backlog'],
+    ['family-calendar', 'doc', 'Shared events & trips'],
+    ['birthday-list', 'note', 'Upcoming dates & gift ideas'],
+    ['tax-2025', 'doc', 'Federal return prep'],
+  ],
+};
+
+// Possible task phrasings per base — used for dispatch sim + new-node labels
+const TASK_TEMPLATES = {
+  lovenotes: [
+    'review PR #482 auth flow', 'draft q2 retention experiment', 'tune prompt for conflict mode',
+    'profile slow webhook', 'A/B pricing copy', 'audit rate-limit middleware',
+    'write post-mortem for outage', 'design weekly digest screen'
+  ],
+  hg: [
+    'draft Q2 OKRs for coaching', 'prep session notes for Tues', 'refine intake form questions',
+    'analyze adherence metrics', 'write referral incentive brief', 'outline client case study',
+    'build 6-month engagement plan'
+  ],
+  content: [
+    'draft essay on agent dispatch', 'outline newsletter issue 14', 'research guest posts',
+    'compile top threads of Q1', 'write post on Personal OS', 'draft twitter thread on bases'
+  ],
+  life: [
+    'book dentist appt', 'research vendor options', 'review Q1 finances', 'plan anniversary dinner',
+    'schedule car service', 'draft birthday gift list', 'renew annual subscriptions'
+  ],
+};
+
+const NODE_LABEL_TEMPLATES = {
+  lovenotes: ['auth-middleware.ts', 'retention-v2.md', 'prompt-conflict.md', 'rate-audit.md', 'pricing-ab.md', 'outage-notes.md', 'webhook-profile.json', 'tone-calibration.ts'],
+  hg: ['q2-okrs.md', 'intake-v3.tsx', 'adherence-analysis.md', 'referral-brief.md', 'case-study-m.md', 'engagement-plan.md'],
+  content: ['essay-dispatch.md', 'newsletter-014.md', 'guest-post-ideas.md', 'thread-q1-top.md', 'post-personal-os.md'],
+  life: ['dentist-booking.md', 'vendor-shortlist.md', 'finance-q1.md', 'anniversary-plan.md', 'birthday-list-v2.md'],
+};
+
+const AGENT_NAMES = ['Kit','Nova','Axel','Pax','Mira','Oren','Vex','Ilo','Juno','Ren','Sol','Tala'];
+
+// ---------------- STATE ----------------
+const state = {
+  nodes: {},      // id -> {id, base, x, y, vx, vy, label, kind, desc, author, bornAt, createdBy}
+  edges: [],      // {a, b, active}
+  agents: [],     // {id, name, base, x, y, targetNode, prevNode, phase, phaseT, task, status, selected}
+  bases: {},      // id -> {...BASES[i], cx, cy, radius, nodeIds[]}
+  queues: {       // per base
+    lovenotes: [], hg: [], content: [], life: [],
+  },
+  mode: 'command',  // 'command' | 'observe'
+  focusBase: null,
+  resources: {
+    context: 38000,  contextMax: 200000,
+    tokens: 212400,
+    spend: 1.04,
+    memory: 38,
+    builtThisSession: 0,
+  },
+  selectedAgent: null,
+  selectedNode: null,
+  tempoPulses: 0,
+  startedAt: Date.now(),
+  viewTransform: { tx: 0, ty: 0, s: 1 },
+};
+
+// ---------------- LAYOUT ----------------
+const graphEl = document.getElementById('graph');
+const edgeLayer = document.getElementById('edgeLayer');
+const nodeLayer = document.getElementById('nodeLayer');
+const agentLayer = document.getElementById('agentLayer');
+const auraLayer  = document.getElementById('auraLayer');
+const labelLayer = document.getElementById('labelLayer');
+const titleLayer = document.getElementById('titleLayer');
+const hitLayer   = document.getElementById('hitLayer');
+const canvasWrap = document.getElementById('canvasWrap');
+
+let W = 0, H = 0;
+
+function sizeToViewport() {
+  const r = canvasWrap.getBoundingClientRect();
+  W = r.width; H = r.height;
+}
+
+// Deterministic pseudo-random for stable seed positions
+function prng(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function buildSeedGraph() {
+  // Position each base
+  BASES.forEach(b => {
+    state.bases[b.id] = { ...b, cx: b.x * W, cy: b.y * H, nodeIds: [] };
+  });
+
+  // Seed nodes in rough radial layout per base; tiny drift
+  const rand = prng(42);
+  Object.entries(SEED_NODES).forEach(([baseId, entries]) => {
+    const base = state.bases[baseId];
+    entries.forEach((entry, i) => {
+      const [label, kind, desc] = entry;
+      const angle = (i / entries.length) * Math.PI * 2 + rand() * 0.5;
+      const r = base.radius * (0.35 + rand() * 0.55);
+      const nid = `${baseId}-n${i}`;
+      state.nodes[nid] = {
+        id: nid, base: baseId,
+        x: base.cx + Math.cos(angle) * r,
+        y: base.cy + Math.sin(angle) * r,
+        vx: 0, vy: 0,
+        label, kind, desc,
+        author: 'seed',
+        bornAt: Date.now() - (60 + rand() * 3600) * 1000,
+        createdBy: null,
+        radius: kind === 'decision' ? 5 : kind === 'doc' ? 4.5 : 4,
+      };
+      base.nodeIds.push(nid);
+    });
+  });
+
+  // Seed edges — connect each node to 1-3 nearby nodes in the same base
+  Object.values(state.bases).forEach(base => {
+    base.nodeIds.forEach((nid, i) => {
+      const n = state.nodes[nid];
+      const neighbors = base.nodeIds
+        .filter(oid => oid !== nid)
+        .map(oid => {
+          const o = state.nodes[oid];
+          return { id: oid, d: Math.hypot(n.x - o.x, n.y - o.y) };
+        })
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 1 + (i % 3));
+      neighbors.forEach(nb => {
+        if (!state.edges.find(e => (e.a === nid && e.b === nb.id) || (e.a === nb.id && e.b === nid))) {
+          state.edges.push({ a: nid, b: nb.id, active: false });
+        }
+      });
+    });
+  });
+}
+
+// ---------------- AGENT SEEDING ----------------
+function seedAgents() {
+  const initial = [
+    { base: 'lovenotes', status: 'working', task: 'tune prompt for conflict mode' },
+    { base: 'lovenotes', status: 'working', task: 'audit rate-limit middleware' },
+    { base: 'hg',        status: 'alert',   task: 'draft Q2 OKRs for coaching' },
+    { base: 'content',   status: 'working', task: 'draft essay on agent dispatch' },
+    { base: 'life',      status: 'idle',    task: null },
+    { base: 'content',   status: 'working', task: 'outline newsletter issue 14' },
+  ];
+  initial.forEach((cfg, i) => {
+    const base = state.bases[cfg.base];
+    const startNode = state.nodes[base.nodeIds[Math.floor(Math.random() * base.nodeIds.length)]];
+    state.agents.push({
+      id: `a${i}`,
+      name: AGENT_NAMES[i],
+      base: cfg.base,
+      x: startNode.x, y: startNode.y,
+      prevNode: startNode.id,
+      targetNode: pickDifferentNode(base, startNode.id),
+      phase: cfg.status === 'idle' ? 'idle' : 'walk',
+      phaseT: 0,
+      phaseDur: 1800 + Math.random() * 900,
+      workDur: 6000 + Math.random() * 4000,
+      task: cfg.task,
+      status: cfg.status,  // working | idle | alert
+      selected: false,
+      color: state.bases[cfg.base].hue,
+    });
+  });
+
+  // Seed queues
+  state.queues.lovenotes = [
+    { task: 'review PR #482 auth flow', priority: 'P1' },
+    { task: 'write post-mortem for outage', priority: 'P2' },
+  ];
+  state.queues.hg = [{ task: 'refine intake form questions', priority: 'P1' }];
+  state.queues.content = [{ task: 'research guest posts', priority: 'P2' }];
+  state.queues.life = [];
+}
+
+function pickDifferentNode(base, excludeId) {
+  const pool = base.nodeIds.filter(id => id !== excludeId);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ---------------- RENDERING ----------------
+function ns(tag) {
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+
+function renderAuras() {
+  auraLayer.innerHTML = '';
+  Object.values(state.bases).forEach(b => {
+    const c = ns('circle');
+    c.setAttribute('cx', b.cx);
+    c.setAttribute('cy', b.cy);
+    c.setAttribute('r', b.radius * 1.5);
+    c.setAttribute('fill', `url(#baseAura-${b.id})`);
+    c.setAttribute('data-base', b.id);
+    c.setAttribute('class', 'base-aura');
+    auraLayer.appendChild(c);
+  });
+}
+
+function renderTitles() {
+  titleLayer.innerHTML = '';
+  Object.values(state.bases).forEach(b => {
+    const d = document.createElement('div');
+    d.className = 'base-title';
+    d.dataset.base = b.id;
+    d.style.left = b.cx + 'px';
+    d.style.top = (b.cy - b.radius - 14) + 'px';
+    const nodeCount = b.nodeIds.length;
+    const agentCount = state.agents.filter(a => a.base === b.id).length;
+    d.innerHTML = `
+      <div class="name">${b.name}</div>
+      <div class="meta mono">${nodeCount} nodes · ${agentCount} agents</div>
+    `;
+    titleLayer.appendChild(d);
+  });
+}
+
+function renderHitZones() {
+  hitLayer.innerHTML = '';
+  Object.values(state.bases).forEach(b => {
+    const d = document.createElement('div');
+    d.className = 'base-hit';
+    d.dataset.base = b.id;
+    d.style.left = (b.cx - b.radius) + 'px';
+    d.style.top = (b.cy - b.radius) + 'px';
+    d.style.width = (b.radius * 2) + 'px';
+    d.style.height = (b.radius * 2) + 'px';
+    if (state.agents.some(a => a.base === b.id && a.status === 'alert')) {
+      d.classList.add('alert');
+    }
+    d.addEventListener('click', (e) => {
+      if (state.mode === 'observe') return;
+      zoomInto(b.id);
+    });
+    hitLayer.appendChild(d);
+  });
+}
+
+function renderEdges() {
+  edgeLayer.innerHTML = '';
+  state.edges.forEach(e => {
+    const a = state.nodes[e.a], b = state.nodes[e.b];
+    if (!a || !b) return;
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    // Slight curve: perpendicular offset
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    const curve = Math.min(12, len * 0.08);
+    const cx = mx + nx * curve;
+    const cy = my + ny * curve;
+    const p = ns('path');
+    p.setAttribute('d', `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`);
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', e.active ? `hsla(${state.bases[a.base].hue},60%,60%,0.7)` : 'rgba(130,140,180,0.12)');
+    p.setAttribute('stroke-width', e.active ? 1.2 : 0.7);
+    if (e.active) {
+      p.setAttribute('filter', 'url(#glow)');
+    }
+    if (e.bornAt && Date.now() - e.bornAt < 1800) {
+      const age = (Date.now() - e.bornAt) / 1800;
+      p.setAttribute('stroke', `hsla(${state.bases[a.base].hue},70%,65%,${1 - age * 0.6})`);
+      p.setAttribute('stroke-width', 1.4 * (1 - age * 0.4) + 0.7);
+      p.setAttribute('filter', 'url(#glow)');
+    }
+    edgeLayer.appendChild(p);
+  });
+}
+
+function renderNodes() {
+  nodeLayer.innerHTML = '';
+  Object.values(state.nodes).forEach(n => {
+    const age = Date.now() - n.bornAt;
+    const isNew = age < 2400;
+
+    const g = ns('g');
+    g.setAttribute('transform', `translate(${n.x}, ${n.y})`);
+    g.setAttribute('data-node', n.id);
+    g.style.cursor = 'pointer';
+
+    // Glow halo on new nodes or occupied nodes
+    const occupied = state.agents.some(a => a.phase === 'work' && a.targetNode === n.id);
+    if (isNew) {
+      const halo = ns('circle');
+      const t = age / 2400;
+      halo.setAttribute('r', (n.radius + 10) * (1 - t * 0.3));
+      halo.setAttribute('fill', 'none');
+      halo.setAttribute('stroke', `hsla(${state.bases[n.base].hue},80%,65%,${0.6 - t * 0.6})`);
+      halo.setAttribute('stroke-width', 1.5);
+      g.appendChild(halo);
+
+      const halo2 = ns('circle');
+      halo2.setAttribute('r', n.radius);
+      halo2.setAttribute('fill', `hsla(${state.bases[n.base].hue},80%,70%,${0.3 - t * 0.3})`);
+      halo2.setAttribute('filter', 'url(#strongGlow)');
+      g.appendChild(halo2);
+    } else if (occupied) {
+      const halo = ns('circle');
+      halo.setAttribute('r', n.radius + 4);
+      halo.setAttribute('fill', 'none');
+      halo.setAttribute('stroke', 'var(--accent)');
+      halo.setAttribute('stroke-width', 0.8);
+      halo.setAttribute('opacity', 0.6);
+      halo.setAttribute('filter', 'url(#glow)');
+      g.appendChild(halo);
+    }
+
+    // Main node
+    if (n.kind === 'decision') {
+      const r = ns('rect');
+      r.setAttribute('x', -n.radius);
+      r.setAttribute('y', -n.radius);
+      r.setAttribute('width', n.radius * 2);
+      r.setAttribute('height', n.radius * 2);
+      r.setAttribute('fill', `hsl(${state.bases[n.base].hue}, 30%, 22%)`);
+      r.setAttribute('stroke', `hsl(${state.bases[n.base].hue}, 60%, 60%)`);
+      r.setAttribute('stroke-width', 0.8);
+      r.setAttribute('transform', 'rotate(45)');
+      g.appendChild(r);
+    } else {
+      const c = ns('circle');
+      c.setAttribute('r', n.radius);
+      c.setAttribute('fill', n.kind === 'doc' ? `hsl(${state.bases[n.base].hue}, 30%, 26%)` : `hsl(${state.bases[n.base].hue}, 25%, 18%)`);
+      c.setAttribute('stroke', `hsla(${state.bases[n.base].hue}, 60%, 65%, 0.8)`);
+      c.setAttribute('stroke-width', 0.8);
+      g.appendChild(c);
+    }
+
+    if (state.selectedNode === n.id) {
+      const ring = ns('circle');
+      ring.setAttribute('r', n.radius + 5);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', 'var(--accent)');
+      ring.setAttribute('stroke-width', 1);
+      ring.setAttribute('stroke-dasharray', '2 2');
+      g.appendChild(ring);
+    }
+
+    g.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      openNodePopover(n, ev);
+    });
+    nodeLayer.appendChild(g);
+  });
+}
+
+function renderAgents() {
+  agentLayer.innerHTML = '';
+  state.agents.forEach(a => {
+    const g = ns('g');
+    g.setAttribute('transform', `translate(${a.x}, ${a.y})`);
+    g.setAttribute('data-agent', a.id);
+    g.style.cursor = 'pointer';
+
+    // Selection ring
+    if (a.selected) {
+      const ring = ns('circle');
+      ring.setAttribute('r', 14);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', 'var(--accent)');
+      ring.setAttribute('stroke-width', 1.2);
+      ring.setAttribute('stroke-dasharray', '3 3');
+      ring.setAttribute('filter', 'url(#glow)');
+      const anim = ns('animateTransform');
+      anim.setAttribute('attributeName', 'transform');
+      anim.setAttribute('type', 'rotate');
+      anim.setAttribute('from', '0');
+      anim.setAttribute('to', '360');
+      anim.setAttribute('dur', '8s');
+      anim.setAttribute('repeatCount', 'indefinite');
+      ring.appendChild(anim);
+      g.appendChild(ring);
+    }
+
+    // Progress ring when working
+    if (a.phase === 'work' && a.status === 'working') {
+      const pct = Math.min(1, a.phaseT / a.workDur);
+      const r = 10;
+      const circumference = 2 * Math.PI * r;
+      const ring = ns('circle');
+      ring.setAttribute('r', r);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', 'var(--accent)');
+      ring.setAttribute('stroke-width', 1.1);
+      ring.setAttribute('stroke-dasharray', `${pct * circumference} ${circumference}`);
+      ring.setAttribute('stroke-dashoffset', circumference * 0.25);
+      ring.setAttribute('transform', 'rotate(-90)');
+      ring.setAttribute('opacity', '0.8');
+      g.appendChild(ring);
+    }
+
+    // Agent body
+    const fillColor = a.status === 'idle'
+      ? `hsl(${state.bases[a.base].hue}, 20%, 45%)`
+      : a.status === 'alert'
+        ? '#ef5a5a'
+        : `hsl(${state.bases[a.base].hue}, 55%, 65%)`;
+    const c = ns('circle');
+    c.setAttribute('r', 5);
+    c.setAttribute('fill', fillColor);
+    c.setAttribute('stroke', 'rgba(255,255,255,0.6)');
+    c.setAttribute('stroke-width', 0.8);
+    c.setAttribute('filter', 'url(#glow)');
+    g.appendChild(c);
+
+    // Tiny initial
+    const txt = ns('text');
+    txt.textContent = a.name[0];
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('dy', '0.32em');
+    txt.setAttribute('font-family', 'JetBrains Mono, monospace');
+    txt.setAttribute('font-size', '6');
+    txt.setAttribute('font-weight', '700');
+    txt.setAttribute('fill', 'rgba(0,0,0,0.7)');
+    g.appendChild(txt);
+
+    // Alert orb
+    if (a.status === 'alert') {
+      const alertG = ns('g');
+      alertG.setAttribute('transform', 'translate(6, -8)');
+      const ac = ns('circle');
+      ac.setAttribute('r', 4);
+      ac.setAttribute('fill', '#ef5a5a');
+      ac.setAttribute('filter', 'url(#strongGlow)');
+      const anim = ns('animate');
+      anim.setAttribute('attributeName', 'r');
+      anim.setAttribute('values', '3.5;4.5;3.5');
+      anim.setAttribute('dur', '1.2s');
+      anim.setAttribute('repeatCount', 'indefinite');
+      ac.appendChild(anim);
+      alertG.appendChild(ac);
+      const at = ns('text');
+      at.textContent = '!';
+      at.setAttribute('text-anchor', 'middle');
+      at.setAttribute('dy', '0.35em');
+      at.setAttribute('font-family', 'Inter, sans-serif');
+      at.setAttribute('font-size', '6');
+      at.setAttribute('font-weight', '700');
+      at.setAttribute('fill', '#fff');
+      alertG.appendChild(at);
+      g.appendChild(alertG);
+    }
+
+    g.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectAgent(a.id, ev);
+    });
+    agentLayer.appendChild(g);
+  });
+}
+
+function renderLabels() {
+  labelLayer.innerHTML = '';
+  if (state.mode !== 'observe') return;
+  const base = state.bases[state.focusBase];
+  if (!base) return;
+  base.nodeIds.forEach(nid => {
+    const n = state.nodes[nid];
+    const d = document.createElement('div');
+    d.className = 'node-label show';
+    if (state.selectedNode === n.id) d.classList.add('highlight');
+    d.style.left = n.x + 'px';
+    d.style.top = (n.y + n.radius + 8) + 'px';
+    d.textContent = n.label;
+    labelLayer.appendChild(d);
+  });
+}
+
+// ---------------- SIMULATION ----------------
+let lastTick = performance.now();
+function tick(now) {
+  const dt = Math.min(60, now - lastTick);
+  lastTick = now;
+
+  // agent motion
+  state.agents.forEach(a => {
+    if (a.status === 'alert' || a.phase === 'paused') return;
+    if (a.phase === 'idle') {
+      // gentle drift to center of base
+      const base = state.bases[a.base];
+      a.x += (base.cx - a.x) * 0.0008 * dt;
+      a.y += (base.cy - a.y) * 0.0008 * dt;
+      return;
+    }
+    a.phaseT += dt;
+    if (a.phase === 'walk') {
+      const target = state.nodes[a.targetNode];
+      if (!target) {
+        a.targetNode = pickDifferentNode(state.bases[a.base], a.prevNode);
+        return;
+      }
+      const t = Math.min(1, a.phaseT / a.phaseDur);
+      const prev = state.nodes[a.prevNode] || target;
+      const easedT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      a.x = prev.x + (target.x - prev.x) * easedT;
+      a.y = prev.y + (target.y - prev.y) * easedT;
+      if (t >= 1) {
+        a.phase = 'work';
+        a.phaseT = 0;
+        a.x = target.x; a.y = target.y;
+      }
+    } else if (a.phase === 'work') {
+      if (a.phaseT >= a.workDur) {
+        // Complete work — spawn new node!
+        completeWork(a);
+        // then pick new destination
+        a.prevNode = a.targetNode;
+        a.targetNode = pickDifferentNode(state.bases[a.base], a.prevNode);
+        a.phase = 'walk';
+        a.phaseT = 0;
+        a.phaseDur = 1600 + Math.random() * 1200;
+        a.workDur = 6000 + Math.random() * 5000;
+      }
+    }
+  });
+
+  // Light node drift — simulated "breathing" for seed graph
+  Object.values(state.nodes).forEach(n => {
+    const wiggle = Math.sin((Date.now() / 3000) + n.x * 0.01) * 0.05;
+    n.x += wiggle * dt * 0.002;
+  });
+
+  renderEdges();
+  renderNodes();
+  renderAgents();
+  if (state.mode === 'observe') renderLabels();
+
+  requestAnimationFrame(tick);
+}
+
+function completeWork(agent) {
+  const base = state.bases[agent.base];
+  // New node at agent's position, then drift to a stable spot near target
+  const parent = state.nodes[agent.targetNode];
+  const labels = NODE_LABEL_TEMPLATES[agent.base];
+  const label = labels[Math.floor(Math.random() * labels.length)] + '';
+  // Unique-ify label
+  let finalLabel = label;
+  let n = 2;
+  while (Object.values(state.nodes).some(nd => nd.label === finalLabel)) {
+    finalLabel = label.replace(/(\.\w+)?$/, (m) => `-v${n}${m || ''}`);
+    n++;
+  }
+  const nid = `${agent.base}-n-new-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const angle = Math.random() * Math.PI * 2;
+  const dist = 22 + Math.random() * 18;
+  const newNode = {
+    id: nid,
+    base: agent.base,
+    x: parent.x,
+    y: parent.y,
+    vx: Math.cos(angle) * 0.5,
+    vy: Math.sin(angle) * 0.5,
+    label: finalLabel,
+    kind: Math.random() < 0.25 ? 'decision' : (Math.random() < 0.4 ? 'doc' : 'note'),
+    desc: agent.task ? `Result of: ${agent.task}` : 'Knowledge captured by agent',
+    author: agent.name,
+    bornAt: Date.now(),
+    createdBy: agent.id,
+    radius: 4,
+  };
+  // animate to final position
+  const finalX = parent.x + Math.cos(angle) * dist;
+  const finalY = parent.y + Math.sin(angle) * dist;
+  state.nodes[nid] = newNode;
+  base.nodeIds.push(nid);
+
+  // animate drift
+  const startX = parent.x, startY = parent.y;
+  const startTime = performance.now();
+  const duration = 1100;
+  function animateNode(t) {
+    const p = Math.min(1, (t - startTime) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    newNode.x = startX + (finalX - startX) * eased;
+    newNode.y = startY + (finalY - startY) * eased;
+    if (p < 1) requestAnimationFrame(animateNode);
+  }
+  requestAnimationFrame(animateNode);
+
+  // new edge
+  state.edges.push({ a: parent.id, b: nid, active: false, bornAt: Date.now() });
+  // maybe a second edge to another nearby node
+  if (Math.random() < 0.5) {
+    const others = base.nodeIds.filter(id => id !== nid && id !== parent.id);
+    if (others.length) {
+      const other = others[Math.floor(Math.random() * others.length)];
+      state.edges.push({ a: nid, b: other, active: false, bornAt: Date.now() });
+    }
+  }
+
+  // Bump resources
+  state.resources.context += 1800 + Math.floor(Math.random() * 2200);
+  state.resources.tokens += 3200 + Math.floor(Math.random() * 2400);
+  state.resources.spend += 0.04 + Math.random() * 0.04;
+  state.resources.memory += 1;
+  state.resources.builtThisSession += 1;
+  state.tempoPulses = Math.min(12, state.tempoPulses + 1);
+  updateResourceUI();
+  updateTitles();
+
+  // If agent task completed and queue has one, rotate it
+  if (state.queues[agent.base].length && agent.status === 'working' && Math.random() < 0.35) {
+    const next = state.queues[agent.base].shift();
+    agent.task = next.task;
+    renderQueues();
+    renderAgentChips();
+    updateObserveTask();
+  }
+}
+
+// ---------------- UI UPDATERS ----------------
+function updateResourceUI() {
+  const r = state.resources;
+  document.getElementById('ctxCur').textContent = (r.context / 1000).toFixed(1) + 'k';
+  const ctxPct = r.context / r.contextMax;
+  document.getElementById('ctxFill').style.width = Math.min(100, ctxPct * 100) + '%';
+  const ctxMeter = document.getElementById('ctxMeter');
+  ctxMeter.classList.remove('warn', 'crit');
+  if (ctxPct > 0.9) ctxMeter.classList.add('crit');
+  else if (ctxPct > 0.7) ctxMeter.classList.add('warn');
+
+  document.getElementById('tokTotal').textContent = (r.tokens / 1000).toFixed(1) + 'k';
+  document.getElementById('tokFill').style.width = Math.min(100, (r.tokens / 1000000) * 100) + '%';
+
+  document.getElementById('spendTotal').textContent = r.spend.toFixed(2);
+  document.getElementById('spendFill').style.width = Math.min(100, (r.spend / 10) * 100) + '%';
+
+  document.getElementById('memCount').textContent = r.memory;
+  document.getElementById('memFill').style.width = Math.min(100, (r.memory / 100) * 100) + '%';
+
+  document.getElementById('builtCount').textContent = r.builtThisSession + ' built';
+  const bars = document.querySelectorAll('#tempoBar span');
+  bars.forEach((b, i) => b.classList.toggle('on', i < state.tempoPulses));
+
+  const mins = Math.floor((Date.now() - state.startedAt) / 60000);
+  const secs = Math.floor(((Date.now() - state.startedAt) % 60000) / 1000);
+  document.getElementById('runtime').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateTitles() {
+  titleLayer.querySelectorAll('.base-title').forEach(el => {
+    const bid = el.dataset.base;
+    const base = state.bases[bid];
+    const agentCount = state.agents.filter(a => a.base === bid).length;
+    el.querySelector('.meta').textContent = `${base.nodeIds.length} nodes · ${agentCount} agents`;
+  });
+}
+
+function renderAgentChips() {
+  const strip = document.getElementById('agentsStrip');
+  strip.innerHTML = '';
+  state.agents.forEach(a => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'agent-chip ' + a.status;
+    chip.innerHTML = `
+      <span class="dot"></span>
+      <span>${a.name}</span>
+      <span class="base-tag">${state.bases[a.base].name.slice(0, 4).toLowerCase()}</span>
+    `;
+    chip.title = a.task || 'idle';
+    chip.addEventListener('click', () => {
+      if (state.mode === 'command') zoomInto(a.base, () => selectAgent(a.id));
+      else selectAgent(a.id);
+    });
+    strip.appendChild(chip);
+  });
+}
+
+function renderQueues() {
+  const row = document.getElementById('queueRow');
+  row.innerHTML = '';
+  Object.entries(state.queues).forEach(([bid, q]) => {
+    const item = document.createElement('div');
+    item.className = 'queue-item';
+    const hotness = q.length > 1 ? 'hot' : '';
+    item.innerHTML = `
+      <strong>${state.bases[bid].name}</strong>
+      <span class="queue-count ${hotness}">${q.length}</span>
+      <span style="color:var(--ink-3)">${q[0] ? '· ' + q[0].task.slice(0, 32) + (q[0].task.length > 32 ? '…' : '') : ''}</span>
+    `;
+    row.appendChild(item);
+  });
+}
+
+function updateObserveTask() {
+  if (state.mode !== 'observe') return;
+  const focusBase = state.focusBase;
+  const activeAgent = state.agents.find(a => a.base === focusBase && a.status === 'working');
+  const alertAgent = state.agents.find(a => a.base === focusBase && a.status === 'alert');
+  const agent = alertAgent || activeAgent;
+  document.getElementById('focusName').textContent = state.bases[focusBase].name.toUpperCase();
+  document.getElementById('focusTask').textContent = agent
+    ? `${agent.name} · ${agent.task || 'idle'}${alertAgent ? ' — needs input' : ''}`
+    : 'no active agents';
+}
+
+// ---------------- ZOOM MODE ----------------
+function zoomInto(baseId, afterCb) {
+  state.mode = 'observe';
+  state.focusBase = baseId;
+  const base = state.bases[baseId];
+  // We want base to fill center, scaled up
+  const targetScale = Math.min(W, H) / (base.radius * 3.2);
+  const vx = W / 2 - base.cx * targetScale;
+  const vy = H / 2 - base.cy * targetScale;
+  graphEl.style.transform = `translate(${vx}px, ${vy}px) scale(${targetScale})`;
+  labelLayer.style.transform = `translate(${vx}px, ${vy}px) scale(${targetScale})`;
+  titleLayer.style.transform = `translate(${vx}px, ${vy}px) scale(${targetScale})`;
+  hitLayer.style.transform = `translate(${vx}px, ${vy}px) scale(${targetScale})`;
+  // Hide other bases' content by fading auras + titles
+  titleLayer.querySelectorAll('.base-title').forEach(el => {
+    el.style.opacity = el.dataset.base === baseId ? '1' : '0';
+    el.classList.toggle('active', el.dataset.base === baseId);
+  });
+  hitLayer.querySelectorAll('.base-hit').forEach(el => {
+    el.style.pointerEvents = el.dataset.base === baseId ? 'none' : 'none';
+  });
+  document.getElementById('observeBar').classList.add('show');
+  updateObserveTask();
+  if (afterCb) setTimeout(afterCb, 420);
+}
+
+function zoomOut() {
+  state.mode = 'command';
+  state.focusBase = null;
+  graphEl.style.transform = '';
+  labelLayer.style.transform = '';
+  labelLayer.innerHTML = '';
+  titleLayer.style.transform = '';
+  hitLayer.style.transform = '';
+  titleLayer.querySelectorAll('.base-title').forEach(el => {
+    el.style.opacity = '1';
+    el.classList.remove('active');
+  });
+  hitLayer.querySelectorAll('.base-hit').forEach(el => {
+    el.style.pointerEvents = 'auto';
+  });
+  document.getElementById('observeBar').classList.remove('show');
+  closeCmdPanel();
+  closePopover();
+}
+
+// ---------------- SELECTION / POPOVERS ----------------
+function selectAgent(id, ev) {
+  state.agents.forEach(a => a.selected = (a.id === id));
+  state.selectedAgent = id;
+  const a = state.agents.find(x => x.id === id);
+  if (!a) return;
+
+  const panel = document.getElementById('cmdPanel');
+  document.getElementById('cmdAvatar').textContent = a.name[0];
+  document.getElementById('cmdName').textContent = a.name;
+  const statusEl = document.getElementById('cmdStatus');
+  statusEl.textContent = a.status.toUpperCase();
+  statusEl.classList.toggle('alert', a.status === 'alert');
+  document.getElementById('cmdTask').textContent = a.task || 'idle — awaiting dispatch';
+
+  // Position panel near agent (screen coords)
+  const pt = graphToScreen(a.x, a.y);
+  const px = Math.min(W - 260, Math.max(20, pt.x + 20));
+  const py = Math.min(H + 62 - 180, Math.max(76, pt.y - 20));
+  panel.style.left = px + 'px';
+  panel.style.top = py + 'px';
+  panel.classList.add('show');
+}
+
+function closeCmdPanel() {
+  document.getElementById('cmdPanel').classList.remove('show');
+  state.agents.forEach(a => a.selected = false);
+  state.selectedAgent = null;
+}
+
+function graphToScreen(x, y) {
+  const rect = canvasWrap.getBoundingClientRect();
+  const m = new DOMMatrix(window.getComputedStyle(graphEl).transform);
+  const sx = m.a * x + m.c * y + m.e + rect.left;
+  const sy = m.b * x + m.d * y + m.f + rect.top;
+  return { x: sx, y: sy };
+}
+
+function openNodePopover(node, ev) {
+  state.selectedNode = node.id;
+  const pop = document.getElementById('nodePopover');
+  document.getElementById('popTitle').textContent = node.label;
+  document.getElementById('popMeta').textContent = `${node.kind.toUpperCase()} · ${state.bases[node.base].name}`;
+  document.getElementById('popBody').textContent = node.desc;
+  document.getElementById('popAuthor').textContent = node.createdBy
+    ? `by ${node.author}`
+    : 'seed node';
+  const age = Date.now() - node.bornAt;
+  document.getElementById('popTime').textContent = formatAge(age);
+  const pt = graphToScreen(node.x, node.y);
+  const px = Math.min(W - 300, Math.max(20, pt.x + 14));
+  const py = Math.min(H + 62 - 160, Math.max(76, pt.y + 14));
+  pop.style.left = px + 'px';
+  pop.style.top = py + 'px';
+  pop.classList.add('show');
+}
+
+function closePopover() {
+  document.getElementById('nodePopover').classList.remove('show');
+  state.selectedNode = null;
+}
+
+function formatAge(ms) {
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return `${Math.floor(ms / 1000)}s ago`;
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+// ---------------- COMMAND PANEL ACTIONS ----------------
+document.querySelectorAll('[data-cmd]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cmd = btn.dataset.cmd;
+    const a = state.agents.find(x => x.id === state.selectedAgent);
+    if (!a) return;
+    if (cmd === 'pause') {
+      a.phase = a.phase === 'paused' ? 'walk' : 'paused';
+      a.status = a.phase === 'paused' ? 'idle' : 'working';
+      showToast(`${a.name} ${a.phase === 'paused' ? 'paused' : 'resumed'}`);
+    } else if (cmd === 'refocus') {
+      a.status = 'working';
+      a.phase = 'walk';
+      a.phaseT = 0;
+      const newTask = TASK_TEMPLATES[a.base][Math.floor(Math.random() * TASK_TEMPLATES[a.base].length)];
+      a.task = newTask;
+      showToast(`${a.name} refocused → ${newTask}`);
+    } else if (cmd === 'recall') {
+      a.status = 'idle';
+      a.phase = 'idle';
+      a.task = null;
+      showToast(`${a.name} recalled`);
+    } else if (cmd === 'cancel') {
+      const idx = state.agents.findIndex(x => x.id === a.id);
+      if (idx >= 0) state.agents.splice(idx, 1);
+      showToast(`${a.name} dismissed`);
+      closeCmdPanel();
+      renderAgentChips();
+      return;
+    }
+    closeCmdPanel();
+    renderAgentChips();
+    updateObserveTask();
+  });
+});
+
+// ---------------- DISPATCH ----------------
+const dispatchForm = document.getElementById('dispatchForm');
+const dispatchInput = document.getElementById('dispatchInput');
+const dispatchBase = document.getElementById('dispatchBase');
+dispatchForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const task = dispatchInput.value.trim();
+  if (!task) return;
+  const baseId = dispatchBase.value;
+  dispatchAgent(baseId, task);
+  dispatchInput.value = '';
+});
+
+function dispatchAgent(baseId, task) {
+  const base = state.bases[baseId];
+  const startNode = state.nodes[base.nodeIds[Math.floor(Math.random() * base.nodeIds.length)]];
+  const name = AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)] + (Math.random() < 0.4 ? Math.floor(Math.random() * 9) : '');
+  const agent = {
+    id: 'a-' + Date.now(),
+    name,
+    base: baseId,
+    x: startNode.x, y: startNode.y,
+    prevNode: startNode.id,
+    targetNode: pickDifferentNode(base, startNode.id),
+    phase: 'walk',
+    phaseT: 0,
+    phaseDur: 1600 + Math.random() * 1000,
+    workDur: 6000 + Math.random() * 4000,
+    task,
+    status: 'working',
+    selected: false,
+    color: base.hue,
+  };
+  state.agents.push(agent);
+  renderAgentChips();
+  renderHitZones();
+  updateTitles();
+  updateObserveTask();
+  showToast(`dispatched ${name} → ${state.bases[baseId].name}`);
+
+  // Smart nav — if in command, auto-focus briefly on the target base
+  if (state.mode === 'command') {
+    const aura = document.querySelectorAll('.base-aura');
+    aura.forEach(a => {
+      if (a.dataset.base === baseId) {
+        a.setAttribute('opacity', 1);
+        setTimeout(() => a.removeAttribute('opacity'), 600);
+      }
+    });
+  }
+}
+
+// Auto-dispatch from queue every 15-20s
+function queueTick() {
+  const baseIds = Object.keys(state.queues).filter(bid => state.queues[bid].length);
+  if (baseIds.length) {
+    const bid = baseIds[Math.floor(Math.random() * baseIds.length)];
+    const q = state.queues[bid];
+    // Sometimes auto-dispatch (only if few agents already there)
+    const existing = state.agents.filter(a => a.base === bid && a.status === 'working').length;
+    if (existing < 3 && Math.random() < 0.55) {
+      const next = q.shift();
+      dispatchAgent(bid, next.task);
+      renderQueues();
+    }
+  }
+  // Sometimes add a new queued task
+  if (Math.random() < 0.5) {
+    const bids = Object.keys(state.queues);
+    const bid = bids[Math.floor(Math.random() * bids.length)];
+    const tasks = TASK_TEMPLATES[bid];
+    const task = tasks[Math.floor(Math.random() * tasks.length)];
+    if (!state.queues[bid].find(x => x.task === task)) {
+      state.queues[bid].push({ task, priority: Math.random() < 0.3 ? 'P1' : 'P2' });
+      renderQueues();
+    }
+  }
+}
+
+// Alert fires occasionally
+function alertTick() {
+  if (Math.random() < 0.35) {
+    const working = state.agents.filter(a => a.status === 'working');
+    if (working.length > 2) {
+      const target = working[Math.floor(Math.random() * working.length)];
+      target.status = 'alert';
+      target.phase = 'work';
+      renderAgentChips();
+      renderHitZones();
+      updateObserveTask();
+      // auto-resolve after ~15-25s if not manually attended
+      setTimeout(() => {
+        if (target.status === 'alert' && state.selectedAgent !== target.id) {
+          target.status = 'working';
+          target.phase = 'walk';
+          target.phaseT = 0;
+          renderAgentChips();
+          renderHitZones();
+        }
+      }, 18000 + Math.random() * 7000);
+    }
+  }
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ---------------- GLOBAL LISTENERS ----------------
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('cmdPanel').classList.contains('show')) {
+      closeCmdPanel();
+    } else if (document.getElementById('nodePopover').classList.contains('show')) {
+      closePopover();
+    } else if (state.mode === 'observe') {
+      zoomOut();
+    }
+  }
+  if ((e.key === '/' || e.key === 'k' && (e.metaKey || e.ctrlKey)) && document.activeElement !== dispatchInput) {
+    e.preventDefault();
+    dispatchInput.focus();
+  }
+});
+
+document.getElementById('backBtn').addEventListener('click', zoomOut);
+canvasWrap.addEventListener('click', (e) => {
+  if (e.target === canvasWrap || e.target === graphEl || e.target.tagName === 'svg') {
+    closeCmdPanel();
+    closePopover();
+  }
+});
+
+// Stars background
+function drawStars() {
+  const c = document.getElementById('stars');
+  const dpr = window.devicePixelRatio || 1;
+  c.width = window.innerWidth * dpr;
+  c.height = window.innerHeight * dpr;
+  c.style.width = window.innerWidth + 'px';
+  c.style.height = window.innerHeight + 'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, c.width, c.height);
+  const rand = prng(7);
+  for (let i = 0; i < 220; i++) {
+    const x = rand() * window.innerWidth;
+    const y = rand() * window.innerHeight;
+    const r = rand() * 0.9 + 0.2;
+    const a = rand() * 0.35 + 0.05;
+    ctx.fillStyle = `rgba(200,210,240,${a})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ---------------- RESIZE ----------------
+function handleResize() {
+  sizeToViewport();
+  // Recompute base centers
+  BASES.forEach(b => {
+    if (state.bases[b.id]) {
+      state.bases[b.id].cx = b.x * W;
+      state.bases[b.id].cy = b.y * H;
+    }
+  });
+  renderAuras();
+  renderTitles();
+  renderHitZones();
+  drawStars();
+}
+window.addEventListener('resize', handleResize);
+
+// ---------------- INIT ----------------
+function init() {
+  sizeToViewport();
+  drawStars();
+  buildSeedGraph();
+  seedAgents();
+  renderAuras();
+  renderTitles();
+  renderHitZones();
+  renderAgentChips();
+  renderQueues();
+  updateResourceUI();
+
+  // Tempo initially at 3 pulses (some momentum)
+  state.tempoPulses = 3;
+  updateResourceUI();
+
+  // Resource tick — small background rises while agents work
+  setInterval(() => {
+    const workingCount = state.agents.filter(a => a.status === 'working').length;
+    if (workingCount > 0) {
+      state.resources.context += workingCount * 40;
+      state.resources.tokens += workingCount * 80;
+      state.resources.spend += workingCount * 0.002;
+    }
+    // Tempo decay
+    if (state.tempoPulses > 0 && Math.random() < 0.25) state.tempoPulses--;
+    updateResourceUI();
+  }, 1500);
+
+  // Queue tick
+  setInterval(queueTick, 16000);
+  // Alert tick
+  setInterval(alertTick, 22000);
+
+  requestAnimationFrame(tick);
+}
+
+init();
+</script>
+</body>
+</html>

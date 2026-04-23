@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AGENT FOUNDRY // Dispatch Floor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Bebas+Neue&display=swap');
+
+  :root {
+    --bg-0: #0e1013;
+    --bg-1: #15181d;
+    --bg-2: #1c2027;
+    --bg-3: #252a33;
+    --concrete: #2e333d;
+    --concrete-2: #3a4050;
+    --gunmetal: #4a5160;
+    --steel: #8b94a3;
+    --chalk: #d9dde3;
+    --yellow: #f4c518;
+    --yellow-dim: #8a7110;
+    --hazard: #e8a020;
+    --red: #ff3b30;
+    --red-dim: #8a1f18;
+    --green: #2ecc71;
+    --green-dim: #1a7a42;
+    --amber: #ffb347;
+    --blue: #4aa3ff;
+    --purple: #b17df7;
+    --rivet: #1a1d22;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg-0);
+    color: var(--chalk);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Blueprint grid */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(74,163,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,163,255,0.04) 1px, transparent 1px),
+      linear-gradient(rgba(74,163,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,163,255,0.02) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at top left, rgba(244,197,24,0.04), transparent 40%),
+      radial-gradient(ellipse at bottom right, rgba(74,163,255,0.05), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 56px 1fr 120px;
+    grid-template-columns: 280px 1fr 320px;
+    grid-template-areas:
+      "top    top    top"
+      "left   floor  right"
+      "left   dock   right";
+    gap: 10px;
+    padding: 10px;
+    z-index: 1;
+  }
+
+  /* ================ TOP BAR ================ */
+  .topbar {
+    grid-area: top;
+    background: linear-gradient(180deg, #1a1e25, #0f1216);
+    border: 1px solid var(--concrete);
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 0 18px;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .topbar::before {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 3px;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--yellow) 0 10px,
+      #111 10px 20px
+    );
+    opacity: 0.85;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand .logo {
+    width: 34px; height: 34px;
+    background: var(--yellow);
+    display: grid; place-items: center;
+    color: #000;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    border-radius: 3px;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.35);
+    position: relative;
+  }
+  .brand .logo::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px dashed rgba(0,0,0,0.35);
+    border-radius: 2px;
+  }
+  .brand .title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  .brand .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--steel);
+    letter-spacing: 2px;
+    margin-top: 3px;
+  }
+
+  .ticker {
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    height: 28px;
+    border: 1px solid var(--concrete);
+    border-radius: 3px;
+    background: #0a0c0f;
+  }
+  .ticker-inner {
+    display: inline-flex;
+    animation: ticker-scroll 60s linear infinite;
+    padding-left: 100%;
+  }
+  .ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--steel);
+  }
+  .ticker-item .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px currentColor;
+  }
+  .ticker-item.warn .dot { background: var(--hazard); color: var(--hazard); }
+  .ticker-item.warn { color: var(--hazard); }
+  .ticker-item.err .dot { background: var(--red); color: var(--red); }
+  .ticker-item.err { color: var(--red); }
+  @keyframes ticker-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .top-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .stat {
+    display: flex; flex-direction: column;
+    align-items: flex-end;
+    padding: 0 14px;
+    border-left: 1px solid var(--concrete);
+  }
+  .stat:first-child { border-left: none; }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--steel);
+    letter-spacing: 2px;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--yellow);
+    line-height: 1.1;
+  }
+  .stat-value.ok { color: var(--green); }
+  .stat-value.warn { color: var(--hazard); }
+
+  /* ================ LEFT SIDEBAR — DISPATCH ================ */
+  .left {
+    grid-area: left;
+    background: var(--bg-1);
+    border: 1px solid var(--concrete);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--concrete);
+    background: linear-gradient(180deg, #1f242c, #181b21);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-header h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 14px;
+    color: var(--chalk);
+  }
+  .panel-header .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    padding: 3px 6px;
+    border-radius: 2px;
+    background: var(--bg-3);
+    color: var(--steel);
+    border: 1px solid var(--concrete);
+  }
+
+  .panel-body {
+    padding: 14px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .panel-body::-webkit-scrollbar { width: 6px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--concrete-2); border-radius: 3px; }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--steel);
+  }
+  .form-group input,
+  .form-group select {
+    background: #0b0d10;
+    border: 1px solid var(--concrete);
+    color: var(--chalk);
+    padding: 8px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    border-radius: 2px;
+    outline: none;
+  }
+  .form-group input:focus,
+  .form-group select:focus { border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(244,197,24,0.15); }
+
+  .btn {
+    padding: 9px 12px;
+    background: var(--yellow);
+    color: #111;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 2px;
+    position: relative;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.25), 0 1px 0 rgba(0,0,0,0.4);
+    transition: transform 0.05s ease, filter 0.15s ease;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:active { transform: translateY(1px); }
+  .btn.secondary {
+    background: var(--bg-3);
+    color: var(--chalk);
+    border: 1px solid var(--concrete-2);
+    box-shadow: none;
+  }
+  .btn.danger { background: var(--red); color: #fff; }
+  .btn.small { padding: 5px 8px; font-size: 10px; }
+
+  .hazard-divider {
+    height: 8px;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--yellow) 0 8px,
+      #111 8px 16px
+    );
+    border-radius: 1px;
+    margin: 4px 0;
+    opacity: 0.5;
+  }
+
+  .quota {
+    background: var(--bg-2);
+    border: 1px solid var(--concrete);
+    border-radius: 3px;
+    padding: 10px;
+  }
+  .quota-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--steel);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .quota-head .num { color: var(--yellow); font-weight: 700; font-size: 13px; }
+  .quota-bar {
+    height: 12px;
+    background: #0a0c0f;
+    border: 1px solid var(--concrete);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .quota-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f4c518, #ffd84d);
+    transition: width 0.4s ease;
+    position: relative;
+  }
+  .quota-fill::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgba(0,0,0,0.15) 0 6px,
+      transparent 6px 12px
+    );
+  }
+
+  .sparkline-box {
+    background: var(--bg-2);
+    border: 1px solid var(--concrete);
+    border-radius: 3px;
+    padding: 8px 10px;
+  }
+  .sparkline-box .sl-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--steel);
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .sparkline-box .sl-head .val {
+    color: var(--green);
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .sparkline-box svg { width: 100%; height: 42px; display: block; }
+
+  /* ================ CENTER — FACTORY FLOOR ================ */
+  .floor {
+    grid-area: floor;
+    background:
+      linear-gradient(180deg, #1b1f26, #141820);
+    border: 1px solid var(--concrete);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .floor::before {
+    /* concrete texture */
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.02) 0 1px, transparent 2px),
+      radial-gradient(circle at 70% 60%, rgba(255,255,255,0.015) 0 1px, transparent 2px),
+      radial-gradient(circle at 40% 80%, rgba(255,255,255,0.025) 0 1px, transparent 2px),
+      radial-gradient(circle at 85% 15%, rgba(255,255,255,0.02) 0 1px, transparent 2px);
+    background-size: 140px 140px, 200px 200px, 180px 180px, 160px 160px;
+    pointer-events: none;
+  }
+
+  .floor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--concrete);
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .floor-header .title {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 3px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .floor-header .title .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 4px;
+    position: relative;
+    z-index: 1;
+  }
+  .lines::-webkit-scrollbar { width: 6px; }
+  .lines::-webkit-scrollbar-thumb { background: var(--concrete-2); border-radius: 3px; }
+
+  .line {
+    background: linear-gradient(180deg, #1a1e25, #15181e);
+    border: 1px solid var(--concrete);
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: 180px 1fr 140px;
+    min-height: 120px;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.3s ease;
+  }
+  .line.jammed {
+    border-color: var(--red);
+    animation: jam-shake 0.15s ease-in-out infinite;
+  }
+  .line.idle { border-color: var(--concrete); }
+  @keyframes jam-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-1px); }
+    75% { transform: translateX(1px); }
+  }
+
+  .line-head {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(180deg, #22272f, #191c22);
+    border-right: 1px solid var(--concrete);
+    position: relative;
+  }
+  .line-head::after {
+    content: "";
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green), inset 0 0 3px rgba(255,255,255,0.4);
+  }
+  .line.jammed .line-head::after { background: var(--red); box-shadow: 0 0 8px var(--red); animation: blink 0.5s step-end infinite; }
+  .line.idle .line-head::after { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .line.done .line-head::after { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+  @keyframes blink {
+    50% { opacity: 0.3; }
+  }
+
+  .line-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: var(--chalk);
+  }
+  .line-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--steel);
+    letter-spacing: 1px;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+  }
+  .line-meta .status-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    background: rgba(46,204,113,0.15);
+    color: var(--green);
+    width: fit-content;
+    margin-top: 4px;
+    border: 1px solid rgba(46,204,113,0.3);
+  }
+  .line.jammed .line-meta .status-tag {
+    background: rgba(255,59,48,0.15);
+    color: var(--red);
+    border-color: rgba(255,59,48,0.4);
+  }
+  .line.idle .line-meta .status-tag {
+    background: rgba(255,179,71,0.15);
+    color: var(--amber);
+    border-color: rgba(255,179,71,0.4);
+  }
+  .line.done .line-meta .status-tag {
+    background: rgba(74,163,255,0.15);
+    color: var(--blue);
+    border-color: rgba(74,163,255,0.4);
+  }
+
+  .line-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  /* Belt */
+  .belt-area {
+    position: relative;
+    overflow: hidden;
+    background: #0c0e12;
+    border-left: 1px solid var(--concrete);
+    border-right: 1px solid var(--concrete);
+  }
+  .belt {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 34px;
+    background:
+      linear-gradient(180deg, #2a2f38 0%, #1b1f26 50%, #2a2f38 100%);
+    border-top: 1px solid #3a4050;
+    border-bottom: 1px solid #3a4050;
+    overflow: hidden;
+  }
+  .belt::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 200%;
+    height: 100%;
+    background-image: repeating-linear-gradient(
+      90deg,
+      #1b1f26 0 14px,
+      #2a2f38 14px 16px
+    );
+    animation: belt-scroll 1.5s linear infinite;
+  }
+  .line.jammed .belt::before { animation-play-state: paused; }
+  .line.idle .belt::before { animation-duration: 6s; opacity: 0.5; }
+  @keyframes belt-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Rails above and below belt */
+  .belt-area::before, .belt-area::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--concrete-2);
+  }
+  .belt-area::before { top: calc(50% - 22px); }
+  .belt-area::after { top: calc(50% + 22px); }
+
+  /* Items on belt */
+  .item {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px; height: 26px;
+    border-radius: 3px;
+    background: linear-gradient(145deg, #d9dde3, #8b94a3);
+    box-shadow:
+      inset 0 -4px 0 rgba(0,0,0,0.25),
+      0 2px 4px rgba(0,0,0,0.4);
+    display: grid; place-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #222;
+    font-weight: 700;
+    transition: left 0.8s linear, opacity 0.3s ease;
+    z-index: 2;
+  }
+  .item.t-research { background: linear-gradient(145deg, #b17df7, #7a4bc7); color: #fff; }
+  .item.t-support  { background: linear-gradient(145deg, #4aa3ff, #2e6bb1); color: #fff; }
+  .item.t-design   { background: linear-gradient(145deg, #ff9a3c, #c96d1e); color: #fff; }
+  .item.t-data     { background: linear-gradient(145deg, #2ecc71, #1a7a42); color: #fff; }
+  .item.completing {
+    animation: item-complete 0.4s ease-out forwards;
+  }
+  @keyframes item-complete {
+    0% { transform: translateY(-50%) scale(1); opacity: 1; }
+    60% { transform: translateY(-50%) scale(1.4); opacity: 1; filter: drop-shadow(0 0 8px #f4c518); }
+    100% { transform: translateY(-50%) scale(0); opacity: 0; }
+  }
+
+  /* Sparks */
+  .spark {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: var(--yellow);
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: 0 0 6px var(--yellow);
+    animation: spark-fly 0.5s ease-out forwards;
+  }
+  @keyframes spark-fly {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+
+  /* Machine */
+  .machine {
+    position: relative;
+    background: linear-gradient(180deg, #242932, #1a1e25);
+    border-left: 1px solid var(--concrete);
+    display: grid;
+    place-items: center;
+    padding: 10px;
+    overflow: hidden;
+  }
+  .machine::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 20px,
+      rgba(255,255,255,0.02) 20px 21px
+    );
+  }
+  .machine-svg { width: 110px; height: 95px; position: relative; z-index: 1; }
+  .machine-body {
+    fill: #3a4050;
+    stroke: #1a1d22;
+    stroke-width: 1.5;
+  }
+  .machine-screen {
+    fill: #0a0c0f;
+    stroke: var(--green);
+    stroke-width: 0.8;
+  }
+  .machine-glow {
+    fill: var(--green);
+    opacity: 0.8;
+  }
+  .line.jammed .machine-glow { fill: var(--red); }
+  .line.idle .machine-glow { fill: var(--amber); opacity: 0.5; }
+
+  .gear {
+    transform-origin: center center;
+    animation: gear-spin 3s linear infinite;
+    fill: #4a5160;
+    stroke: #1a1d22;
+    stroke-width: 0.8;
+  }
+  .gear.fast { animation-duration: 1.5s; }
+  .gear.slow { animation-duration: 5s; animation-direction: reverse; }
+  .line.jammed .gear { animation-play-state: paused; }
+  .line.idle .gear { animation-duration: 10s; }
+  @keyframes gear-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .piston {
+    animation: piston-move 1.2s ease-in-out infinite;
+  }
+  .line.jammed .piston { animation-play-state: paused; }
+  .line.idle .piston { animation-play-state: paused; }
+  @keyframes piston-move {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+  }
+
+  .buffer-bar {
+    position: absolute;
+    bottom: 6px;
+    left: 10px; right: 10px;
+    height: 6px;
+    background: #0a0c0f;
+    border: 1px solid var(--concrete);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .buffer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #6be29a);
+    transition: width 0.4s ease;
+  }
+  .buffer-fill.warn { background: linear-gradient(90deg, var(--amber), #ffd584); }
+  .buffer-fill.danger { background: linear-gradient(90deg, var(--red), #ff7a72); }
+
+  /* ================ SHIPPING DOCK ================ */
+  .dock {
+    grid-area: dock;
+    background: linear-gradient(180deg, #1a1e25, #12151a);
+    border: 1px solid var(--concrete);
+    border-radius: 4px;
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dock-label {
+    display: flex;
+    flex-direction: column;
+  }
+  .dock-label .t1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .dock-label .t2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--steel);
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+  }
+
+  .crates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px;
+    min-height: 80px;
+  }
+  .crates::-webkit-scrollbar { height: 5px; }
+  .crates::-webkit-scrollbar-thumb { background: var(--concrete-2); }
+
+  .crate {
+    flex-shrink: 0;
+    width: 72px; height: 72px;
+    background: linear-gradient(145deg, #8b6a2a, #5c4418);
+    border: 1px solid #3a2d10;
+    border-radius: 2px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    box-shadow:
+      inset 0 -6px 0 rgba(0,0,0,0.3),
+      inset 0 6px 0 rgba(255,255,255,0.06),
+      0 2px 6px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease;
+  }
+  .crate.shipping { animation: crate-ship 0.8s ease-in forwards; }
+  @keyframes crate-ship {
+    0% { transform: translateX(0) translateY(0); opacity: 1; }
+    100% { transform: translateX(400px) translateY(-30px) rotate(15deg); opacity: 0; }
+  }
+  .crate::before, .crate::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px;
+    height: 4px;
+    background: #3a2d10;
+  }
+  .crate::before { top: 14px; }
+  .crate::after { bottom: 14px; }
+  .crate-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #f1dba0;
+    letter-spacing: 1px;
+    text-align: center;
+    line-height: 1.2;
+    padding: 0 4px;
+    z-index: 1;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.5);
+  }
+  .crate-fill {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: rgba(244,197,24,0.4);
+    transition: height 0.4s ease;
+    border-top: 1px solid var(--yellow);
+  }
+
+  .dock-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+    padding-left: 14px;
+    border-left: 1px solid var(--concrete);
+  }
+
+  /* ================ RIGHT — RESEARCH TREE ================ */
+  .right {
+    grid-area: right;
+    background: var(--bg-1);
+    border: 1px solid var(--concrete);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .research-body {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .research-body::-webkit-scrollbar { width: 6px; }
+  .research-body::-webkit-scrollbar-thumb { background: var(--concrete-2); border-radius: 3px; }
+
+  .rp-bar {
+    background: var(--bg-2);
+    border: 1px solid var(--concrete);
+    border-radius: 3px;
+    padding: 10px;
+  }
+  .rp-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--steel);
+    margin-bottom: 8px;
+  }
+  .rp-head .num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--purple);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .rp-lvl {
+    display: flex; gap: 3px; margin-top: 6px;
+  }
+  .lvl-cell {
+    flex: 1;
+    height: 6px;
+    background: #0a0c0f;
+    border: 1px solid var(--concrete);
+  }
+  .lvl-cell.on { background: var(--purple); box-shadow: 0 0 4px var(--purple); }
+
+  .upgrade {
+    background: var(--bg-2);
+    border: 1px solid var(--concrete);
+    border-radius: 3px;
+    padding: 10px 12px;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.1s ease;
+  }
+  .upgrade:hover:not(.locked):not(.owned) { border-color: var(--yellow); }
+  .upgrade:active:not(.locked):not(.owned) { transform: translateY(1px); }
+  .upgrade.locked { opacity: 0.45; cursor: not-allowed; }
+  .upgrade.owned { border-color: var(--green-dim); background: rgba(46,204,113,0.05); }
+
+  .upg-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+  }
+  .upg-cost {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--purple);
+  }
+  .upgrade.owned .upg-cost {
+    color: var(--green);
+  }
+  .upg-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--steel);
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+    margin-top: 5px;
+  }
+  .upg-tier {
+    position: absolute;
+    top: -7px; left: 10px;
+    background: var(--bg-0);
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--steel);
+    border: 1px solid var(--concrete);
+    border-radius: 2px;
+  }
+
+  /* Rivets */
+  .rivet {
+    position: absolute;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #6a7080, #1a1d22);
+    z-index: 2;
+  }
+
+  /* Toast / flash */
+  .toast {
+    position: fixed;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-3);
+    border: 1px solid var(--yellow);
+    padding: 10px 18px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--yellow);
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(244,197,24,0.25);
+    animation: toast-in 0.3s ease-out, toast-out 0.3s ease-in 2.2s forwards;
+  }
+  @keyframes toast-in {
+    from { transform: translate(-50%, 20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+  @keyframes toast-out {
+    from { opacity: 1; }
+    to { opacity: 0; transform: translate(-50%, -10px); }
+  }
+
+  /* Misc */
+  .stack-shine {
+    color: var(--yellow);
+    animation: shine 1s ease-out;
+  }
+  @keyframes shine {
+    0% { transform: scale(1.3); color: #fff; text-shadow: 0 0 10px var(--yellow); }
+    100% { transform: scale(1); color: var(--yellow); text-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">AF</div>
+      <div>
+        <div class="title">Agent Foundry</div>
+        <div class="sub">// DISPATCH FLOOR · SECTOR 07</div>
+      </div>
+    </div>
+
+    <div class="ticker" id="ticker">
+      <div class="ticker-inner" id="tickerInner">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <div class="top-stats">
+      <div class="stat">
+        <div class="stat-label">SHIFT</div>
+        <div class="stat-value" id="shiftClock">00:00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">LEVEL</div>
+        <div class="stat-value" id="factLevel">7</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">EFFICIENCY</div>
+        <div class="stat-value ok" id="efficiency">94%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">THROUGHPUT</div>
+        <div class="stat-value" id="throughput">0/min</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">UPTIME</div>
+        <div class="stat-value ok" id="uptime">99.2%</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ LEFT — DISPATCH ============ -->
+  <aside class="left">
+    <div class="panel-header">
+      <h3>Dispatch Console</h3>
+      <span class="pill">ONLINE</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="form-group">
+        <label>Task Description</label>
+        <input type="text" id="taskName" placeholder="e.g. Draft Q2 memo" value="Quarterly memo draft" />
+      </div>
+
+      <div class="form-group">
+        <label>Task Type</label>
+        <select id="taskType">
+          <option value="research">Research</option>
+          <option value="support">Support</option>
+          <option value="design">Design</option>
+          <option value="data">Data</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Route To Line</label>
+        <select id="taskLine">
+          <!-- filled by JS -->
+        </select>
+      </div>
+
+      <button class="btn" id="queueBtn">Queue Item</button>
+
+      <div class="hazard-divider"></div>
+
+      <div class="form-group">
+        <label>Build New Line (Agent)</label>
+        <input type="text" id="newLineName" placeholder="Line name" value="L-05 ANALYST" />
+      </div>
+      <button class="btn secondary" id="buildBtn">+ Deploy Machine</button>
+
+      <div class="hazard-divider"></div>
+
+      <div class="quota">
+        <div class="quota-head">
+          <span>DAILY QUOTA</span>
+          <span><span id="quotaNum">0</span>/<span id="quotaTarget">120</span></span>
+        </div>
+        <div class="quota-bar"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="sparkline-box">
+        <div class="sl-head">
+          <span>ITEMS / MIN (60s)</span>
+          <span class="val" id="slVal">—</span>
+        </div>
+        <svg viewBox="0 0 200 42" preserveAspectRatio="none" id="sparklineSvg">
+          <path id="sparkline" d="" fill="none" stroke="#2ecc71" stroke-width="1.5" />
+          <path id="sparklineFill" d="" fill="rgba(46,204,113,0.15)" stroke="none" />
+        </svg>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ============ CENTER — FACTORY FLOOR ============ -->
+  <section class="floor">
+    <div class="floor-header">
+      <div class="title"><span class="live-dot"></span>Production Floor</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--steel);letter-spacing:1.5px">
+        <span id="activeLines">4</span> LINES · <span id="inFlight">0</span> IN-FLIGHT · <span id="alertCount">0</span> ALERTS
+      </div>
+    </div>
+
+    <div class="lines" id="lines">
+      <!-- production lines injected by JS -->
+    </div>
+  </section>
+
+  <!-- ============ BOTTOM — SHIPPING DOCK ============ -->
+  <footer class="dock">
+    <div class="dock-label">
+      <div class="t1">Shipping Dock</div>
+      <div class="t2">OUTBOUND QUEUE · BAY 03</div>
+    </div>
+    <div class="crates" id="crates">
+      <!-- crates injected -->
+    </div>
+    <div class="dock-stats">
+      <div class="stat-label" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel);letter-spacing:2px">TOTAL SHIPPED</div>
+      <div class="stat-value" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--yellow)" id="totalShipped">0</div>
+      <div class="stat-label" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--steel);letter-spacing:2px">XP EARNED</div>
+      <div class="stat-value" style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--blue)" id="xpEarned">0</div>
+    </div>
+  </footer>
+
+  <!-- ============ RIGHT — RESEARCH TREE ============ -->
+  <aside class="right">
+    <div class="panel-header">
+      <h3>Research Tree</h3>
+      <span class="pill" id="factLevelPill">LVL 7</span>
+    </div>
+    <div class="research-body">
+
+      <div class="rp-bar">
+        <div class="rp-head">
+          <span>RESEARCH POINTS</span>
+          <span class="num" id="rpNum">24</span>
+        </div>
+        <div class="stat-label" style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--steel);letter-spacing:1.5px">NEXT LEVEL</div>
+        <div class="rp-lvl" id="rpLvl"></div>
+      </div>
+
+      <div id="upgrades">
+        <!-- upgrades injected -->
+      </div>
+
+    </div>
+  </aside>
+
+</div>
+
+<script>
+/* =========================================================
+   AGENT FOUNDRY — Factory Dispatch UI
+   ========================================================= */
+
+const TASK_TYPES = {
+  research: { label: 'RSC', color: '#b17df7' },
+  support:  { label: 'SUP', color: '#4aa3ff' },
+  design:   { label: 'DSN', color: '#ff9a3c' },
+  data:     { label: 'DAT', color: '#2ecc71' },
+};
+
+const state = {
+  lines: [],
+  totalShipped: 0,
+  xp: 0,
+  rp: 24,
+  level: 7,
+  nextLevelRp: 40,
+  crates: [],       // [{id, items, capacity}]
+  throughputHistory: new Array(60).fill(0),
+  secondsElapsed: 0,
+  shiftStart: Date.now(),
+  alerts: [],
+  upgrades: [
+    { id:'belt2',  tier:'T1', name:'Reinforced Belts',     cost:15, desc:'+25% belt speed across all lines.', owned:false, locked:false, effect:{ beltSpeed:1.25 } },
+    { id:'buf2',   tier:'T1', name:'Smart Buffer',         cost:20, desc:'Output buffers hold +50% more items.', owned:false, locked:false, effect:{ bufferMult:1.5 } },
+    { id:'auto',   tier:'T2', name:'Auto-Restart',         cost:35, desc:'Jammed machines self-recover after 8s.', owned:false, locked:false, effect:{ autoRestart:true } },
+    { id:'par2',   tier:'T2', name:'Parallel Processing MK II', cost:50, desc:'Each machine can process 2 items simultaneously.', owned:false, locked:true, effect:{ parallel:2 } },
+    { id:'overc',  tier:'T3', name:'Overclocker',          cost:75, desc:'Consumes RP for +40% throughput bursts.', owned:false, locked:true, effect:{ overclock:true } },
+    { id:'fore',   tier:'T3', name:'AI Foreman',           cost:100, desc:'Auto-routes items to fastest available line.', owned:false, locked:true, effect:{ foreman:true } },
+  ],
+  beltSpeedMult: 1,
+  bufferMult: 1,
+  autoRestart: false,
+};
+
+/* ------------------ Seed Lines ------------------ */
+function makeLine(id, name, type, status){
+  return {
+    id, name, type, status,    // status: running | jammed | idle | done
+    items: [],                 // items on belt { id, type, pos, name }
+    processed: 0,
+    buffer: 0,
+    bufferMax: 10,
+    lastProcess: Date.now(),
+    jammedSince: null,
+  };
+}
+
+state.lines = [
+  makeLine('L01', 'L-01 SCRIBE',   'research', 'running'),
+  makeLine('L02', 'L-02 CRAWLER',  'data',     'jammed'),
+  makeLine('L03', 'L-03 RENDERER', 'design',   'idle'),
+  makeLine('L04', 'L-04 CONCIERGE','support',  'running'),
+];
+
+// seed items
+state.lines[0].items = [
+  { id: uid(), type:'research', pos: 15, name:'Q2 review' },
+  { id: uid(), type:'research', pos: 48, name:'Market scan' },
+  { id: uid(), type:'data',     pos: 78, name:'Metric pull' },
+];
+state.lines[0].processed = 14;
+state.lines[0].buffer = 3;
+
+state.lines[1].items = [
+  { id: uid(), type:'data', pos: 55, name:'Log parse' }, // stuck
+];
+state.lines[1].processed = 7;
+state.lines[1].buffer = 8;
+state.lines[1].jammedSince = Date.now();
+
+state.lines[2].items = [];
+state.lines[2].processed = 2;
+state.lines[2].buffer = 0;
+
+state.lines[3].items = [
+  { id: uid(), type:'support', pos: 88, name:'Ticket #2143' }, // near done
+  { id: uid(), type:'support', pos: 35, name:'Ticket #2144' },
+];
+state.lines[3].processed = 22;
+state.lines[3].buffer = 5;
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+/* ------------------ RENDER ------------------ */
+function renderLines(){
+  const el = document.getElementById('lines');
+  el.innerHTML = '';
+  state.lines.forEach(line => {
+    const div = document.createElement('div');
+    div.className = `line ${line.status}`;
+    div.id = `line-${line.id}`;
+
+    const bufferPct = Math.min(100, (line.buffer / line.bufferMax) * 100);
+    let bufferClass = '';
+    if (bufferPct > 80) bufferClass = 'danger';
+    else if (bufferPct > 60) bufferClass = 'warn';
+
+    let statusLabel = 'RUNNING';
+    if (line.status === 'jammed') statusLabel = 'JAMMED';
+    else if (line.status === 'idle') statusLabel = 'IDLE / AWAITING INPUT';
+    else if (line.status === 'done') statusLabel = 'FINALIZING';
+
+    div.innerHTML = `
+      <div class="line-head">
+        <div>
+          <div class="line-name">${line.name}</div>
+          <div class="line-meta">
+            <span>TYPE · ${line.type.toUpperCase()}</span>
+            <span>PROCESSED · <span class="n" id="proc-${line.id}">${line.processed}</span></span>
+            <span>BUFFER · <span id="buf-${line.id}">${line.buffer}</span>/${line.bufferMax}</span>
+            <span class="status-tag">${statusLabel}</span>
+          </div>
+        </div>
+        <div class="line-actions">
+          ${line.status === 'jammed' ? '<button class="btn small danger" data-action="unjam" data-line="'+line.id+'">Unjam</button>' : ''}
+          ${line.status === 'idle' ? '<button class="btn small" data-action="feed" data-line="'+line.id+'">Feed</button>' : ''}
+          <button class="btn small secondary" data-action="pause" data-line="${line.id}">${line.status === 'paused' ? 'Resume' : 'Pause'}</button>
+        </div>
+      </div>
+      <div class="belt-area" id="belt-${line.id}">
+        <div class="belt"></div>
+        ${renderItems(line)}
+        <div class="rivet" style="top:6px;left:6px"></div>
+        <div class="rivet" style="top:6px;right:6px"></div>
+        <div class="rivet" style="bottom:6px;left:6px"></div>
+        <div class="rivet" style="bottom:6px;right:6px"></div>
+      </div>
+      <div class="machine">
+        ${renderMachineSVG(line)}
+        <div class="buffer-bar"><div class="buffer-fill ${bufferClass}" style="width:${bufferPct}%"></div></div>
+      </div>
+    `;
+    el.appendChild(div);
+  });
+
+  // wire actions
+  el.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const { action, line } = btn.dataset;
+      if (action === 'unjam') unjamLine(line);
+      if (action === 'feed') feedLine(line);
+      if (action === 'pause') toggleLine(line);
+    });
+  });
+}
+
+function renderItems(line){
+  return line.items.map(item => {
+    const t = TASK_TYPES[item.type];
+    return `<div class="item t-${item.type}" data-item="${item.id}" style="left:${item.pos}%"><span>${t.label}</span></div>`;
+  }).join('');
+}
+
+function renderMachineSVG(line){
+  // Machine body with screen, gears, piston
+  const screenColor = line.status === 'jammed' ? '#ff3b30' :
+                     line.status === 'idle' ? '#ffb347' : '#2ecc71';
+  return `
+    <svg class="machine-svg" viewBox="0 0 110 95">
+      <!-- base -->
+      <rect class="machine-body" x="8" y="60" width="94" height="30" rx="2" />
+      <!-- body -->
+      <rect class="machine-body" x="18" y="20" width="74" height="45" rx="3" />
+      <!-- rivets -->
+      <circle cx="22" cy="24" r="1.4" fill="#1a1d22" />
+      <circle cx="88" cy="24" r="1.4" fill="#1a1d22" />
+      <circle cx="22" cy="61" r="1.4" fill="#1a1d22" />
+      <circle cx="88" cy="61" r="1.4" fill="#1a1d22" />
+      <!-- screen -->
+      <rect class="machine-screen" x="26" y="28" width="34" height="20" rx="1" />
+      <circle class="machine-glow" cx="30" cy="32" r="1.4" />
+      <rect x="34" y="31" width="20" height="1" fill="${screenColor}" opacity="0.6" />
+      <rect x="34" y="34" width="14" height="1" fill="${screenColor}" opacity="0.4" />
+      <rect x="34" y="37" width="18" height="1" fill="${screenColor}" opacity="0.5" />
+      <rect x="34" y="40" width="10" height="1" fill="${screenColor}" opacity="0.4" />
+      <!-- status light strip -->
+      <rect x="66" y="28" width="4" height="20" fill="#0a0c0f" stroke="#1a1d22" stroke-width="0.5" />
+      <rect x="66.5" y="29" width="3" height="5" fill="${screenColor}" opacity="0.9">
+        ${line.status === 'running' ? '<animate attributeName="opacity" values="0.9;0.3;0.9" dur="0.6s" repeatCount="indefinite" />' : ''}
+      </rect>
+      <rect x="66.5" y="35" width="3" height="5" fill="${screenColor}" opacity="0.4" />
+      <rect x="66.5" y="41" width="3" height="5" fill="${screenColor}" opacity="0.2" />
+      <!-- gears -->
+      <g transform="translate(78,38)">
+        <g class="gear">
+          <circle r="8" />
+          <g fill="#4a5160" stroke="#1a1d22" stroke-width="0.5">
+            <rect x="-1.5" y="-11" width="3" height="3" />
+            <rect x="-1.5" y="8" width="3" height="3" />
+            <rect x="-11" y="-1.5" width="3" height="3" />
+            <rect x="8" y="-1.5" width="3" height="3" />
+            <rect x="-8.5" y="-8.5" width="2.5" height="2.5" transform="rotate(45)" />
+            <rect x="-8.5" y="6" width="2.5" height="2.5" transform="rotate(45)" />
+          </g>
+          <circle r="3" fill="#2a2f38" />
+          <circle r="1" fill="#1a1d22" />
+        </g>
+      </g>
+      <g transform="translate(88,62)">
+        <g class="gear fast">
+          <circle r="5" />
+          <g fill="#4a5160" stroke="#1a1d22" stroke-width="0.4">
+            <rect x="-1" y="-7" width="2" height="2" />
+            <rect x="-1" y="5" width="2" height="2" />
+            <rect x="-7" y="-1" width="2" height="2" />
+            <rect x="5" y="-1" width="2" height="2" />
+          </g>
+          <circle r="2" fill="#2a2f38" />
+        </g>
+      </g>
+      <!-- piston -->
+      <g class="piston">
+        <rect x="10" y="40" width="10" height="4" fill="#4a5160" stroke="#1a1d22" stroke-width="0.5" />
+        <rect x="6" y="38" width="4" height="8" fill="#2a2f38" stroke="#1a1d22" stroke-width="0.5" />
+      </g>
+      <!-- feet / base hazard stripes -->
+      <rect x="8" y="88" width="94" height="4" fill="url(#hz-${line.id})" />
+      <defs>
+        <pattern id="hz-${line.id}" width="8" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+          <rect width="4" height="4" fill="#f4c518" />
+          <rect x="4" width="4" height="4" fill="#1a1d22" />
+        </pattern>
+      </defs>
+    </svg>
+  `;
+}
+
+function renderLineSelect(){
+  const sel = document.getElementById('taskLine');
+  sel.innerHTML = state.lines.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+}
+
+function renderCrates(){
+  const el = document.getElementById('crates');
+  el.innerHTML = state.crates.map(c => {
+    const pct = Math.min(100, (c.items / c.capacity) * 100);
+    return `
+      <div class="crate" id="crate-${c.id}">
+        <div class="crate-fill" style="height:${pct}%"></div>
+        <div class="crate-label">CRATE-${c.id}<br>${c.items}/${c.capacity}</div>
+      </div>
+    `;
+  }).join('');
+  if (state.crates.length === 0) {
+    el.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--steel);letter-spacing:1.5px;padding:20px">AWAITING OUTPUT…</div>';
+  }
+}
+
+function renderUpgrades(){
+  const el = document.getElementById('upgrades');
+  el.innerHTML = state.upgrades.map(u => `
+    <div class="upgrade ${u.owned ? 'owned' : ''} ${u.locked ? 'locked' : ''}" data-upg="${u.id}">
+      <div class="upg-tier">${u.tier}</div>
+      <div class="upg-head">
+        <span>${u.name}</span>
+        <span class="upg-cost">${u.owned ? 'OWNED' : u.cost + ' RP'}</span>
+      </div>
+      <div class="upg-desc">${u.desc}</div>
+    </div>
+  `).join('');
+
+  el.querySelectorAll('[data-upg]').forEach(node => {
+    node.addEventListener('click', () => {
+      const upg = state.upgrades.find(x => x.id === node.dataset.upg);
+      if (!upg || upg.owned || upg.locked) return;
+      if (state.rp < upg.cost) { toast('Insufficient research points'); return; }
+      state.rp -= upg.cost;
+      upg.owned = true;
+      applyUpgrade(upg);
+      toast(`${upg.name} deployed.`);
+      renderResearch();
+    });
+  });
+}
+
+function renderResearch(){
+  document.getElementById('rpNum').textContent = state.rp;
+  const lvl = document.getElementById('rpLvl');
+  lvl.innerHTML = '';
+  const cells = 10;
+  const filled = Math.min(cells, Math.floor((state.rp / state.nextLevelRp) * cells));
+  for (let i = 0; i < cells; i++) {
+    const c = document.createElement('div');
+    c.className = 'lvl-cell' + (i < filled ? ' on' : '');
+    lvl.appendChild(c);
+  }
+  renderUpgrades();
+
+  // unlock T3 after certain levels
+  if (state.level >= 8) {
+    state.upgrades.forEach(u => { if (u.tier === 'T3') u.locked = false; });
+  }
+  if (state.level >= 9) {
+    // all unlocked
+  }
+}
+
+function applyUpgrade(upg){
+  const e = upg.effect;
+  if (e.beltSpeed) state.beltSpeedMult *= e.beltSpeed;
+  if (e.bufferMult) {
+    state.bufferMult *= e.bufferMult;
+    state.lines.forEach(l => l.bufferMax = Math.round(l.bufferMax * e.bufferMult));
+    renderLines();
+  }
+  if (e.autoRestart) state.autoRestart = true;
+}
+
+/* ------------------ INTERACTIONS ------------------ */
+document.getElementById('queueBtn').addEventListener('click', () => {
+  const name = document.getElementById('taskName').value.trim() || 'Untitled';
+  const type = document.getElementById('taskType').value;
+  const lineId = document.getElementById('taskLine').value;
+  const line = state.lines.find(l => l.id === lineId);
+  if (!line) return;
+
+  if (line.items.length >= 5) { toast('Line ' + line.name + ' is saturated'); return; }
+  line.items.push({ id: uid(), type, pos: 0, name });
+  if (line.status === 'idle') line.status = 'running';
+  renderLines();
+  toast(`Queued → ${line.name}`);
+});
+
+document.getElementById('buildBtn').addEventListener('click', () => {
+  if (state.lines.length >= 6) { toast('Max lines reached — unlock Mega Factory'); return; }
+  const name = document.getElementById('newLineName').value.trim() || `L-0${state.lines.length+1} AGENT`;
+  const types = ['research','support','design','data'];
+  const type = types[Math.floor(Math.random()*types.length)];
+  const id = 'L0' + (state.lines.length + 1);
+  state.lines.push(makeLine(id, name, type, 'idle'));
+  renderLines();
+  renderLineSelect();
+  document.getElementById('activeLines').textContent = state.lines.length;
+  toast(`Machine deployed → ${name}`);
+  pushAlert({ msg: `NEW LINE ONLINE · ${name}`, kind: 'ok' });
+});
+
+function unjamLine(id){
+  const line = state.lines.find(l => l.id === id);
+  if (!line) return;
+  line.status = 'running';
+  line.jammedSince = null;
+  toast(`${line.name} unjammed`);
+  renderLines();
+  pushAlert({ msg: `${line.name} recovered`, kind: 'ok' });
+}
+
+function feedLine(id){
+  const line = state.lines.find(l => l.id === id);
+  if (!line) return;
+  line.items.push({ id: uid(), type: line.type, pos: 0, name: 'Refill-' + Math.floor(Math.random()*999) });
+  line.status = 'running';
+  renderLines();
+  toast(`${line.name} fed`);
+}
+
+function toggleLine(id){
+  const line = state.lines.find(l => l.id === id);
+  if (!line) return;
+  line.status = line.status === 'paused' ? 'running' : 'paused';
+  renderLines();
+}
+
+/* ------------------ TICK LOOP ------------------ */
+function tick(){
+  state.secondsElapsed++;
+  let produced = 0;
+  let inFlight = 0;
+
+  state.lines.forEach(line => {
+    if (line.status === 'paused') { inFlight += line.items.length; return; }
+
+    // Move items
+    if (line.status === 'running' || line.status === 'done') {
+      line.items.forEach(item => {
+        item.pos += (7 * state.beltSpeedMult) + (Math.random()*2);
+      });
+    } else if (line.status === 'idle') {
+      // no movement
+    }
+
+    // Jammed: no movement
+    if (line.status === 'jammed') {
+      // auto-restart?
+      if (state.autoRestart && line.jammedSince && Date.now() - line.jammedSince > 8000) {
+        line.status = 'running';
+        line.jammedSince = null;
+        pushAlert({ msg: `${line.name} auto-recovered`, kind: 'ok' });
+      }
+    }
+
+    // Complete items that reach end
+    const reaching = line.items.filter(i => i.pos >= 100);
+    reaching.forEach(item => {
+      produced++;
+      line.processed++;
+      line.buffer = Math.min(line.bufferMax, line.buffer + 1);
+      shipItem(item.type);
+      spawnSparks(line.id);
+      // remove from belt
+      line.items = line.items.filter(i => i.id !== item.id);
+      state.totalShipped++;
+      state.xp += 2;
+      state.rp += 1;
+    });
+
+    // Random jam chance for running lines
+    if (line.status === 'running' && Math.random() < 0.012) {
+      line.status = 'jammed';
+      line.jammedSince = Date.now();
+      pushAlert({ msg: `${line.name} JAMMED`, kind: 'err' });
+    }
+
+    // If no items and status running → go idle
+    if (line.items.length === 0 && line.status === 'running' && Math.random() < 0.08) {
+      line.status = 'idle';
+      pushAlert({ msg: `${line.name} awaiting input`, kind: 'warn' });
+    }
+
+    // Buffer near full
+    if (line.buffer >= line.bufferMax * 0.9 && Math.random() < 0.02) {
+      pushAlert({ msg: `${line.name} buffer 90%`, kind: 'warn' });
+    }
+
+    // Random auto-queue for running lines (keeps factory alive)
+    if (line.status === 'running' && line.items.length < 3 && Math.random() < 0.22) {
+      const names = ['Report draft', 'Query run', 'Mock build', 'Index sweep', 'Brief digest', 'Asset render', 'Ticket triage', 'Data extract'];
+      line.items.push({ id: uid(), type: line.type, pos: 0, name: names[Math.floor(Math.random()*names.length)] });
+    }
+
+    inFlight += line.items.length;
+
+    // Buffer drain (shipping)
+    if (line.buffer >= 4 && Math.random() < 0.4) {
+      line.buffer = Math.max(0, line.buffer - Math.ceil(Math.random()*3));
+    }
+  });
+
+  // Throughput history
+  state.throughputHistory.push(produced);
+  if (state.throughputHistory.length > 60) state.throughputHistory.shift();
+
+  // Quota
+  const target = 120;
+  document.getElementById('quotaNum').textContent = state.totalShipped;
+  document.getElementById('quotaTarget').textContent = target;
+  const pct = Math.min(100, (state.totalShipped / target) * 100);
+  document.getElementById('quotaFill').style.width = pct + '%';
+
+  // Level up
+  if (state.rp >= state.nextLevelRp) {
+    state.level++;
+    state.rp -= state.nextLevelRp;
+    state.nextLevelRp = Math.round(state.nextLevelRp * 1.4);
+    document.getElementById('factLevel').textContent = state.level;
+    document.getElementById('factLevelPill').textContent = `LVL ${state.level}`;
+    toast(`LEVEL UP → ${state.level}`);
+    pushAlert({ msg: `FACTORY LEVEL ${state.level}`, kind: 'ok' });
+  }
+
+  // Quota met?
+  if (state.totalShipped === target) {
+    toast('DAILY QUOTA MET');
+    pushAlert({ msg: 'QUOTA ACHIEVED', kind: 'ok' });
+  }
+
+  // Update HUD
+  document.getElementById('inFlight').textContent = inFlight;
+  document.getElementById('activeLines').textContent = state.lines.length;
+  const sumThrough = state.throughputHistory.slice(-60).reduce((a,b)=>a+b,0);
+  document.getElementById('throughput').textContent = sumThrough + '/min';
+  document.getElementById('slVal').textContent = sumThrough;
+
+  // Efficiency = running lines / total * 100
+  const running = state.lines.filter(l => l.status === 'running' || l.status === 'done').length;
+  const eff = state.lines.length > 0 ? Math.round((running / state.lines.length) * 100) : 100;
+  const effEl = document.getElementById('efficiency');
+  effEl.textContent = eff + '%';
+  effEl.className = 'stat-value ' + (eff >= 75 ? 'ok' : eff >= 50 ? 'warn' : '');
+
+  // Uptime
+  const uptime = Math.min(100, 95 + Math.random()*5 - (state.lines.filter(l=>l.status==='jammed').length * 4));
+  document.getElementById('uptime').textContent = uptime.toFixed(1) + '%';
+
+  // Alerts count
+  const activeAlerts = state.lines.filter(l => l.status === 'jammed' || l.status === 'idle').length;
+  document.getElementById('alertCount').textContent = activeAlerts;
+
+  // Shift clock
+  const elapsed = Math.floor((Date.now() - state.shiftStart)/1000);
+  document.getElementById('shiftClock').textContent =
+    String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0');
+
+  // Update item positions in DOM (smooth)
+  state.lines.forEach(line => {
+    const beltEl = document.getElementById('belt-' + line.id);
+    if (!beltEl) return;
+
+    // Sync DOM items with state items
+    const existingIds = new Set();
+    beltEl.querySelectorAll('.item').forEach(el => existingIds.add(el.dataset.item));
+    const stateIds = new Set(line.items.map(i => i.id));
+
+    // remove stale
+    beltEl.querySelectorAll('.item').forEach(el => {
+      if (!stateIds.has(el.dataset.item)) {
+        el.classList.add('completing');
+        setTimeout(() => el.remove(), 400);
+      }
+    });
+
+    // add new & update existing
+    line.items.forEach(item => {
+      let el = beltEl.querySelector(`[data-item="${item.id}"]`);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = `item t-${item.type}`;
+        el.dataset.item = item.id;
+        el.innerHTML = `<span>${TASK_TYPES[item.type].label}</span>`;
+        el.style.left = '0%';
+        beltEl.appendChild(el);
+      }
+      el.style.left = Math.min(100, item.pos) + '%';
+    });
+
+    // Update processed / buffer counts
+    const procEl = document.getElementById('proc-' + line.id);
+    if (procEl && parseInt(procEl.textContent) !== line.processed) {
+      procEl.textContent = line.processed;
+      procEl.classList.remove('stack-shine');
+      void procEl.offsetWidth;
+      procEl.classList.add('stack-shine');
+    }
+    const bufEl = document.getElementById('buf-' + line.id);
+    if (bufEl) bufEl.textContent = line.buffer;
+    // update buffer bar
+    const bufferBar = document.querySelector(`#line-${line.id} .buffer-fill`);
+    if (bufferBar) {
+      const bp = Math.min(100, (line.buffer / line.bufferMax) * 100);
+      bufferBar.style.width = bp + '%';
+      bufferBar.className = 'buffer-fill' + (bp > 80 ? ' danger' : bp > 60 ? ' warn' : '');
+    }
+    // update status class
+    const lineDom = document.getElementById('line-' + line.id);
+    if (lineDom) {
+      lineDom.className = 'line ' + line.status;
+      // update status tag and actions
+      const tag = lineDom.querySelector('.status-tag');
+      if (tag) {
+        let label = 'RUNNING';
+        if (line.status === 'jammed') label = 'JAMMED';
+        else if (line.status === 'idle') label = 'IDLE / AWAITING INPUT';
+        else if (line.status === 'paused') label = 'PAUSED';
+        else if (line.status === 'done') label = 'FINALIZING';
+        tag.textContent = label;
+      }
+    }
+  });
+
+  // Shipping totals
+  document.getElementById('totalShipped').textContent = state.totalShipped;
+  document.getElementById('xpEarned').textContent = state.xp;
+
+  renderSparkline();
+}
+
+/* ------------------ Shipping ------------------ */
+function shipItem(type){
+  // add to latest crate, or make new
+  let crate = state.crates.find(c => c.items < c.capacity);
+  if (!crate) {
+    crate = { id: String(state.crates.length + 1).padStart(3,'0'), items: 0, capacity: 6, type };
+    state.crates.push(crate);
+    renderCrates();
+  }
+  crate.items++;
+
+  // update DOM
+  const dom = document.getElementById('crate-' + crate.id);
+  if (dom) {
+    const fill = dom.querySelector('.crate-fill');
+    const label = dom.querySelector('.crate-label');
+    const pct = (crate.items / crate.capacity) * 100;
+    if (fill) fill.style.height = pct + '%';
+    if (label) label.innerHTML = `CRATE-${crate.id}<br>${crate.items}/${crate.capacity}`;
+  }
+
+  // If crate full, ship it
+  if (crate.items >= crate.capacity) {
+    setTimeout(() => {
+      const dom2 = document.getElementById('crate-' + crate.id);
+      if (dom2) {
+        dom2.classList.add('shipping');
+        setTimeout(() => {
+          state.crates = state.crates.filter(c => c.id !== crate.id);
+          state.xp += 25;
+          state.rp += 5;
+          pushAlert({ msg: `CRATE-${crate.id} SHIPPED · +25 XP`, kind: 'ok' });
+          renderCrates();
+        }, 800);
+      }
+    }, 200);
+  }
+}
+
+/* ------------------ Sparks ------------------ */
+function spawnSparks(lineId){
+  const machine = document.querySelector(`#line-${lineId} .machine`);
+  if (!machine) return;
+  const rect = machine.getBoundingClientRect();
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement('div');
+    s.className = 'spark';
+    s.style.left = '20%';
+    s.style.top = '50%';
+    const dx = (Math.random() - 0.3) * 60;
+    const dy = (Math.random() - 0.8) * 40;
+    s.style.setProperty('--dx', dx + 'px');
+    s.style.setProperty('--dy', dy + 'px');
+    machine.appendChild(s);
+    setTimeout(() => s.remove(), 500);
+  }
+}
+
+/* ------------------ Sparkline ------------------ */
+function renderSparkline(){
+  const data = state.throughputHistory.slice(-60);
+  const max = Math.max(1, ...data);
+  const w = 200, h = 42;
+  const step = w / Math.max(1, data.length - 1);
+  let d = '';
+  data.forEach((v, i) => {
+    const x = i * step;
+    const y = h - (v / max) * (h - 4) - 2;
+    d += (i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`);
+  });
+  const fill = d + ` L ${w} ${h} L 0 ${h} Z`;
+  document.getElementById('sparkline').setAttribute('d', d);
+  document.getElementById('sparklineFill').setAttribute('d', fill);
+}
+
+/* ------------------ Ticker / Alerts ------------------ */
+function pushAlert({ msg, kind = 'ok' }){
+  const stamp = new Date();
+  const ts = String(stamp.getHours()).padStart(2,'0') + ':' + String(stamp.getMinutes()).padStart(2,'0') + ':' + String(stamp.getSeconds()).padStart(2,'0');
+  state.alerts.unshift({ msg, kind, ts });
+  if (state.alerts.length > 20) state.alerts.pop();
+  renderTicker();
+}
+
+function renderTicker(){
+  const inner = document.getElementById('tickerInner');
+  const recent = state.alerts.slice(0, 12);
+  if (recent.length === 0) {
+    inner.innerHTML = '<div class="ticker-item"><span class="dot"></span>SYSTEMS NOMINAL · ALL LINES OPERATIONAL</div>';
+    return;
+  }
+  inner.innerHTML = recent.map(a => `
+    <div class="ticker-item ${a.kind === 'warn' ? 'warn' : a.kind === 'err' ? 'err' : ''}">
+      <span class="dot"></span>
+      <span style="color:var(--steel)">[${a.ts}]</span>
+      <span>${a.msg}</span>
+    </div>
+  `).join('') + recent.map(a => `
+    <div class="ticker-item ${a.kind === 'warn' ? 'warn' : a.kind === 'err' ? 'err' : ''}">
+      <span class="dot"></span>
+      <span style="color:var(--steel)">[${a.ts}]</span>
+      <span>${a.msg}</span>
+    </div>
+  `).join('');
+}
+
+/* ------------------ Toast ------------------ */
+function toast(msg){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+/* ------------------ Init ------------------ */
+renderLines();
+renderLineSelect();
+renderCrates();
+renderResearch();
+renderSparkline();
+pushAlert({ msg: 'SHIFT STARTED · DAY 1207', kind: 'ok' });
+pushAlert({ msg: 'L-02 CRAWLER JAMMED · manual intervention required', kind: 'err' });
+pushAlert({ msg: 'L-03 RENDERER awaiting input', kind: 'warn' });
+
+setInterval(tick, 1000);
+
+</script>
+</body>
+</html>

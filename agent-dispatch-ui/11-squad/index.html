@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squad Tactical Dispatch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #root {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #444;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #00ff88;
+            text-transform: uppercase;
+        }
+
+        .header-info {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Squad roster */
+        .roster {
+            display: flex;
+            gap: 12px;
+            padding: 16px 24px;
+            border-bottom: 1px solid #333;
+            background: rgba(0, 0, 0, 0.2);
+            overflow-x: auto;
+            z-index: 90;
+        }
+
+        .agent-card {
+            min-width: 140px;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .agent-card:hover {
+            border-color: #00ff88;
+            background: #222;
+        }
+
+        .agent-card.alert {
+            border-color: #ff3333;
+            background: rgba(255, 51, 51, 0.1);
+            box-shadow: 0 0 12px rgba(255, 51, 51, 0.3), inset 0 0 8px rgba(255, 51, 51, 0.1);
+            animation: pulse-alert 0.6s infinite;
+        }
+
+        @keyframes pulse-alert {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .agent-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+            border: 2px solid;
+        }
+
+        .agent-card.active .agent-avatar {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .agent-card.idle .agent-avatar {
+            border-color: #666;
+            background: rgba(100, 100, 100, 0.2);
+        }
+
+        .agent-card.alert .agent-avatar {
+            border-color: #ff3333;
+            background: rgba(255, 51, 51, 0.2);
+        }
+
+        .agent-info {
+            font-size: 11px;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .agent-role {
+            color: #888;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .agent-mission {
+            color: #00ff88;
+            font-size: 10px;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .xp-bar {
+            height: 3px;
+            background: #333;
+            margin-top: 6px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: #00ff88;
+            width: 65%;
+            transition: width 0.3s ease;
+        }
+
+        /* Main battlefield */
+        .battlefield {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .mission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .mission-tile {
+            background: linear-gradient(135deg, #1a1a1a 0%, #222 100%);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .mission-tile:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+        }
+
+        .mission-tile.alert {
+            border-color: #ff3333;
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.05) 0%, rgba(255, 51, 51, 0.02) 100%);
+            box-shadow: 0 0 16px rgba(255, 51, 51, 0.2), inset 0 0 12px rgba(255, 51, 51, 0.05);
+            animation: pulse-tile 0.6s infinite;
+        }
+
+        @keyframes pulse-tile {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .mission-tile.complete {
+            animation: slide-out 0.5s ease forwards;
+        }
+
+        @keyframes slide-out {
+            to {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+
+        .tile-accent {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .tile-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .mission-title {
+            font-weight: bold;
+            color: #fff;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .mission-status {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+        }
+
+        .mission-status.running {
+            background: #00ff88;
+            animation: pulse-status 1s infinite;
+        }
+
+        .mission-status.alert {
+            background: #ff3333;
+            animation: pulse-alert 0.6s infinite;
+        }
+
+        @keyframes pulse-status {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .progress-section {
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+            width: 45%;
+            transition: width 0.1s linear;
+            border-radius: 3px;
+        }
+
+        .progress-fill.alert {
+            background: linear-gradient(90deg, #ff3333, #cc0000);
+        }
+
+        .mission-agent {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .incident-indicator {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            background: #ff3333;
+            border-radius: 50%;
+            display: none;
+            animation: pulse-incident 0.6s infinite;
+        }
+
+        .mission-tile.alert .incident-indicator {
+            display: block;
+        }
+
+        @keyframes pulse-incident {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px #ff3333; }
+            50% { opacity: 0.4; box-shadow: 0 0 4px #ff3333; }
+        }
+
+        /* Queue zone */
+        .queue-zone {
+            padding: 16px 24px;
+            border-top: 1px solid #333;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 80;
+        }
+
+        .queue-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .queue-items {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .queue-item {
+            padding: 8px 12px;
+            background: #1a1a1a;
+            border: 1px dashed #333;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .queue-item.queued {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .dispatch-input {
+            padding: 8px 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 3px;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            width: 300px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .dispatch-input:focus {
+            border-color: #00ff88;
+        }
+
+        /* Pause overlay */
+        .pause-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(2px);
+        }
+
+        .pause-overlay.active {
+            display: flex;
+        }
+
+        .pause-text {
+            font-size: 48px;
+            letter-spacing: 4px;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            animation: pulse-pause 1s infinite;
+        }
+
+        @keyframes pulse-pause {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .command-menu {
+            position: absolute;
+            background: #1a1a1a;
+            border: 1px solid #00ff88;
+            border-radius: 4px;
+            padding: 8px 0;
+            min-width: 120px;
+            z-index: 150;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .command-menu.active {
+            display: block;
+        }
+
+        .command-item {
+            padding: 8px 16px;
+            color: #00ff88;
+            cursor: pointer;
+            font-size: 11px;
+            border-bottom: 1px solid #333;
+            transition: background 0.2s;
+        }
+
+        .command-item:last-child {
+            border-bottom: none;
+        }
+
+        .command-item:hover {
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        /* Footer hint */
+        .footer-hint {
+            padding: 8px 24px;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #333;
+            background: rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="header">
+            <h1>Squad Tactical Dispatch</h1>
+            <div class="header-info">
+                <span id="time">00:00:00</span> | <span id="status">Operational</span>
+            </div>
+        </div>
+
+        <div class="roster" id="roster"></div>
+
+        <div class="battlefield" id="battlefield">
+            <div class="mission-grid" id="missionGrid"></div>
+        </div>
+
+        <div class="queue-zone">
+            <div class="queue-label">Dispatch Queue</div>
+            <div class="queue-items" id="queueItems"></div>
+            <input
+                type="text"
+                id="dispatchInput"
+                class="dispatch-input"
+                placeholder="Type mission name + Enter to queue..."
+            />
+        </div>
+
+        <div class="footer-hint">
+            SPACEBAR: Tactical Pause | Click Agent: Commands | Click Mission: Reassign
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-text">PAUSED</div>
+    </div>
+
+    <div class="command-menu" id="commandMenu">
+        <div class="command-item" data-action="continue">Continue</div>
+        <div class="command-item" data-action="reassign">Reassign</div>
+        <div class="command-item" data-action="queue">Queue Next</div>
+        <div class="command-item" data-action="cancel">Cancel</div>
+    </div>
+
+    <script>
+        // Game state
+        const state = {
+            isPaused: false,
+            selectedAgent: null,
+            selectedMission: null,
+            agents: [
+                {
+                    id: 'scout-01',
+                    name: 'Echo',
+                    role: 'Scout',
+                    status: 'active',
+                    color: '#00ff88',
+                    mission: null,
+                    xp: 65,
+                    isAlert: false,
+                },
+                {
+                    id: 'analyst-01',
+                    name: 'Cipher',
+                    role: 'Analyst',
+                    status: 'active',
+                    color: '#00ccff',
+                    mission: null,
+                    xp: 42,
+                    isAlert: false,
+                },
+                {
+                    id: 'ops-01',
+                    name: 'Viper',
+                    role: 'Ops',
+                    status: 'active',
+                    color: '#ffcc00',
+                    mission: null,
+                    xp: 78,
+                    isAlert: false,
+                },
+                {
+                    id: 'specialist-01',
+                    name: 'Nova',
+                    role: 'Specialist',
+                    status: 'idle',
+                    color: '#ff6600',
+                    mission: null,
+                    xp: 38,
+                    isAlert: false,
+                },
+            ],
+            missions: [
+                {
+                    id: 'mission-1',
+                    title: 'Data Exfiltration',
+                    agentId: 'scout-01',
+                    duration: 25000,
+                    elapsed: 0,
+                    status: 'running',
+                    hasAlert: false,
+                },
+                {
+                    id: 'mission-2',
+                    title: 'Pattern Analysis',
+                    agentId: 'analyst-01',
+                    duration: 35000,
+                    elapsed: 0,
+                    status: 'running',
+                    hasAlert: false,
+                },
+                {
+                    id: 'mission-3',
+                    title: 'Field Reconnaissance',
+                    agentId: 'ops-01',
+                    duration: 30000,
+                    elapsed: 7000,
+                    status: 'running',
+                    hasAlert: false,
+                },
+            ],
+            queue: [
+                { id: 'queued-1', title: 'Asset Recovery' },
+            ],
+            nextAlertTime: 10000,
+        };
+
+        let gameTime = 0;
+        let lastFrameTime = Date.now();
+
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString('en-US', {
+                hour12: false,
+            });
+        }
+
+        // Render roster
+        function renderRoster() {
+            const roster = document.getElementById('roster');
+            roster.innerHTML = state.agents
+                .map(
+                    (agent) => `
+                <div class="agent-card ${agent.status} ${agent.isAlert ? 'alert' : ''}" data-agent-id="${agent.id}">
+                    <div class="agent-avatar" style="color: ${agent.color}">${agent.name.charAt(0)}</div>
+                    <div class="agent-info">
+                        <div class="agent-name">${agent.name}</div>
+                        <div class="agent-role">${agent.role}</div>
+                        ${
+                            agent.mission
+                                ? `<div class="agent-mission">${agent.mission.title}</div>`
+                                : '<div class="agent-mission" style="color: #666;">Idle</div>'
+                        }
+                        <div class="xp-bar">
+                            <div class="xp-fill" style="width: ${agent.xp}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `
+                )
+                .join('');
+
+            roster.querySelectorAll('.agent-card').forEach((card) => {
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    onAgentClick(card.dataset.agentId);
+                });
+            });
+        }
+
+        // Render mission tiles
+        function renderMissions() {
+            const grid = document.getElementById('missionGrid');
+            grid.innerHTML = state.missions
+                .map(
+                    (mission) => `
+                <div class="mission-tile ${mission.hasAlert ? 'alert' : ''}" data-mission-id="${mission.id}">
+                    <div class="tile-accent" style="background-color: ${
+                        state.agents.find((a) => a.id === mission.agentId)?.color || '#888'
+                    }"></div>
+                    <div class="incident-indicator"></div>
+                    <div class="tile-header">
+                        <div class="mission-title">${mission.title}</div>
+                        <div class="mission-status ${mission.status}">●</div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill ${mission.hasAlert ? 'alert' : ''}"
+                                 style="width: ${(mission.elapsed / mission.duration) * 100}%"></div>
+                        </div>
+                    </div>
+                    <div class="mission-agent">${
+                        state.agents.find((a) => a.id === mission.agentId)?.name || 'Unknown'
+                    }</div>
+                </div>
+            `
+                )
+                .join('');
+
+            grid.querySelectorAll('.mission-tile').forEach((tile) => {
+                tile.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    onMissionClick(tile.dataset.missionId);
+                });
+            });
+        }
+
+        // Render queue
+        function renderQueue() {
+            const queueItems = document.getElementById('queueItems');
+            queueItems.innerHTML = state.queue
+                .map(
+                    (item) => `
+                <div class="queue-item queued">${item.title}</div>
+            `
+                )
+                .join('');
+        }
+
+        // Agent click handler
+        function onAgentClick(agentId) {
+            if (!state.isPaused) return;
+            state.selectedAgent = agentId;
+            showCommandMenu(event);
+        }
+
+        // Mission click handler
+        function onMissionClick(missionId) {
+            if (!state.isPaused) return;
+            state.selectedMission = missionId;
+            // Could show mission details or reassign UI
+        }
+
+        // Show command menu
+        function showCommandMenu(event) {
+            const menu = document.getElementById('commandMenu');
+            menu.classList.add('active');
+            menu.style.left = event.clientX + 'px';
+            menu.style.top = event.clientY + 'px';
+
+            menu.querySelectorAll('.command-item').forEach((item) => {
+                item.onclick = () => {
+                    executeCommand(item.dataset.action);
+                    menu.classList.remove('active');
+                };
+            });
+        }
+
+        // Execute command
+        function executeCommand(action) {
+            const agent = state.agents.find((a) => a.id === state.selectedAgent);
+            if (!agent) return;
+
+            switch (action) {
+                case 'continue':
+                    state.isPaused = false;
+                    document.getElementById('pauseOverlay').classList.remove('active');
+                    break;
+                case 'reassign':
+                    // In a full game, this would show reassignment UI
+                    console.log('Reassign:', agent.name);
+                    break;
+                case 'queue':
+                    // Add current mission back to queue
+                    if (agent.mission) {
+                        state.queue.push({
+                            id: 'queued-' + Date.now(),
+                            title: agent.mission.title,
+                        });
+                        agent.mission = null;
+                        agent.status = 'idle';
+                    }
+                    break;
+                case 'cancel':
+                    // Cancel current mission
+                    if (agent.mission) {
+                        state.missions = state.missions.filter((m) => m.id !== agent.mission.id);
+                        agent.mission = null;
+                        agent.status = 'idle';
+                    }
+                    break;
+            }
+            renderRoster();
+            renderMissions();
+            renderQueue();
+        }
+
+        // Pause/unpause
+        function togglePause() {
+            if (state.isPaused && !anyAgentAlert()) {
+                state.isPaused = false;
+                document.getElementById('pauseOverlay').classList.remove('active');
+                document.getElementById('status').textContent = 'Operational';
+            } else if (!state.isPaused && !anyAgentAlert()) {
+                state.isPaused = true;
+                document.getElementById('pauseOverlay').classList.add('active');
+                document.getElementById('status').textContent = 'Paused';
+            }
+        }
+
+        // Check if any agent has alert
+        function anyAgentAlert() {
+            return state.agents.some((a) => a.isAlert) || state.missions.some((m) => m.hasAlert);
+        }
+
+        // Auto-pause on alert
+        function checkAlerts() {
+            if (state.missions.some((m) => m.hasAlert)) {
+                if (!state.isPaused) {
+                    state.isPaused = true;
+                    document.getElementById('pauseOverlay').classList.add('active');
+                    document.getElementById('status').textContent = 'Alert';
+
+                    // Highlight alert agent/mission
+                    const alertMission = state.missions.find((m) => m.hasAlert);
+                    const alertAgent = state.agents.find((a) => a.id === alertMission.agentId);
+                    if (alertAgent) {
+                        alertAgent.isAlert = true;
+                    }
+                }
+            }
+        }
+
+        // Update game loop
+        function update(deltaTime) {
+            if (state.isPaused) return;
+
+            // Update mission timers
+            state.missions.forEach((mission) => {
+                mission.elapsed += deltaTime;
+                if (mission.elapsed >= mission.duration) {
+                    // Mission complete
+                    mission.status = 'complete';
+                    const agent = state.agents.find((a) => a.id === mission.agentId);
+                    if (agent) {
+                        agent.mission = null;
+                        agent.status = 'idle';
+                        agent.isAlert = false;
+                    }
+                    // Remove mission after animation
+                    setTimeout(() => {
+                        state.missions = state.missions.filter((m) => m.id !== mission.id);
+                        // Assign next queued mission
+                        if (state.queue.length > 0 && agent) {
+                            const queued = state.queue.shift();
+                            const newMission = {
+                                id: 'mission-' + Date.now(),
+                                title: queued.title,
+                                agentId: agent.id,
+                                duration: 20000 + Math.random() * 20000,
+                                elapsed: 0,
+                                status: 'running',
+                                hasAlert: false,
+                            };
+                            state.missions.push(newMission);
+                            agent.mission = newMission;
+                            agent.status = 'active';
+                            renderMissions();
+                        }
+                        renderRoster();
+                        renderQueue();
+                    }, 500);
+                }
+            });
+
+            // Random incident
+            state.nextAlertTime -= deltaTime;
+            if (state.nextAlertTime <= 0 && state.missions.length > 0) {
+                const randomMission =
+                    state.missions[Math.floor(Math.random() * state.missions.length)];
+                if (!randomMission.hasAlert && Math.random() > 0.8) {
+                    randomMission.hasAlert = true;
+                    checkAlerts();
+                }
+                state.nextAlertTime = 25000 + Math.random() * 15000;
+            }
+
+            gameTime += deltaTime;
+        }
+
+        // Render loop
+        function render() {
+            const now = Date.now();
+            const deltaTime = now - lastFrameTime;
+            lastFrameTime = now;
+
+            update(Math.min(deltaTime, 32)); // Cap at 32ms per frame
+            checkAlerts();
+            renderRoster();
+            renderMissions();
+            renderQueue();
+            updateClock();
+            requestAnimationFrame(render);
+        }
+
+        // Keyboard handlers
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+
+        // Dispatch input
+        document.getElementById('dispatchInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+                const mission = {
+                    id: 'queued-' + Date.now(),
+                    title: e.target.value.trim(),
+                };
+                state.queue.push(mission);
+                e.target.value = '';
+                renderQueue();
+
+                // Auto-assign to idle agent if available
+                const idleAgent = state.agents.find((a) => a.status === 'idle');
+                if (idleAgent && !idleAgent.mission) {
+                    const newMission = {
+                        id: 'mission-' + Date.now(),
+                        title: mission.title,
+                        agentId: idleAgent.id,
+                        duration: 20000 + Math.random() * 20000,
+                        elapsed: 0,
+                        status: 'running',
+                        hasAlert: false,
+                    };
+                    state.missions.push(newMission);
+                    idleAgent.mission = newMission;
+                    idleAgent.status = 'active';
+                    state.queue = state.queue.filter((q) => q.id !== mission.id);
+                    renderQueue();
+                    renderMissions();
+                }
+            }
+        });
+
+        // Close command menu on click outside
+        document.addEventListener('click', () => {
+            document.getElementById('commandMenu').classList.remove('active');
+        });
+
+        // Initialize
+        renderRoster();
+        renderMissions();
+        renderQueue();
+        updateClock();
+        setInterval(updateClock, 1000);
+        render();
+    </script>
+</body>
+</html>

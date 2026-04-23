@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Arcanum — Agent Dispatch</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg-0: #0a0612;
+  --bg-1: #15102a;
+  --bg-2: #1d1740;
+  --velvet: #2a1a4f;
+  --obsidian: #0d0a1e;
+  --ink: #e8e4ff;
+  --ink-dim: #9a94c2;
+  --ink-dimmer: #5e587e;
+  --gold: #e9c16b;
+  --gold-deep: #8a6a2a;
+  --silver: #c6cad6;
+  --bronze: #c48a5a;
+  --rare: #4aa8ff;
+  --epic: #a96bff;
+  --legendary: #ffb347;
+  --common: #8a8aa0;
+  --danger: #ff5864;
+  --warn: #ffc34d;
+  --win: #55e6a5;
+  --frame-line: rgba(233, 193, 107, 0.35);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(90, 40, 160, 0.25), transparent 55%),
+    radial-gradient(ellipse at 80% 100%, rgba(160, 90, 40, 0.12), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(30, 20, 60, 0.4), transparent 60%),
+    linear-gradient(180deg, #0a0612 0%, #13092a 50%, #0a0612 100%);
+  color: var(--ink);
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+/* Background atmospheric texture */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 2%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.03) 0%, transparent 2%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 3%);
+  background-size: 120px 120px, 200px 200px, 80px 80px;
+  pointer-events: none;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+/* Subtle noise overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.3'/></svg>");
+  opacity: 0.04;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+.app {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  grid-template-rows: 56px 1fr auto;
+  grid-template-areas:
+    "header header header"
+    "sidebar board log"
+    "hand hand hand";
+  height: 100vh;
+  gap: 0;
+}
+
+/* ================= HEADER ================= */
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(233, 193, 107, 0.15);
+  background: linear-gradient(180deg, rgba(15, 10, 30, 0.9), rgba(15, 10, 30, 0.6));
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-sigil {
+  width: 32px;
+  height: 32px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.brand-sigil svg {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 6px rgba(233, 193, 107, 0.5));
+}
+
+.brand-name {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.brand-sub {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--ink-dimmer);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.header-stats {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.hstat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-dim);
+}
+
+.hstat-val {
+  color: var(--ink);
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.hstat-label {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.streak {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 179, 71, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 179, 71, 0.08);
+  color: var(--legendary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.streak::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--legendary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--legendary);
+  animation: pulse-dot 1.8s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  grid-area: sidebar;
+  padding: 20px 18px;
+  border-right: 1px solid rgba(233, 193, 107, 0.12);
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(20, 12, 40, 0.4), rgba(10, 6, 18, 0.2));
+}
+
+.section-label {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(233, 193, 107, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label::before {
+  content: "◆";
+  color: var(--gold);
+  font-size: 8px;
+}
+
+.rank-card {
+  padding: 16px;
+  background:
+    linear-gradient(135deg, rgba(233, 193, 107, 0.12), rgba(138, 106, 42, 0.04)),
+    rgba(20, 12, 40, 0.6);
+  border: 1px solid rgba(233, 193, 107, 0.25);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rank-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(233, 193, 107, 0.08) 50%, transparent 70%);
+  background-size: 200% 200%;
+  animation: shimmer-slow 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer-slow {
+  0% { background-position: -100% -100%; }
+  100% { background-position: 100% 100%; }
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rank-crest {
+  width: 44px;
+  height: 44px;
+  background: radial-gradient(circle, var(--gold), var(--gold-deep));
+  display: grid;
+  place-items: center;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  color: var(--obsidian);
+  font-family: 'Cinzel', serif;
+  font-weight: 800;
+  font-size: 18px;
+  box-shadow: 0 0 16px rgba(233, 193, 107, 0.35);
+}
+
+.rank-info {
+  flex: 1;
+}
+
+.rank-name {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+}
+
+.rank-tier {
+  font-size: 10px;
+  color: var(--ink-dim);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.xp-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(233, 193, 107, 0.15);
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold), #fff4c2);
+  border-radius: 999px;
+  box-shadow: 0 0 8px rgba(233, 193, 107, 0.6);
+  transition: width 0.8s ease;
+  position: relative;
+}
+
+.xp-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer-fast 2s linear infinite;
+}
+
+@keyframes shimmer-fast {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.xp-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  margin-top: 6px;
+  color: var(--ink-dim);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.stat-cell {
+  padding: 10px 12px;
+  background: rgba(20, 12, 40, 0.5);
+  border: 1px solid rgba(233, 193, 107, 0.1);
+  border-radius: 6px;
+  position: relative;
+}
+
+.stat-cell-label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dimmer);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.stat-cell-val {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.stat-cell.legendary .stat-cell-val { color: var(--legendary); }
+.stat-cell.victories .stat-cell-val { color: var(--win); }
+
+.pack-card {
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(169, 107, 255, 0.2), rgba(74, 168, 255, 0.1));
+  border: 1px solid rgba(169, 107, 255, 0.4);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.pack-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(169, 107, 255, 0.7);
+  box-shadow: 0 6px 20px rgba(169, 107, 255, 0.3);
+}
+
+.pack-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
+  background-size: 200% 200%;
+  animation: shimmer-slow 3s linear infinite;
+  pointer-events: none;
+}
+
+.pack-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pack-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--epic);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pack-badge {
+  background: var(--epic);
+  color: var(--obsidian);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.1em;
+  animation: pulse-badge 1.5s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { box-shadow: 0 0 0 rgba(169, 107, 255, 0.4); }
+  50% { box-shadow: 0 0 12px rgba(169, 107, 255, 0.8); }
+}
+
+.pack-desc {
+  font-size: 11px;
+  color: var(--ink-dim);
+  line-height: 1.5;
+}
+
+.pack-progress {
+  height: 4px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 999px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.pack-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--rare), var(--epic));
+  border-radius: 999px;
+  transition: width 0.6s;
+}
+
+.synergy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.synergy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(20, 12, 40, 0.4);
+  border: 1px solid rgba(233, 193, 107, 0.08);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.synergy.active {
+  border-color: rgba(85, 230, 165, 0.4);
+  background: rgba(85, 230, 165, 0.06);
+  box-shadow: 0 0 10px rgba(85, 230, 165, 0.15);
+}
+
+.synergy-icon {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: var(--gold);
+}
+
+.synergy.active .synergy-icon { color: var(--win); }
+
+.synergy-text { flex: 1; color: var(--ink-dim); }
+.synergy.active .synergy-text { color: var(--ink); }
+
+.synergy-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--ink-dimmer);
+  letter-spacing: 0.08em;
+}
+
+.synergy.active .synergy-status { color: var(--win); }
+
+/* ================= BOARD ================= */
+.board {
+  grid-area: board;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 10px;
+  overflow: hidden;
+}
+
+.board-section {
+  margin-bottom: 18px;
+}
+
+.board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.board-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.board-title::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+
+.board-title::after {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.board-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-dimmer);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Active encounters — battlefield */
+.battlefield {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  min-height: 240px;
+}
+
+.slot {
+  background:
+    linear-gradient(180deg, rgba(42, 26, 79, 0.3), rgba(15, 10, 30, 0.6));
+  border: 1px dashed rgba(233, 193, 107, 0.18);
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s;
+}
+
+.slot.drop-ready {
+  border: 1px solid var(--gold);
+  background:
+    linear-gradient(180deg, rgba(233, 193, 107, 0.18), rgba(42, 26, 79, 0.5));
+  box-shadow: 0 0 24px rgba(233, 193, 107, 0.3), inset 0 0 40px rgba(233, 193, 107, 0.1);
+}
+
+.slot.empty-slot {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.slot.empty-slot::before {
+  content: "EMPTY SLOT";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--ink-dimmer);
+}
+
+.encounter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(233, 193, 107, 0.1);
+}
+
+.enc-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  flex: 1;
+  padding-right: 8px;
+}
+
+.enc-suit {
+  font-size: 16px;
+  color: var(--gold);
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.enc-suit.mental { color: #9ac6ff; }
+.enc-suit.creative { color: #ffb347; }
+.enc-suit.rigor { color: #c8a2ff; }
+.enc-suit.outreach { color: #7de3a5; }
+
+.enc-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* Deployed (tapped) card */
+.deployed-card {
+  width: 100px;
+  height: 140px;
+  transform: rotate(-8deg);
+  transition: transform 0.4s cubic-bezier(0.4, 1.4, 0.6, 1);
+  flex-shrink: 0;
+}
+
+.deployed-card.just-deployed {
+  animation: deploy-in 0.6s ease-out;
+}
+
+@keyframes deploy-in {
+  0% { transform: translateY(-100px) rotate(-25deg) scale(1.1); opacity: 0; }
+  60% { transform: translateY(10px) rotate(-5deg) scale(0.95); }
+  100% { transform: rotate(-8deg); opacity: 1; }
+}
+
+.mini-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  padding: 6px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(155deg, #1a1036, #0d0820);
+  border: 2px solid var(--common);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.mini-card.rare { border-color: var(--rare); box-shadow: 0 0 10px rgba(74, 168, 255, 0.4); }
+.mini-card.epic { border-color: var(--epic); box-shadow: 0 0 12px rgba(169, 107, 255, 0.5); }
+.mini-card.legendary {
+  border-color: var(--legendary);
+  box-shadow: 0 0 16px rgba(255, 179, 71, 0.6);
+}
+.mini-card.legendary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+  background-size: 250% 250%;
+  animation: shimmer-slow 3s linear infinite;
+  pointer-events: none;
+}
+
+.mini-portrait {
+  width: 100%;
+  aspect-ratio: 1.2 / 1;
+  border-radius: 4px;
+  background: linear-gradient(145deg, #3a2560, #1a1036);
+  display: grid;
+  place-items: center;
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  color: var(--gold);
+  margin-bottom: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mini-portrait::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.2), transparent 70%);
+}
+
+.mini-name {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.mini-class {
+  font-size: 7px;
+  text-align: center;
+  color: var(--ink-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.progress-ring-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.progress-ring {
+  width: 80px;
+  height: 80px;
+  position: relative;
+}
+
+.progress-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.progress-ring .track { stroke: rgba(233, 193, 107, 0.1); }
+
+.progress-ring .fill {
+  stroke: var(--gold);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.slot.status-trouble .progress-ring .fill { stroke: var(--danger); }
+.slot.status-waiting .progress-ring .fill { stroke: var(--warn); }
+.slot.status-winning .progress-ring .fill { stroke: var(--win); }
+
+.progress-pct {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.slot.status-trouble .progress-pct { color: var(--danger); }
+.slot.status-waiting .progress-pct { color: var(--warn); }
+.slot.status-winning .progress-pct { color: var(--win); }
+
+.enc-status-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.enc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--ink-dimmer);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+}
+
+.enc-reward {
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Status banners */
+.status-banner {
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  padding: 3px 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 3px;
+  z-index: 2;
+}
+
+.slot.status-trouble { animation: trouble-pulse 1.5s infinite; }
+.slot.status-trouble .status-banner {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 88, 100, 0.6);
+}
+
+.slot.status-waiting .status-banner {
+  background: var(--warn);
+  color: var(--obsidian);
+  box-shadow: 0 0 10px rgba(255, 195, 77, 0.5);
+  animation: waiting-glow 1.6s infinite;
+}
+
+.slot.status-winning .status-banner {
+  background: var(--win);
+  color: var(--obsidian);
+}
+
+.slot.status-fresh .status-banner {
+  background: var(--rare);
+  color: var(--obsidian);
+}
+
+@keyframes trouble-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 88, 100, 0); }
+  50% { box-shadow: 0 0 24px 0 rgba(255, 88, 100, 0.35); }
+}
+
+@keyframes waiting-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 195, 77, 0); }
+  50% { box-shadow: 0 0 16px rgba(255, 195, 77, 0.25); }
+}
+
+.slot.status-trouble {
+  border-color: rgba(255, 88, 100, 0.5);
+}
+
+.slot.status-waiting {
+  border-color: rgba(255, 195, 77, 0.4);
+}
+
+.slot.status-winning {
+  border-color: rgba(85, 230, 165, 0.4);
+}
+
+/* Victory flare */
+.victory-flare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.victory-flare::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(85, 230, 165, 0.6), transparent 70%);
+  animation: flare-out 1.2s ease-out forwards;
+}
+
+.victory-flare .spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--win);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--win);
+  animation: spark-burst 1s ease-out forwards;
+}
+
+@keyframes flare-out {
+  0% { opacity: 1; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(2); }
+}
+
+@keyframes spark-burst {
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0);
+    opacity: 0;
+  }
+}
+
+.loot-drop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255, 179, 71, 0.8);
+  animation: loot-rise 1.5s ease-out forwards;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes loot-rise {
+  0% { opacity: 0; transform: translate(-50%, -20%) scale(0.7); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -120%) scale(1); }
+}
+
+/* Queue row */
+.queue {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.queue-card {
+  min-width: 160px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, rgba(42, 26, 79, 0.5), rgba(15, 10, 30, 0.6));
+  border: 1px solid rgba(233, 193, 107, 0.18);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.queue-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(233, 193, 107, 0.5);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.queue-card.drop-ready {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, rgba(233, 193, 107, 0.2), rgba(42, 26, 79, 0.6));
+  box-shadow: 0 0 16px rgba(233, 193, 107, 0.4);
+}
+
+.queue-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.queue-diff {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.3);
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+
+.queue-diff.easy { color: var(--win); border: 1px solid rgba(85, 230, 165, 0.3); }
+.queue-diff.med { color: var(--warn); border: 1px solid rgba(255, 195, 77, 0.3); }
+.queue-diff.hard { color: var(--danger); border: 1px solid rgba(255, 88, 100, 0.3); }
+.queue-diff.elite { color: var(--epic); border: 1px solid rgba(169, 107, 255, 0.3); }
+
+.queue-suit {
+  font-size: 14px;
+}
+
+.queue-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-bottom: 6px;
+  min-height: 28px;
+}
+
+.queue-reward {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ================= LOG ================= */
+.log {
+  grid-area: log;
+  padding: 20px 18px;
+  border-left: 1px solid rgba(233, 193, 107, 0.12);
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(20, 12, 40, 0.4), rgba(10, 6, 18, 0.2));
+  display: flex;
+  flex-direction: column;
+}
+
+.log-feed {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.log-feed::-webkit-scrollbar { width: 4px; }
+.log-feed::-webkit-scrollbar-thumb { background: rgba(233, 193, 107, 0.2); border-radius: 2px; }
+
+.log-entry {
+  padding: 8px 10px;
+  background: rgba(20, 12, 40, 0.3);
+  border-left: 2px solid var(--common);
+  border-radius: 0 4px 4px 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  animation: log-in 0.4s ease-out;
+}
+
+@keyframes log-in {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.log-entry.crit { border-left-color: var(--legendary); color: var(--ink); }
+.log-entry.victory { border-left-color: var(--win); color: var(--ink); background: rgba(85, 230, 165, 0.04); }
+.log-entry.trouble { border-left-color: var(--danger); }
+.log-entry.attn { border-left-color: var(--warn); }
+.log-entry.epic { border-left-color: var(--epic); }
+
+.log-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--ink-dimmer);
+  letter-spacing: 0.08em;
+  margin-right: 6px;
+}
+
+.log-entry .agent { color: var(--gold); font-weight: 600; font-family: 'Cinzel', serif; }
+.log-entry .crit-word { color: var(--legendary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
+.log-entry .win-word { color: var(--win); font-weight: 700; }
+.log-entry .dmg-word { color: var(--danger); font-weight: 600; }
+.log-entry .dmg-num { color: var(--legendary); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+/* ================= HAND ================= */
+.hand-wrap {
+  grid-area: hand;
+  padding: 0 24px 18px;
+  position: relative;
+}
+
+.hand-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 6px;
+  border-top: 1px solid rgba(233, 193, 107, 0.12);
+}
+
+.hand-label {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.hand-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-dimmer);
+  letter-spacing: 0.12em;
+}
+
+.hand {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 12px 0 0;
+  min-height: 320px;
+  perspective: 1200px;
+}
+
+/* Full card design */
+.card {
+  width: 210px;
+  height: 300px;
+  border-radius: 14px;
+  background:
+    linear-gradient(155deg, #24164a 0%, #140a2e 60%, #0a0612 100%);
+  border: 3px solid var(--common);
+  position: relative;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.25s cubic-bezier(0.4, 1.4, 0.6, 1),
+              box-shadow 0.25s,
+              margin 0.2s;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+  transform-style: preserve-3d;
+  margin: 0 -14px;
+}
+
+.card:first-child { margin-left: 0; }
+.card:last-child { margin-right: 0; }
+
+.card:nth-child(odd) { transform: rotate(-2deg) translateY(4px); }
+.card:nth-child(even) { transform: rotate(2deg); }
+
+.card:hover {
+  transform: translateY(-30px) rotate(0) scale(1.05) !important;
+  z-index: 10;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 20px rgba(233, 193, 107, 0.2);
+}
+
+.card.dragging {
+  opacity: 0.3;
+  transform: scale(0.95) rotate(-8deg) !important;
+}
+
+.card-frame-inner {
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(233, 193, 107, 0.3);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.card.common { border-color: var(--common); }
+.card.rare {
+  border-color: var(--rare);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5), 0 0 16px rgba(74, 168, 255, 0.25), inset 0 0 0 1px rgba(74, 168, 255, 0.3);
+}
+.card.epic {
+  border-color: var(--epic);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5), 0 0 20px rgba(169, 107, 255, 0.35), inset 0 0 0 1px rgba(169, 107, 255, 0.4);
+}
+.card.legendary {
+  border-color: var(--legendary);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5), 0 0 24px rgba(255, 179, 71, 0.45), inset 0 0 0 1px rgba(255, 179, 71, 0.5);
+}
+
+.card.legendary::before,
+.card.epic::before,
+.card.rare::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.1) 50%, transparent 65%);
+  background-size: 250% 250%;
+  animation: shimmer-slow 4s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card.legendary::before {
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 223, 150, 0.18) 50%, transparent 70%);
+  background-size: 220% 220%;
+  animation: shimmer-slow 2.4s linear infinite;
+}
+
+.card-cost {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle, var(--gold), var(--gold-deep));
+  border: 2px solid var(--obsidian);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--obsidian);
+  z-index: 3;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+}
+
+.card-rarity-gem {
+  position: absolute;
+  top: -6px;
+  right: 14px;
+  width: 16px;
+  height: 16px;
+  transform: rotate(45deg);
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.card.common .card-rarity-gem { background: var(--common); }
+.card.rare .card-rarity-gem { background: var(--rare); box-shadow: 0 0 8px var(--rare); }
+.card.epic .card-rarity-gem { background: var(--epic); box-shadow: 0 0 10px var(--epic); }
+.card.legendary .card-rarity-gem {
+  background: var(--legendary);
+  box-shadow: 0 0 12px var(--legendary);
+}
+
+.card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  line-height: 1.1;
+  position: relative;
+  z-index: 2;
+  min-height: 30px;
+}
+
+.card.legendary .card-name { color: var(--legendary); text-shadow: 0 0 8px rgba(255, 179, 71, 0.3); }
+.card.epic .card-name { color: #d5b6ff; }
+.card.rare .card-name { color: #b4d9ff; }
+
+.card-portrait {
+  height: 100px;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(233, 193, 107, 0.2), transparent 60%),
+    linear-gradient(145deg, #3a2560, #1a1036);
+  display: grid;
+  place-items: center;
+  margin-bottom: 6px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(233, 193, 107, 0.25);
+  z-index: 2;
+}
+
+.card-portrait::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: linear-gradient(180deg, transparent, rgba(10, 6, 18, 0.8));
+}
+
+.card-sigil {
+  font-family: 'Cinzel', serif;
+  font-size: 44px;
+  color: var(--gold);
+  filter: drop-shadow(0 0 10px rgba(233, 193, 107, 0.5));
+  z-index: 1;
+}
+
+.card.legendary .card-sigil { color: var(--legendary); }
+.card.epic .card-sigil { color: var(--epic); }
+.card.rare .card-sigil { color: var(--rare); }
+
+.card-class {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  z-index: 2;
+}
+
+.card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 2px;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 2;
+}
+
+.stat {
+  text-align: center;
+  padding: 3px 2px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 3px;
+  border: 1px solid rgba(233, 193, 107, 0.12);
+}
+
+.stat-label {
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.stat-val {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.stat.high .stat-val { color: var(--win); }
+.stat.low .stat-val { color: var(--danger); }
+
+.card-abilities {
+  flex: 1;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--ink);
+  padding: 5px 6px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(233, 193, 107, 0.1);
+  border-radius: 4px;
+  margin-bottom: 5px;
+  position: relative;
+  z-index: 2;
+}
+
+.ability {
+  margin-bottom: 3px;
+}
+
+.ability-name {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ability-text {
+  color: var(--ink-dim);
+}
+
+.card-flavor {
+  font-size: 8.5px;
+  font-style: italic;
+  color: var(--ink-dimmer);
+  text-align: center;
+  line-height: 1.3;
+  border-top: 1px solid rgba(233, 193, 107, 0.15);
+  padding-top: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Drag ghost */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  transform: rotate(-6deg);
+  transition: none;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(135deg, rgba(233, 193, 107, 0.2), rgba(20, 12, 40, 0.95));
+  border: 1px solid var(--gold);
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  z-index: 999;
+  animation: toast-in 0.4s ease-out, toast-out 0.4s ease-in 2.6s forwards;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 20px rgba(233, 193, 107, 0.25);
+  text-shadow: 0 0 8px rgba(233, 193, 107, 0.3);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes toast-out {
+  to { opacity: 0; transform: translate(-50%, -20px); }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(233, 193, 107, 0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(233, 193, 107, 0.35); }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-sigil">
+        <svg viewBox="0 0 32 32">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#e9c16b"/>
+              <stop offset="1" stop-color="#8a6a2a"/>
+            </linearGradient>
+          </defs>
+          <path d="M16 2 L28 10 L28 22 L16 30 L4 22 L4 10 Z" fill="none" stroke="url(#g1)" stroke-width="1.5"/>
+          <path d="M16 8 L22 12 L22 20 L16 24 L10 20 L10 12 Z" fill="url(#g1)" opacity="0.3"/>
+          <circle cx="16" cy="16" r="3" fill="url(#g1)"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Arcanum</div>
+        <div class="brand-sub">Dispatch · s.04</div>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="hstat"><span class="hstat-label">Deck</span><span class="hstat-val" id="hdr-deck">24 / 60</span></div>
+      <div class="hstat"><span class="hstat-label">XP</span><span class="hstat-val" id="hdr-xp">4,210</span></div>
+      <div class="hstat"><span class="hstat-label">Victories</span><span class="hstat-val" id="hdr-vic">7</span></div>
+      <div class="streak"><span id="hdr-streak">×3.2</span> Streak</div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="section-label">Operator</div>
+    <div class="rank-card">
+      <div class="rank-row">
+        <div class="rank-crest">IV</div>
+        <div class="rank-info">
+          <div class="rank-name">Sentinel</div>
+          <div class="rank-tier">Diamond · Tier IV</div>
+        </div>
+      </div>
+      <div class="xp-bar"><div class="xp-fill" id="sb-xpfill" style="width: 64%"></div></div>
+      <div class="xp-label"><span id="sb-xpcur">4,210</span><span>6,500 → Master</span></div>
+    </div>
+
+    <div class="section-label">Collection</div>
+    <div class="stat-grid">
+      <div class="stat-cell">
+        <div class="stat-cell-label">Cards Owned</div>
+        <div class="stat-cell-val">47</div>
+      </div>
+      <div class="stat-cell legendary">
+        <div class="stat-cell-label">Legendary</div>
+        <div class="stat-cell-val">3</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">Total XP</div>
+        <div class="stat-cell-val" id="sb-totxp">14.2K</div>
+      </div>
+      <div class="stat-cell victories">
+        <div class="stat-cell-label">Today</div>
+        <div class="stat-cell-val"><span id="sb-daily">7</span>W</div>
+      </div>
+    </div>
+
+    <div class="section-label">Unopened</div>
+    <div class="pack-card" id="packCard">
+      <div class="pack-head">
+        <div class="pack-title">Emerald Pack</div>
+        <div class="pack-badge">×1</div>
+      </div>
+      <div class="pack-desc">Guaranteed Rare+. Complete <span id="pack-remain">3</span> more encounters for next pack.</div>
+      <div class="pack-progress"><div class="pack-progress-fill" id="pack-fill" style="width: 40%"></div></div>
+    </div>
+
+    <div class="section-label">Synergies</div>
+    <div class="synergy-list" id="synergyList">
+      <div class="synergy active">
+        <div class="synergy-icon">◈</div>
+        <div class="synergy-text">Scholar + Scout</div>
+        <div class="synergy-status">ACTIVE</div>
+      </div>
+      <div class="synergy">
+        <div class="synergy-icon">⚘</div>
+        <div class="synergy-text">Triple Creative</div>
+        <div class="synergy-status">0/3</div>
+      </div>
+      <div class="synergy">
+        <div class="synergy-icon">✦</div>
+        <div class="synergy-text">Legendary Duo</div>
+        <div class="synergy-status">1/2</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- BOARD -->
+  <main class="board">
+    <!-- Active Encounters -->
+    <section class="board-section">
+      <div class="board-head">
+        <div class="board-title">Active Engagements</div>
+        <div class="board-meta"><span id="active-count">3</span> / 3 slots · live</div>
+      </div>
+      <div class="battlefield" id="battlefield"></div>
+    </section>
+
+    <!-- Encounter Queue -->
+    <section class="board-section">
+      <div class="board-head">
+        <div class="board-title">Encounter Queue</div>
+        <div class="board-meta">drag card · or click to deploy</div>
+      </div>
+      <div class="queue" id="queue"></div>
+    </section>
+  </main>
+
+  <!-- BATTLE LOG -->
+  <aside class="log">
+    <div class="section-label">Battle Log</div>
+    <div class="log-feed" id="logFeed"></div>
+  </aside>
+
+  <!-- HAND -->
+  <div class="hand-wrap">
+    <div class="hand-bar">
+      <div class="hand-label">Your Hand</div>
+      <div class="hand-meta">draw next · in <span id="draw-timer">24s</span></div>
+    </div>
+    <div class="hand" id="hand"></div>
+  </div>
+
+</div>
+
+<script>
+// ============ STATE ============
+
+const AGENTS = [
+  {
+    id: 'a1',
+    name: 'Orin Vex',
+    class: 'Scholar',
+    rarity: 'legendary',
+    cost: 7,
+    sigil: '✦',
+    stats: { speed: 6, focus: 10, creativity: 8, reliability: 9 },
+    abilities: [
+      { name: 'Deep Citation', text: 'Research tasks resolve 2× faster.' },
+      { name: 'Aura: Insight', text: 'Allies gain +2 Focus.' }
+    ],
+    flavor: '"I have read the book. Then the margins. Then between them."'
+  },
+  {
+    id: 'a2',
+    name: 'Scout Ren',
+    class: 'Scout',
+    rarity: 'rare',
+    cost: 3,
+    sigil: '◈',
+    stats: { speed: 9, focus: 5, creativity: 6, reliability: 7 },
+    abilities: [
+      { name: 'Quick Recon', text: 'First encounter each round costs −2.' }
+    ],
+    flavor: '"I was there and back before you blinked."'
+  },
+  {
+    id: 'a3',
+    name: 'Mera Voss',
+    class: 'Artisan',
+    rarity: 'epic',
+    cost: 5,
+    sigil: '⚘',
+    stats: { speed: 4, focus: 7, creativity: 10, reliability: 6 },
+    abilities: [
+      { name: 'Spark', text: 'Creative encounters yield double XP.' },
+      { name: 'Muse', text: 'On deploy: draw a card.' }
+    ],
+    flavor: '"The blank page has never survived our meetings."'
+  },
+  {
+    id: 'a4',
+    name: 'Dex Holt',
+    class: 'Courier',
+    rarity: 'common',
+    cost: 2,
+    sigil: '⟡',
+    stats: { speed: 7, focus: 4, creativity: 3, reliability: 8 },
+    abilities: [
+      { name: 'Dispatch', text: 'Quick-resolves any Outreach task.' }
+    ],
+    flavor: '"Message received. Message delivered."'
+  },
+  {
+    id: 'a5',
+    name: 'Quill Mara',
+    class: 'Archivist',
+    rarity: 'rare',
+    cost: 4,
+    sigil: '❧',
+    stats: { speed: 5, focus: 8, creativity: 5, reliability: 9 },
+    abilities: [
+      { name: 'Crossfile', text: 'Any admin task resolves with Reliability check.' }
+    ],
+    flavor: '"Every note has its place. Every place, a note."'
+  }
+];
+
+const ACTIVE_SEED = [
+  {
+    slotId: 's1',
+    agentId: 'a1',
+    encounter: { title: 'Synthesize Q2 research dossier', suit: 'mental', suitIcon: '◉', reward: '+240 XP · Pack+' },
+    progress: 74,
+    status: 'winning',
+  },
+  {
+    slotId: 's2',
+    agentId: 'a4',
+    encounter: { title: 'Reply to partner dispatches (12)', suit: 'outreach', suitIcon: '✉', reward: '+120 XP' },
+    progress: 38,
+    status: 'trouble',
+    statusNote: 'Blocked: missing credential'
+  },
+  {
+    slotId: 's3',
+    agentId: 'a5',
+    encounter: { title: 'Reconcile ledger anomalies', suit: 'rigor', suitIcon: '☗', reward: '+180 XP' },
+    progress: 8,
+    status: 'fresh',
+  }
+];
+
+let hand = AGENTS.slice();
+let active = ACTIVE_SEED.map(a => ({ ...a }));
+
+const QUEUE_SEED = [
+  { id: 'q1', title: 'Draft launch brief — "Helix"', suit: 'creative', suitIcon: '⚘', diff: 'med', reward: '+180 XP' },
+  { id: 'q2', title: 'Audit vendor contract revisions', suit: 'rigor', suitIcon: '☗', diff: 'hard', reward: '+260 XP' },
+  { id: 'q3', title: 'Summarize board memo (14 pages)', suit: 'mental', suitIcon: '◉', diff: 'easy', reward: '+90 XP' },
+  { id: 'q4', title: 'Ritual: Crimson Gala proposal', suit: 'creative', suitIcon: '✦', diff: 'elite', reward: '+420 XP · Legendary tag' }
+];
+
+let queue = QUEUE_SEED.slice();
+
+let state = {
+  xp: 4210,
+  victories: 7,
+  streak: 3.2,
+  packProgress: 40,
+  packRemain: 3,
+  dailyWins: 7,
+  drawTimer: 24,
+};
+
+// ============ RENDERERS ============
+
+function rarityLabel(r) { return r[0].toUpperCase() + r.slice(1); }
+function statClass(v) { return v >= 8 ? 'high' : (v <= 4 ? 'low' : ''); }
+
+function renderCard(agent) {
+  const abilHtml = agent.abilities.map(a =>
+    `<div class="ability"><span class="ability-name">${a.name}.</span> <span class="ability-text">${a.text}</span></div>`
+  ).join('');
+
+  return `
+    <div class="card ${agent.rarity}" data-agent="${agent.id}" draggable="true">
+      <div class="card-cost">${agent.cost}</div>
+      <div class="card-rarity-gem"></div>
+      <div class="card-frame-inner"></div>
+      <div class="card-name">${agent.name}</div>
+      <div class="card-portrait">
+        <div class="card-sigil">${agent.sigil}</div>
+        <div class="card-class">${agent.class} · ${rarityLabel(agent.rarity)}</div>
+      </div>
+      <div class="card-stats">
+        <div class="stat ${statClass(agent.stats.speed)}"><div class="stat-label">Spd</div><div class="stat-val">${agent.stats.speed}</div></div>
+        <div class="stat ${statClass(agent.stats.focus)}"><div class="stat-label">Foc</div><div class="stat-val">${agent.stats.focus}</div></div>
+        <div class="stat ${statClass(agent.stats.creativity)}"><div class="stat-label">Cre</div><div class="stat-val">${agent.stats.creativity}</div></div>
+        <div class="stat ${statClass(agent.stats.reliability)}"><div class="stat-label">Rel</div><div class="stat-val">${agent.stats.reliability}</div></div>
+      </div>
+      <div class="card-abilities">${abilHtml}</div>
+      <div class="card-flavor">${agent.flavor}</div>
+    </div>
+  `;
+}
+
+function renderMiniCard(agent, justDeployed = false) {
+  return `
+    <div class="deployed-card ${justDeployed ? 'just-deployed' : ''}">
+      <div class="mini-card ${agent.rarity}">
+        <div class="mini-portrait">${agent.sigil}</div>
+        <div class="mini-name">${agent.name}</div>
+        <div class="mini-class">${agent.class}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderProgressRing(pct, status) {
+  const circ = 2 * Math.PI * 34;
+  const offset = circ - (pct / 100) * circ;
+  const label = status === 'trouble' ? 'BLOCKED' :
+                status === 'waiting' ? 'AWAITING' :
+                status === 'winning' ? 'ASCENDANT' :
+                status === 'fresh' ? 'DEPLOYED' : 'IN PROGRESS';
+  return `
+    <div class="progress-ring">
+      <svg viewBox="0 0 80 80">
+        <circle class="track" cx="40" cy="40" r="34"></circle>
+        <circle class="fill" cx="40" cy="40" r="34" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"></circle>
+      </svg>
+      <div class="progress-pct">${pct}%</div>
+    </div>
+    <div class="enc-status-label">${label}</div>
+  `;
+}
+
+function renderSlot(slot) {
+  const agent = AGENTS.find(a => a.id === slot.agentId);
+  if (!slot.agentId) {
+    return `<div class="slot empty-slot" data-slot="${slot.slotId}" data-empty="1"></div>`;
+  }
+
+  const bannerText = slot.status === 'trouble' ? '! BLOCKED' :
+                     slot.status === 'waiting' ? '? AWAITING INPUT' :
+                     slot.status === 'winning' ? '✦ ASCENDANT' :
+                     slot.status === 'fresh' ? '◈ DEPLOYED' : 'IN PROGRESS';
+
+  return `
+    <div class="slot status-${slot.status}" data-slot="${slot.slotId}">
+      <div class="status-banner">${bannerText}</div>
+      <div class="encounter-head">
+        <div class="enc-title">${slot.encounter.title}</div>
+        <div class="enc-suit ${slot.encounter.suit}">${slot.encounter.suitIcon}</div>
+      </div>
+      <div class="enc-body">
+        ${renderMiniCard(agent, slot.justDeployed)}
+        <div class="progress-ring-wrap">
+          ${renderProgressRing(slot.progress, slot.status)}
+        </div>
+      </div>
+      <div class="enc-footer">
+        <div>${slot.encounter.suit.toUpperCase()}</div>
+        <div class="enc-reward">◆ ${slot.encounter.reward}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderQueueCard(q) {
+  return `
+    <div class="queue-card" data-queue="${q.id}">
+      <div class="queue-head">
+        <div class="queue-diff ${q.diff}">${q.diff.toUpperCase()}</div>
+        <div class="queue-suit">${q.suitIcon}</div>
+      </div>
+      <div class="queue-title">${q.title}</div>
+      <div class="queue-reward">◆ ${q.reward}</div>
+    </div>
+  `;
+}
+
+function renderAll() {
+  // battlefield — always 3 slots
+  const slots = [0, 1, 2].map(i => {
+    if (active[i]) return renderSlot(active[i]);
+    return `<div class="slot empty-slot" data-slot="empty-${i}" data-empty="1"></div>`;
+  }).join('');
+  document.getElementById('battlefield').innerHTML = slots;
+
+  // queue
+  document.getElementById('queue').innerHTML = queue.map(renderQueueCard).join('');
+
+  // hand
+  document.getElementById('hand').innerHTML = hand.map(renderCard).join('');
+
+  wireInteractions();
+
+  // stats
+  document.getElementById('active-count').textContent = active.length;
+  document.getElementById('hdr-xp').textContent = state.xp.toLocaleString();
+  document.getElementById('hdr-vic').textContent = state.victories;
+  document.getElementById('hdr-streak').textContent = '×' + state.streak.toFixed(1);
+  document.getElementById('sb-xpcur').textContent = state.xp.toLocaleString();
+  document.getElementById('sb-daily').textContent = state.dailyWins;
+  document.getElementById('pack-remain').textContent = state.packRemain;
+  document.getElementById('pack-fill').style.width = state.packProgress + '%';
+  const xpPct = Math.min(100, (state.xp / 6500) * 100);
+  document.getElementById('sb-xpfill').style.width = xpPct + '%';
+}
+
+// ============ LOG ============
+
+function addLog(html, cls = '') {
+  const feed = document.getElementById('logFeed');
+  const time = new Date().toLocaleTimeString('en-US', { hour12: false }).slice(0, 5);
+  const entry = document.createElement('div');
+  entry.className = 'log-entry ' + cls;
+  entry.innerHTML = `<span class="log-time">${time}</span>${html}`;
+  feed.insertBefore(entry, feed.firstChild);
+  while (feed.children.length > 30) feed.removeChild(feed.lastChild);
+}
+
+// ============ DRAG & DROP ============
+
+let dragged = null;
+let ghost = null;
+
+function wireInteractions() {
+  // card drag
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragged = card.dataset.agent;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragged); } catch(_) {}
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      dragged = null;
+      document.querySelectorAll('.drop-ready').forEach(el => el.classList.remove('drop-ready'));
+    });
+    // click to deploy
+    card.addEventListener('click', () => {
+      const agentId = card.dataset.agent;
+      if (queue.length > 0) deployToQueue(agentId, queue[0].id);
+    });
+  });
+
+  // queue drop target
+  document.querySelectorAll('.queue-card').forEach(qc => {
+    qc.addEventListener('dragover', e => { e.preventDefault(); qc.classList.add('drop-ready'); });
+    qc.addEventListener('dragleave', () => qc.classList.remove('drop-ready'));
+    qc.addEventListener('drop', e => {
+      e.preventDefault();
+      qc.classList.remove('drop-ready');
+      if (dragged) deployToQueue(dragged, qc.dataset.queue);
+    });
+    qc.addEventListener('click', () => {
+      // pick first card in hand
+      if (hand.length > 0) deployToQueue(hand[0].id, qc.dataset.queue);
+    });
+  });
+
+  // empty slot drop target
+  document.querySelectorAll('.slot.empty-slot').forEach(s => {
+    s.addEventListener('dragover', e => { e.preventDefault(); s.classList.add('drop-ready'); });
+    s.addEventListener('dragleave', () => s.classList.remove('drop-ready'));
+    s.addEventListener('drop', e => {
+      e.preventDefault();
+      s.classList.remove('drop-ready');
+      if (dragged && queue.length > 0) deployToQueue(dragged, queue[0].id);
+    });
+  });
+}
+
+function deployToQueue(agentId, queueId) {
+  const agent = AGENTS.find(a => a.id === agentId);
+  if (!agent) return;
+  // remove from hand
+  const handIdx = hand.findIndex(h => h.id === agentId);
+  if (handIdx === -1) return;
+  // find queue item
+  const qIdx = queue.findIndex(q => q.id === queueId);
+  if (qIdx === -1) return;
+  const qItem = queue[qIdx];
+
+  // check slot
+  if (active.length >= 3) {
+    showToast('Battlefield Full');
+    return;
+  }
+
+  hand.splice(handIdx, 1);
+  queue.splice(qIdx, 1);
+
+  active.push({
+    slotId: 's-' + Date.now(),
+    agentId: agent.id,
+    encounter: {
+      title: qItem.title,
+      suit: qItem.suit,
+      suitIcon: qItem.suitIcon,
+      reward: qItem.reward
+    },
+    progress: 3,
+    status: 'fresh',
+    justDeployed: true
+  });
+
+  addLog(`<span class="agent">${agent.name}</span> deploys onto <em>${qItem.title}</em>. <span class="crit-word">Engaged.</span>`, 'epic');
+  renderAll();
+  showToast('◆ DEPLOYED');
+
+  // clear deploy flag shortly
+  setTimeout(() => {
+    const s = active.find(a => a.agentId === agent.id && a.justDeployed);
+    if (s) s.justDeployed = false;
+    renderAll();
+  }, 700);
+}
+
+function showToast(text) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// ============ SIMULATION LOOPS ============
+
+function tickProgress() {
+  active.forEach(slot => {
+    const agent = AGENTS.find(a => a.id === slot.agentId);
+    if (!agent) return;
+
+    if (slot.status === 'trouble') {
+      // stays blocked, occasional crit recovery
+      if (Math.random() < 0.08) {
+        slot.status = 'winning';
+        addLog(`<span class="agent">${agent.name}</span> bypasses the blockade with a <span class="crit-word">critical insight</span>!`, 'crit');
+      }
+      return;
+    }
+    if (slot.status === 'waiting') {
+      // awaits until clicked — small chance resolves
+      if (Math.random() < 0.04) {
+        slot.status = 'winning';
+        addLog(`<span class="agent">${agent.name}</span> receives clarification. Resuming engagement.`, 'attn');
+      }
+      return;
+    }
+
+    // normal progression based on agent speed
+    const baseRate = 2 + agent.stats.speed * 0.5 + Math.random() * 3;
+    const mult = slot.status === 'winning' ? 1.4 : 1.0;
+    slot.progress = Math.min(100, slot.progress + baseRate * mult);
+
+    // status shifts
+    if (slot.status === 'fresh' && slot.progress > 20) slot.status = 'winning';
+
+    // small chance of trouble or waiting
+    if (slot.progress > 25 && slot.progress < 75 && Math.random() < 0.03) {
+      slot.status = 'trouble';
+      addLog(`<span class="agent">${agent.name}</span> is <span class="dmg-word">blocked</span> on <em>${slot.encounter.title}</em>.`, 'trouble');
+      return;
+    }
+    if (slot.progress > 20 && slot.progress < 85 && Math.random() < 0.025) {
+      slot.status = 'waiting';
+      addLog(`<span class="agent">${agent.name}</span> requests your input on <em>${slot.encounter.title}</em>.`, 'attn');
+      return;
+    }
+
+    // hit/crit logging
+    if (Math.random() < 0.15 && slot.progress < 95) {
+      const dmg = Math.floor(20 + Math.random() * 60);
+      const crit = Math.random() < 0.18;
+      if (crit) {
+        addLog(`<span class="agent">${agent.name}</span> <span class="crit-word">critical strikes</span> the task for <span class="dmg-num">${dmg * 2}</span> progress!`, 'crit');
+      } else {
+        addLog(`<span class="agent">${agent.name}</span> advances on <em>${slot.encounter.title}</em> for <span class="dmg-num">${dmg}</span>.`);
+      }
+    }
+
+    // completion
+    if (slot.progress >= 100) {
+      slot.progress = 100;
+      slot.status = 'winning';
+      setTimeout(() => completeSlot(slot), 400);
+    }
+  });
+  renderAll();
+}
+
+function completeSlot(slot) {
+  const agent = AGENTS.find(a => a.id === slot.agentId);
+  const slotEl = document.querySelector(`.slot[data-slot="${slot.slotId}"]`);
+
+  // victory flare
+  if (slotEl) {
+    const flare = document.createElement('div');
+    flare.className = 'victory-flare';
+    for (let i = 0; i < 10; i++) {
+      const s = document.createElement('div');
+      s.className = 'spark';
+      const angle = (i / 10) * Math.PI * 2;
+      const dist = 40 + Math.random() * 30;
+      s.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+      s.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+      s.style.animationDelay = (Math.random() * 0.2) + 's';
+      flare.appendChild(s);
+    }
+    const loot = document.createElement('div');
+    loot.className = 'loot-drop';
+    loot.textContent = '+ ' + slot.encounter.reward;
+    slotEl.appendChild(flare);
+    slotEl.appendChild(loot);
+    setTimeout(() => { flare.remove(); loot.remove(); }, 1500);
+  }
+
+  state.xp += 180 + Math.floor(Math.random() * 80);
+  state.victories++;
+  state.dailyWins++;
+  state.streak = Math.min(9.9, state.streak + 0.2);
+  state.packProgress = Math.min(100, state.packProgress + 18);
+  state.packRemain = Math.max(0, state.packRemain - 1);
+
+  addLog(`<span class="agent">${agent.name}</span> <span class="win-word">triumphs</span> over <em>${slot.encounter.title}</em>. <span class="crit-word">+${slot.encounter.reward}</span>`, 'victory');
+
+  // return agent to hand
+  active = active.filter(a => a.slotId !== slot.slotId);
+  hand.push(agent);
+
+  // pull next queue onto empty slot if possible
+  if (queue.length > 0 && active.length < 3 && hand.length > 0) {
+    // auto-deploy nothing — let user do it; but do add a fresh queue item
+    queue.push(generateQueueItem());
+  }
+
+  renderAll();
+  showToast('◆ VICTORY');
+}
+
+function generateQueueItem() {
+  const ideas = [
+    { title: 'Refine onboarding sequence', suit: 'creative', suitIcon: '⚘' },
+    { title: 'Quarterly KPI synthesis', suit: 'mental', suitIcon: '◉' },
+    { title: 'Investor update digest', suit: 'outreach', suitIcon: '✉' },
+    { title: 'Security audit followups', suit: 'rigor', suitIcon: '☗' },
+    { title: 'Narrative pitch for "Orbit"', suit: 'creative', suitIcon: '✦' },
+    { title: 'Resolve support escalations', suit: 'outreach', suitIcon: '✉' },
+  ];
+  const idea = ideas[Math.floor(Math.random() * ideas.length)];
+  const diffs = ['easy', 'med', 'hard', 'elite'];
+  const diff = diffs[Math.floor(Math.random() * diffs.length)];
+  const rewards = { easy: '+90 XP', med: '+180 XP', hard: '+260 XP', elite: '+420 XP · Legendary tag' };
+  return { id: 'q-' + Date.now() + '-' + Math.floor(Math.random()*999), ...idea, diff, reward: rewards[diff] };
+}
+
+function tickDraw() {
+  state.drawTimer--;
+  if (state.drawTimer <= 0) {
+    state.drawTimer = 24;
+    addLog(`Deck re-shuffles. New card drawn.`, 'epic');
+  }
+  document.getElementById('draw-timer').textContent = state.drawTimer + 's';
+}
+
+// ============ INIT ============
+
+addLog(`Session begins. <span class="agent">Orin Vex</span>, <span class="agent">Dex Holt</span>, <span class="agent">Quill Mara</span> deployed.`, 'epic');
+addLog(`<span class="agent">Dex Holt</span> hits a blockade — missing credential.`, 'trouble');
+addLog(`Synergy unlocked: <span class="crit-word">Scholar + Scout</span> aura active.`, 'crit');
+
+renderAll();
+
+setInterval(tickProgress, 1800);
+setInterval(tickDraw, 1000);
+
+// occasional queue growth
+setInterval(() => {
+  if (queue.length < 6 && Math.random() < 0.35) {
+    queue.push(generateQueueItem());
+    renderAll();
+  }
+}, 9000);
+
+</script>
+</body>
+</html>

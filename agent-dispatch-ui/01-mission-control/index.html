@@ -1,0 +1,1646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ORBITAL // MISSION CONTROL</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#0a0d0b;
+    --bg-1:#0e1311;
+    --bg-2:#131a17;
+    --grid:#1a221d;
+    --line:#222c26;
+    --line-2:#2e3a32;
+    --ink:#cfe3d4;
+    --ink-dim:#7e8f84;
+    --ink-faint:#4a5a50;
+    --accent:#7dff9e;        /* phosphor green */
+    --accent-dim:#2fb962;
+    --accent-glow: 0 0 14px rgba(125,255,158,.45);
+    --warn:#ffb347;
+    --alert:#ff5b6a;
+    --ok:#7dff9e;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, monospace;
+    --sans:'Space Grotesk', system-ui, sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 600px at 80% -10%, rgba(125,255,158,.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(125,255,158,.04), transparent 60%),
+      linear-gradient(180deg, var(--bg), var(--bg-1));
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:14px;
+    letter-spacing:.01em;
+    overflow:hidden;
+    position:relative;
+  }
+
+  /* scanline overlay */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,.012) 0 1px,
+      transparent 1px 3px
+    );
+    pointer-events:none;
+    z-index:9;
+    mix-blend-mode:overlay;
+  }
+  /* vignette */
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
+    pointer-events:none;
+    z-index:8;
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .app{
+    display:grid;
+    grid-template-rows: 56px 1fr 34px;
+    height:100vh;
+    position:relative;
+    z-index:1;
+  }
+
+  /* ---------- HUD TOP BAR ---------- */
+  .hud{
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(125,255,158,.03), transparent);
+    display:grid;
+    grid-template-columns: 320px 1fr auto;
+    align-items:stretch;
+  }
+  .hud-brand{
+    display:flex; align-items:center; gap:12px;
+    padding:0 18px;
+    border-right:1px solid var(--line);
+  }
+  .brand-mark{
+    width:26px; height:26px;
+    position:relative;
+    border:1px solid var(--accent);
+    box-shadow:var(--accent-glow);
+  }
+  .brand-mark::before,.brand-mark::after{
+    content:""; position:absolute; inset:0;
+    border:1px solid var(--accent);
+    transform:rotate(45deg);
+    opacity:.7;
+  }
+  .brand-mark::after{transform:rotate(0);opacity:.25}
+  .brand-mark .dot{
+    position:absolute; inset:0; margin:auto;
+    width:4px; height:4px; background:var(--accent);
+    box-shadow:var(--accent-glow);
+    animation:blink 1.6s steps(2,end) infinite;
+  }
+  .brand-name{
+    font-family:var(--sans);
+    font-weight:700; letter-spacing:.22em;
+    font-size:13px;
+  }
+  .brand-sub{
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-faint);
+    letter-spacing:.25em;
+  }
+
+  .hud-stats{
+    display:grid;
+    grid-template-columns: repeat(5, minmax(0,1fr));
+    align-items:stretch;
+  }
+  .stat{
+    padding:6px 18px;
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; justify-content:center;
+    min-width:0;
+  }
+  .stat:last-child{border-right:0}
+  .stat-k{
+    font-family:var(--mono);
+    font-size:9.5px; letter-spacing:.28em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+  .stat-v{
+    font-family:var(--mono);
+    font-size:17px; font-weight:500;
+    color:var(--ink);
+    display:flex; align-items:baseline; gap:8px;
+  }
+  .stat-v .accent{color:var(--accent); text-shadow:0 0 10px rgba(125,255,158,.35)}
+  .stat-v .delta{
+    font-size:10px; color:var(--accent-dim);
+    letter-spacing:.1em;
+  }
+  .xp-bar{
+    height:3px; background:var(--grid); margin-top:6px;
+    position:relative; overflow:hidden;
+  }
+  .xp-bar > i{
+    position:absolute; left:0; top:0; bottom:0;
+    background:var(--accent);
+    box-shadow:0 0 10px rgba(125,255,158,.55);
+    width:0%;
+    transition:width .8s cubic-bezier(.2,.7,.2,1);
+  }
+
+  .hud-clock{
+    display:flex; align-items:center; gap:14px;
+    padding:0 18px;
+    border-left:1px solid var(--line);
+  }
+  .clock-t{
+    font-family:var(--mono);
+    font-size:16px; letter-spacing:.18em;
+  }
+  .clock-t .sep{opacity:.4}
+  .clock-d{
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-faint);
+    letter-spacing:.2em;
+  }
+  .live-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:var(--accent-glow);
+    animation:pulse 1.2s ease-in-out infinite;
+  }
+
+  /* ---------- MAIN GRID ---------- */
+  .main{
+    display:grid;
+    grid-template-columns: 320px 1fr 360px;
+    min-height:0;
+  }
+
+  /* panels */
+  .panel{
+    display:flex; flex-direction:column;
+    min-height:0;
+    background:
+      linear-gradient(180deg, rgba(125,255,158,.015), transparent 40%),
+      var(--bg-1);
+  }
+  .panel + .panel{border-left:1px solid var(--line)}
+  .panel-head{
+    height:36px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 14px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+  }
+  .panel-title{
+    font-family:var(--mono);
+    font-size:10px; letter-spacing:.3em;
+    color:var(--ink-dim);
+    text-transform:uppercase;
+    display:flex; align-items:center; gap:10px;
+  }
+  .panel-title::before{
+    content:""; width:6px; height:6px;
+    background:var(--accent);
+    box-shadow:var(--accent-glow);
+    transform:rotate(45deg);
+  }
+  .panel-meta{
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-faint);
+    letter-spacing:.2em;
+  }
+  .panel-body{
+    flex:1; min-height:0; overflow:auto;
+  }
+  .panel-body::-webkit-scrollbar{width:8px; height:8px}
+  .panel-body::-webkit-scrollbar-track{background:transparent}
+  .panel-body::-webkit-scrollbar-thumb{background:var(--line-2); border-radius:0}
+  .panel-body::-webkit-scrollbar-thumb:hover{background:var(--accent-dim)}
+
+  /* ---------- LEFT: DISPATCH + QUEUE ---------- */
+  .dispatch{
+    padding:16px 14px 18px;
+    border-bottom:1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(125,255,158,.04), transparent 80%);
+  }
+  .dispatch h3{
+    margin:0 0 10px;
+    font-family:var(--sans);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink);
+  }
+  .dispatch h3 small{
+    display:block;
+    font-family:var(--mono);
+    font-size:10px;
+    font-weight:400;
+    letter-spacing:.2em;
+    color:var(--ink-faint);
+    margin-top:4px;
+  }
+  .dispatch-form{
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .field{
+    position:relative;
+    border:1px solid var(--line-2);
+    background:var(--bg);
+  }
+  .field::before{
+    content:"▸";
+    position:absolute; left:10px; top:50%;
+    transform:translateY(-50%);
+    color:var(--accent);
+    font-family:var(--mono);
+    font-size:11px;
+  }
+  .field input{
+    width:100%;
+    background:transparent;
+    border:0; outline:0;
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:12px;
+    padding:12px 12px 12px 28px;
+    letter-spacing:.05em;
+  }
+  .field input::placeholder{color:var(--ink-faint)}
+  .field:focus-within{
+    border-color:var(--accent);
+    box-shadow:0 0 0 1px rgba(125,255,158,.15), 0 0 18px rgba(125,255,158,.1) inset;
+  }
+  .select-row{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:8px;
+  }
+  .chip-group{
+    display:flex; flex-wrap:wrap; gap:6px;
+  }
+  .chip{
+    font-family:var(--mono);
+    font-size:10px; letter-spacing:.18em;
+    padding:5px 9px;
+    border:1px solid var(--line-2);
+    background:var(--bg);
+    color:var(--ink-dim);
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:all .15s ease;
+    user-select:none;
+  }
+  .chip:hover{border-color:var(--accent-dim); color:var(--ink)}
+  .chip.active{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:rgba(125,255,158,.06);
+    box-shadow:inset 0 0 12px rgba(125,255,158,.1);
+  }
+  .btn-dispatch{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.3em;
+    text-transform:uppercase;
+    padding:12px 16px;
+    background:var(--accent);
+    color:#071108;
+    border:0;
+    cursor:pointer;
+    font-weight:700;
+    position:relative;
+    overflow:hidden;
+    transition:transform .1s ease;
+  }
+  .btn-dispatch:hover{
+    box-shadow:0 0 24px rgba(125,255,158,.5);
+  }
+  .btn-dispatch:active{transform:translateY(1px)}
+  .btn-dispatch::after{
+    content:"";
+    position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+    transform:translateX(-100%);
+    transition:transform .6s ease;
+  }
+  .btn-dispatch:hover::after{transform:translateX(100%)}
+
+  /* queue */
+  .queue{
+    padding:10px 10px 16px;
+  }
+  .queue-head{
+    padding:6px 4px 10px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .queue-head .panel-title{font-size:10px}
+  .q-item{
+    display:grid;
+    grid-template-columns: 18px 1fr auto;
+    gap:10px;
+    align-items:center;
+    padding:10px 10px;
+    border:1px solid var(--line);
+    border-left:2px solid var(--line-2);
+    background:var(--bg-2);
+    margin-bottom:6px;
+    transition:all .2s ease;
+    cursor:default;
+  }
+  .q-item:hover{
+    border-left-color:var(--accent);
+    background:#151d18;
+  }
+  .q-num{
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-faint);
+    letter-spacing:.15em;
+  }
+  .q-task{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .q-class{
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:.2em;
+    color:var(--ink-dim);
+    padding:3px 6px;
+    border:1px solid var(--line-2);
+    text-transform:uppercase;
+  }
+
+  /* ---------- CENTER: COMMAND DECK ---------- */
+  .deck-head{
+    display:flex; align-items:center; gap:14px;
+  }
+  .deck-tabs{
+    display:flex; gap:4px; margin-left:8px;
+  }
+  .tab{
+    font-family:var(--mono);
+    font-size:10px; letter-spacing:.2em;
+    padding:4px 10px;
+    border:1px solid transparent;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .tab.active{
+    color:var(--accent);
+    border-color:var(--line-2);
+    background:rgba(125,255,158,.05);
+  }
+
+  .missions{
+    padding:14px;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .mission{
+    position:relative;
+    border:1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(125,255,158,.02), transparent 60%),
+      var(--bg-2);
+    padding:14px 16px 14px 18px;
+    display:grid;
+    grid-template-columns: 1fr 280px;
+    gap:18px;
+    transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  }
+  .mission:hover{
+    border-color:var(--line-2);
+    transform:translateY(-1px);
+  }
+  .mission::before{
+    content:"";
+    position:absolute; left:0; top:0; bottom:0;
+    width:2px;
+    background:var(--line-2);
+  }
+  .mission[data-status="running"]::before{background:var(--accent); box-shadow:var(--accent-glow)}
+  .mission[data-status="blocked"]::before{background:var(--warn); box-shadow:0 0 12px rgba(255,179,71,.5); animation:pulse 1.4s ease-in-out infinite}
+  .mission[data-status="input"]::before{background:var(--alert); box-shadow:0 0 14px rgba(255,91,106,.55); animation:pulse 1s ease-in-out infinite}
+  .mission[data-status="done"]::before{background:var(--ink-dim)}
+  .mission[data-status="input"]{
+    border-color:rgba(255,91,106,.4);
+    box-shadow:0 0 0 1px rgba(255,91,106,.12), 0 0 24px rgba(255,91,106,.06);
+    animation:alertGlow 1.8s ease-in-out infinite;
+  }
+  .mission[data-status="blocked"]{
+    border-color:rgba(255,179,71,.3);
+  }
+
+  .m-left{ min-width:0 }
+  .m-top{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:6px;
+    flex-wrap:wrap;
+  }
+  .m-id{
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-faint);
+    letter-spacing:.2em;
+  }
+  .m-class{
+    font-family:var(--mono);
+    font-size:9px; letter-spacing:.2em;
+    padding:2px 7px;
+    border:1px solid var(--line-2);
+    color:var(--ink-dim);
+    text-transform:uppercase;
+  }
+  .m-class.recon{color:#7dd3ff; border-color:rgba(125,211,255,.3)}
+  .m-class.ops{color:var(--accent); border-color:rgba(125,255,158,.3)}
+  .m-class.research{color:#c59bff; border-color:rgba(197,155,255,.3)}
+  .m-class.diagnostic{color:var(--warn); border-color:rgba(255,179,71,.3)}
+  .m-name{
+    font-family:var(--sans);
+    font-size:15px; font-weight:600;
+    letter-spacing:.02em;
+    color:var(--ink);
+  }
+  .m-status{
+    margin-left:auto;
+    font-family:var(--mono);
+    font-size:10px; letter-spacing:.22em;
+    text-transform:uppercase;
+    display:flex; align-items:center; gap:6px;
+  }
+  .m-status .d{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--ink-faint);
+  }
+  .mission[data-status="running"] .m-status{color:var(--accent)}
+  .mission[data-status="running"] .m-status .d{background:var(--accent); box-shadow:var(--accent-glow); animation:pulse 1.2s infinite}
+  .mission[data-status="blocked"] .m-status{color:var(--warn)}
+  .mission[data-status="blocked"] .m-status .d{background:var(--warn); box-shadow:0 0 8px rgba(255,179,71,.5)}
+  .mission[data-status="input"] .m-status{color:var(--alert)}
+  .mission[data-status="input"] .m-status .d{background:var(--alert); box-shadow:0 0 10px rgba(255,91,106,.6); animation:pulse .9s infinite}
+  .mission[data-status="done"] .m-status{color:var(--ink-dim)}
+  .mission[data-status="done"] .m-status .d{background:var(--ink-dim)}
+
+  .m-task{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink);
+    line-height:1.5;
+    margin:4px 0 10px;
+    padding-left:14px;
+    position:relative;
+  }
+  .m-task::before{
+    content:"$";
+    position:absolute; left:0; top:0;
+    color:var(--accent);
+    opacity:.7;
+  }
+  .mission[data-status="running"] .m-task::after{
+    content:"▮";
+    color:var(--accent);
+    margin-left:4px;
+    animation:caret 1s steps(2) infinite;
+  }
+
+  .m-meta{
+    display:flex; gap:18px; flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-faint);
+    letter-spacing:.15em;
+    text-transform:uppercase;
+  }
+  .m-meta span b{color:var(--ink-dim); font-weight:400}
+
+  /* right side: progress + mini telemetry */
+  .m-right{
+    display:flex; flex-direction:column; gap:10px;
+    min-width:0;
+  }
+  .progress{
+    position:relative;
+    height:8px;
+    background:var(--grid);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .progress > i{
+    position:absolute; left:0; top:0; bottom:0;
+    background:linear-gradient(90deg, var(--accent-dim), var(--accent));
+    box-shadow:0 0 10px rgba(125,255,158,.45);
+    width:0%;
+    transition:width .6s cubic-bezier(.2,.7,.2,1);
+  }
+  .mission[data-status="blocked"] .progress > i{
+    background:linear-gradient(90deg, rgba(255,179,71,.3), var(--warn));
+    box-shadow:0 0 10px rgba(255,179,71,.35);
+  }
+  .mission[data-status="input"] .progress > i{
+    background:linear-gradient(90deg, rgba(255,91,106,.3), var(--alert));
+    box-shadow:0 0 12px rgba(255,91,106,.45);
+  }
+  .progress-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.18em;
+    color:var(--ink-faint);
+  }
+  .progress-row b{color:var(--ink); font-weight:500}
+  .pct{color:var(--accent)}
+  .mission[data-status="done"] .pct{color:var(--ink-dim)}
+
+  .mini-log{
+    background:#0a0f0c;
+    border:1px solid var(--line);
+    padding:8px 10px;
+    font-family:var(--mono);
+    font-size:10.5px;
+    color:var(--ink-dim);
+    line-height:1.55;
+    max-height:72px;
+    overflow:hidden;
+    position:relative;
+  }
+  .mini-log > div{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mini-log .t{color:var(--accent-dim); margin-right:6px}
+  .mini-log::after{
+    content:"";
+    position:absolute; inset:auto 0 0 0; height:24px;
+    background:linear-gradient(180deg, transparent, #0a0f0c);
+    pointer-events:none;
+  }
+  .m-actions{
+    display:flex; gap:6px; margin-top:auto;
+  }
+  .m-btn{
+    flex:1;
+    font-family:var(--mono);
+    font-size:10px; letter-spacing:.2em;
+    padding:7px 0;
+    border:1px solid var(--line-2);
+    background:transparent;
+    color:var(--ink-dim);
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:all .15s ease;
+  }
+  .m-btn:hover{color:var(--accent); border-color:var(--accent-dim)}
+  .m-btn.primary{
+    color:var(--accent);
+    border-color:var(--accent-dim);
+    background:rgba(125,255,158,.05);
+  }
+  .m-btn.primary:hover{
+    background:rgba(125,255,158,.12);
+    box-shadow:inset 0 0 10px rgba(125,255,158,.15);
+  }
+  .m-btn.danger{color:#ff8994; border-color:rgba(255,91,106,.3)}
+  .m-btn.danger:hover{background:rgba(255,91,106,.08); color:#ffb0b8}
+
+  /* ---------- RIGHT: ALERTS + TELEMETRY ---------- */
+  .alerts{ padding:10px; border-bottom:1px solid var(--line); max-height:42%; overflow:auto }
+  .alerts::-webkit-scrollbar{width:8px}
+  .alerts::-webkit-scrollbar-thumb{background:var(--line-2)}
+
+  .alert-empty{
+    padding:20px 12px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    text-align:center;
+    letter-spacing:.18em;
+  }
+
+  .alert{
+    display:grid;
+    grid-template-columns: auto 1fr auto;
+    gap:10px;
+    align-items:start;
+    padding:10px 12px;
+    border:1px solid rgba(255,91,106,.25);
+    background:
+      linear-gradient(180deg, rgba(255,91,106,.05), transparent),
+      #141816;
+    margin-bottom:8px;
+    position:relative;
+    animation:alertBreath 2.2s ease-in-out infinite;
+  }
+  .alert.warn{
+    border-color:rgba(255,179,71,.28);
+    background:
+      linear-gradient(180deg, rgba(255,179,71,.04), transparent),
+      #141816;
+    animation:none;
+  }
+  .alert-icon{
+    width:10px; height:10px;
+    background:var(--alert);
+    box-shadow:0 0 10px rgba(255,91,106,.6);
+    transform:rotate(45deg);
+    margin-top:4px;
+  }
+  .alert.warn .alert-icon{background:var(--warn); box-shadow:0 0 10px rgba(255,179,71,.5)}
+  .alert-body{ min-width:0 }
+  .alert-title{
+    font-family:var(--mono);
+    font-size:10px; letter-spacing:.22em;
+    color:var(--alert);
+    text-transform:uppercase;
+  }
+  .alert.warn .alert-title{color:var(--warn)}
+  .alert-msg{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink);
+    margin-top:4px;
+    line-height:1.5;
+  }
+  .alert-meta{
+    font-family:var(--mono);
+    font-size:9.5px;
+    color:var(--ink-faint);
+    letter-spacing:.18em;
+    margin-top:6px;
+  }
+  .alert-act{
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .alert-act button{
+    font-family:var(--mono);
+    font-size:9.5px; letter-spacing:.2em;
+    padding:5px 8px;
+    background:transparent;
+    border:1px solid var(--line-2);
+    color:var(--ink-dim);
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .alert-act button.primary{
+    color:var(--accent);
+    border-color:var(--accent-dim);
+  }
+  .alert-act button:hover{color:var(--accent); border-color:var(--accent)}
+
+  /* telemetry stream */
+  .telemetry{
+    flex:1;
+    display:flex; flex-direction:column;
+    min-height:0;
+  }
+  .tele-body{
+    flex:1; min-height:0;
+    overflow:auto;
+    padding:8px 12px 40px;
+    font-family:var(--mono);
+    font-size:11px;
+    line-height:1.7;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 22px, rgba(255,255,255,.01) 22px 23px),
+      #090d0b;
+  }
+  .tele-body::-webkit-scrollbar{width:8px}
+  .tele-body::-webkit-scrollbar-thumb{background:var(--line-2)}
+  .log{
+    display:grid;
+    grid-template-columns: 60px 54px 1fr;
+    gap:8px;
+    padding:2px 0;
+    color:var(--ink-dim);
+    border-bottom:1px dashed transparent;
+  }
+  .log .ts{color:var(--ink-faint)}
+  .log .tag{
+    color:var(--accent);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-size:10px;
+    padding-top:1px;
+  }
+  .log.warn .tag{color:var(--warn)}
+  .log.error .tag{color:var(--alert)}
+  .log.sys .tag{color:#7dd3ff}
+  .log.done .tag{color:var(--accent)}
+  .log .msg{color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .log.warn .msg{color:#ffd8a0}
+  .log.error .msg{color:#ffb9c0}
+  .log.new{ animation:logIn .3s ease-out }
+
+  /* ---------- FOOTER TICKER ---------- */
+  .ticker{
+    border-top:1px solid var(--line);
+    background:#080c0a;
+    display:flex; align-items:center;
+    overflow:hidden;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-dim);
+    letter-spacing:.14em;
+  }
+  .ticker-label{
+    flex:0 0 auto;
+    padding:0 14px;
+    height:100%;
+    display:flex; align-items:center;
+    border-right:1px solid var(--line);
+    color:var(--accent);
+    font-weight:500;
+  }
+  .ticker-track{
+    flex:1; min-width:0;
+    overflow:hidden; position:relative;
+    height:100%;
+    display:flex; align-items:center;
+  }
+  .ticker-inner{
+    white-space:nowrap;
+    padding-left:100%;
+    animation:tick 60s linear infinite;
+  }
+  .ticker-inner span{ margin-right:40px }
+  .ticker-inner .a{color:var(--accent)}
+  .ticker-right{
+    flex:0 0 auto;
+    padding:0 14px;
+    border-left:1px solid var(--line);
+    height:100%;
+    display:flex; align-items:center; gap:10px;
+    color:var(--ink-faint);
+  }
+
+  /* ---------- XP BURST ---------- */
+  .xp-burst{
+    position:fixed;
+    pointer-events:none;
+    font-family:var(--mono);
+    font-size:14px; font-weight:700;
+    color:var(--accent);
+    text-shadow:0 0 12px rgba(125,255,158,.7);
+    letter-spacing:.15em;
+    z-index:20;
+    animation:xpPop 1.4s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+
+  /* ---------- ANIMATIONS ---------- */
+  @keyframes pulse{
+    0%,100%{opacity:1; transform:scale(1)}
+    50%{opacity:.55; transform:scale(.9)}
+  }
+  @keyframes blink{
+    50%{opacity:.2}
+  }
+  @keyframes caret{
+    50%{opacity:0}
+  }
+  @keyframes alertGlow{
+    0%,100%{box-shadow:0 0 0 1px rgba(255,91,106,.12), 0 0 14px rgba(255,91,106,.04)}
+    50%{box-shadow:0 0 0 1px rgba(255,91,106,.25), 0 0 28px rgba(255,91,106,.14)}
+  }
+  @keyframes alertBreath{
+    0%,100%{border-color:rgba(255,91,106,.25)}
+    50%{border-color:rgba(255,91,106,.55)}
+  }
+  @keyframes logIn{
+    from{opacity:0; transform:translateY(-4px); background:rgba(125,255,158,.06)}
+    to{opacity:1; transform:translateY(0); background:transparent}
+  }
+  @keyframes tick{
+    from{transform:translateX(0)}
+    to{transform:translateX(-100%)}
+  }
+  @keyframes xpPop{
+    0%{opacity:0; transform:translateY(0) scale(.6)}
+    15%{opacity:1; transform:translateY(-6px) scale(1.1)}
+    100%{opacity:0; transform:translateY(-60px) scale(1)}
+  }
+  @keyframes flashRow{
+    0%{background:rgba(125,255,158,.15)}
+    100%{background:transparent}
+  }
+  .flash{ animation:flashRow 1s ease-out }
+
+  /* small screens — keep it honest */
+  @media (max-width:1200px){
+    .main{grid-template-columns: 280px 1fr 320px}
+    .mission{grid-template-columns: 1fr 220px}
+  }
+  @media (max-width:980px){
+    .main{grid-template-columns:1fr}
+    .panel + .panel{border-left:0; border-top:1px solid var(--line)}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= HUD ================= -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="brand-mark"><span class="dot"></span></div>
+      <div>
+        <div class="brand-name">ORBITAL / MC-7</div>
+        <div class="brand-sub">AGENT DISPATCH // SECTOR 04</div>
+      </div>
+    </div>
+
+    <div class="hud-stats">
+      <div class="stat">
+        <div class="stat-k">Commander</div>
+        <div class="stat-v"><span id="rankName" class="accent">LT. COMMANDER</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-k">Rank XP</div>
+        <div class="stat-v">
+          <span id="xpVal">2,480</span>
+          <span class="delta" id="xpNext">/ 3,200</span>
+        </div>
+        <div class="xp-bar"><i id="xpBar"></i></div>
+      </div>
+      <div class="stat">
+        <div class="stat-k">Missions Today</div>
+        <div class="stat-v"><span id="missionsDone">14</span><span class="delta">+3 vs avg</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-k">Streak</div>
+        <div class="stat-v"><span id="streak">12</span><span class="delta">days</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-k">Active Fleet</div>
+        <div class="stat-v"><span id="activeCount">0</span><span class="delta" id="queueCount">0 queued</span></div>
+      </div>
+    </div>
+
+    <div class="hud-clock">
+      <div>
+        <div class="clock-t" id="clock">00<span class="sep">:</span>00<span class="sep">:</span>00</div>
+        <div class="clock-d" id="dateline">MISSION DAY 043 // UTC</div>
+      </div>
+      <div class="live-dot" title="uplink live"></div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <section class="main">
+
+    <!-- ---- LEFT COLUMN ---- -->
+    <aside class="panel">
+      <div class="dispatch">
+        <h3>Dispatch Console
+          <small>// Issue new orders to the fleet</small>
+        </h3>
+        <form class="dispatch-form" id="dispatchForm" autocomplete="off">
+          <div class="field">
+            <input id="taskInput" type="text" placeholder="Describe the mission… e.g. audit quarterly burn rate" />
+          </div>
+          <div class="chip-group" id="classChips">
+            <span class="chip active" data-class="ops">Ops</span>
+            <span class="chip" data-class="recon">Recon</span>
+            <span class="chip" data-class="research">Research</span>
+            <span class="chip" data-class="diagnostic">Diagnostic</span>
+          </div>
+          <button type="submit" class="btn-dispatch">▸ Dispatch Agent</button>
+        </form>
+      </div>
+
+      <div class="queue">
+        <div class="queue-head">
+          <div class="panel-title">Task Queue</div>
+          <div class="panel-meta" id="queueMeta">3 PENDING</div>
+        </div>
+        <div id="queueList"></div>
+      </div>
+    </aside>
+
+    <!-- ---- CENTER: COMMAND DECK ---- -->
+    <main class="panel">
+      <div class="panel-head">
+        <div class="deck-head">
+          <div class="panel-title">Command Deck</div>
+          <div class="deck-tabs">
+            <span class="tab active">All</span>
+            <span class="tab">Running</span>
+            <span class="tab">Needs Input</span>
+            <span class="tab">Completed</span>
+          </div>
+        </div>
+        <div class="panel-meta" id="deckMeta">LIVE // AUTO-REFRESH 1s</div>
+      </div>
+      <div class="panel-body">
+        <div class="missions" id="missions"></div>
+      </div>
+    </main>
+
+    <!-- ---- RIGHT: ALERTS + TELEMETRY ---- -->
+    <aside class="panel" style="display:flex;flex-direction:column">
+      <div class="panel-head">
+        <div class="panel-title">Attention Alerts</div>
+        <div class="panel-meta" id="alertsMeta">0 ACTIVE</div>
+      </div>
+      <div class="alerts" id="alerts"></div>
+
+      <div class="panel-head" style="border-top:1px solid var(--line)">
+        <div class="panel-title">Telemetry Stream</div>
+        <div class="panel-meta">TAIL -F</div>
+      </div>
+      <div class="telemetry">
+        <div class="tele-body" id="tele"></div>
+      </div>
+    </aside>
+
+  </section>
+
+  <!-- ================= FOOTER TICKER ================= -->
+  <footer class="ticker">
+    <div class="ticker-label">◉ UPLINK</div>
+    <div class="ticker-track">
+      <div class="ticker-inner" id="ticker">
+        <span class="a">[SYS]</span><span>Agent fleet nominal.</span>
+        <span class="a">[ENC]</span><span>Channel A7 · 256-bit · stable.</span>
+        <span class="a">[MEM]</span><span>Long-term store 48% full.</span>
+        <span class="a">[NET]</span><span>Roundtrip 82ms · packet loss 0.00%.</span>
+        <span class="a">[SYS]</span><span>Autosave cycle complete.</span>
+        <span class="a">[OPS]</span><span>Daily quota 14/20 missions.</span>
+      </div>
+    </div>
+    <div class="ticker-right">
+      <span id="latency">PING 82ms</span>
+      <span>·</span>
+      <span>CPU 31%</span>
+      <span>·</span>
+      <span>MEM 48%</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/* ============================================================
+   ORBITAL / MC-7 — Mission Control (prototype)
+   All state is client-side. No backend.
+============================================================ */
+
+const CLASSES = {
+  ops:        { label:'OPS',        color:'ops' },
+  recon:      { label:'RECON',      color:'recon' },
+  research:   { label:'RESEARCH',   color:'research' },
+  diagnostic: { label:'DIAGNOSTIC', color:'diagnostic' },
+};
+
+const AGENT_NAMES = [
+  'ORCA-3','VESPER','KESTREL','NOVA-12','HELIX','ATLAS-9','CAIRN','SOLAR-B',
+  'RAVEN-7','MERIDIAN','TYCHO','PROBE-X','ECHO-4','CIPHER','VECTOR-22','NIMBUS',
+];
+
+/* commander ranks */
+const RANKS = [
+  { name:'ENSIGN',         min:0 },
+  { name:'LIEUTENANT',     min:1200 },
+  { name:'LT. COMMANDER',  min:2400 },
+  { name:'COMMANDER',      min:4000 },
+  { name:'CAPTAIN',        min:6000 },
+  { name:'COMMODORE',      min:9000 },
+  { name:'FLEET ADMIRAL',  min:13000 },
+];
+
+/* ----------------- STATE ----------------- */
+const state = {
+  xp: 2480,
+  missionsDone: 14,
+  streak: 12,
+  selectedClass: 'ops',
+  missions: [],       // active missions (running/blocked/input/done)
+  queue: [],          // queued tasks
+  alerts: [],
+  logs: [],
+  missionSeq: 47,     // id counter
+};
+
+/* seed missions -- varied states so UI is alive on load */
+const now = Date.now();
+state.missions = [
+  {
+    id: nextId(),
+    name: pickName(),
+    task: 'Reconcile Q2 burn-rate against projected runway',
+    cls: 'ops',
+    status: 'running',
+    progress: 42,
+    startedAt: now - 4*60*1000 - 22*1000,
+    eta: 6*60*1000,
+    step: 'cross-referencing stripe ledger',
+    log: [
+      ['-3:42','fetched ledger.csv (12,440 rows)'],
+      ['-2:18','normalizing currency → USD'],
+      ['-1:04','building pivot on [category, month]'],
+      ['-0:12','cross-referencing stripe ledger'],
+    ],
+  },
+  {
+    id: nextId(),
+    name: pickName(),
+    task: 'Draft investor update draft for April cohort',
+    cls: 'research',
+    status: 'input',
+    progress: 68,
+    startedAt: now - 11*60*1000 - 8*1000,
+    eta: 0,
+    step: 'awaiting commander confirmation',
+    needsInput: 'Include headcount plans in the update?',
+    log: [
+      ['-9:30','ingested last 4 updates'],
+      ['-6:11','outlined narrative + KPIs'],
+      ['-3:02','drafted §1 traction'],
+      ['-0:41','paused: ambiguous scope'],
+    ],
+  },
+  {
+    id: nextId(),
+    name: pickName(),
+    task: 'Probe auth-service latency regression > 400ms',
+    cls: 'diagnostic',
+    status: 'blocked',
+    progress: 31,
+    startedAt: now - 7*60*1000 - 15*1000,
+    eta: 0,
+    step: 'credentials expired for staging',
+    blockedReason: 'Staging IAM key rotated 04:12 UTC',
+    log: [
+      ['-6:50','tailing ingress logs'],
+      ['-5:22','isolated spike on POST /session'],
+      ['-3:04','requesting staging shell'],
+      ['-1:18','auth failed · token expired'],
+    ],
+  },
+  {
+    id: nextId(),
+    name: pickName(),
+    task: 'Sweep repo for unowned TODOs older than 90d',
+    cls: 'recon',
+    status: 'done',
+    progress: 100,
+    startedAt: now - 14*60*1000,
+    finishedAt: now - 40*1000,
+    eta: 0,
+    step: 'report generated · 38 findings',
+    log: [
+      ['-13:40','cloned 12 repos'],
+      ['-9:22','scanning branches'],
+      ['-3:11','clustering by owner'],
+      ['-0:40','report.md written'],
+    ],
+  },
+];
+
+/* seed queue */
+state.queue = [
+  { id:nextId(), task:'Summarize last 30 customer interviews into themes', cls:'research' },
+  { id:nextId(), task:'Rotate compromised API keys across 4 services',    cls:'ops' },
+  { id:nextId(), task:'Trace memory leak in websocket gateway',           cls:'diagnostic' },
+];
+
+/* seed alerts from current missions */
+state.alerts = [
+  { id:'A-1', level:'critical', missionId: state.missions[1].id, title:'Input Required',
+    msg:`${state.missions[1].name} is waiting on a decision: include headcount plans?`, at: now - 35*1000 },
+  { id:'A-2', level:'warn', missionId: state.missions[2].id, title:'Mission Blocked',
+    msg:`${state.missions[2].name} lost staging credentials.`, at: now - 90*1000 },
+];
+
+/* seed telemetry */
+pushLog('sys','mission control online · fleet healthy');
+pushLog('info',`${state.missions[0].name} dispatched :: ops`);
+pushLog('info',`${state.missions[1].name} dispatched :: research`);
+pushLog('warn',`${state.missions[2].name} auth failed @ staging-iam`);
+pushLog('info',`${state.missions[3].name} scanning repository tree`);
+pushLog('done',`${state.missions[3].name} completed :: +180 xp`);
+pushLog('error',`${state.missions[2].name} mission blocked`);
+pushLog('warn',`${state.missions[1].name} requires operator input`);
+
+/* ----------------- HELPERS ----------------- */
+function nextId(){ state && state.missionSeq != null && (state.missionSeq++); return 'MX-'+String((state?.missionSeq ?? 48)).padStart(3,'0'); }
+function pickName(){ return AGENT_NAMES[Math.floor(Math.random()*AGENT_NAMES.length)]; }
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtClock(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), ss = s%60;
+  return h>0 ? `${pad(h)}:${pad(m)}:${pad(ss)}` : `${pad(m)}:${pad(ss)}`;
+}
+function elapsed(m){
+  const end = m.finishedAt || Date.now();
+  return fmtClock(end - m.startedAt);
+}
+function nowTs(){
+  const d=new Date();
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+function rankFor(xp){
+  let r = RANKS[0];
+  for(const x of RANKS) if (xp >= x.min) r = x;
+  return r;
+}
+function nextRank(xp){
+  for(const x of RANKS) if (xp < x.min) return x;
+  return null;
+}
+
+function pushLog(kind, msg){
+  state.logs.unshift({ kind, msg, ts: nowTs(), t: Date.now() });
+  if (state.logs.length > 140) state.logs.pop();
+}
+
+/* ----------------- RENDER ----------------- */
+const $ = (sel) => document.querySelector(sel);
+const el = {
+  clock: $('#clock'), dateline: $('#dateline'),
+  xpVal: $('#xpVal'), xpBar: $('#xpBar'), xpNext: $('#xpNext'),
+  rankName: $('#rankName'), missionsDone: $('#missionsDone'),
+  streak: $('#streak'), activeCount: $('#activeCount'), queueCount: $('#queueCount'),
+  missions: $('#missions'), queueList: $('#queueList'), queueMeta: $('#queueMeta'),
+  alerts: $('#alerts'), alertsMeta: $('#alertsMeta'),
+  tele: $('#tele'),
+  deckMeta: $('#deckMeta'),
+  latency: $('#latency'),
+};
+
+function renderHUD(){
+  const rank = rankFor(state.xp);
+  const nxt  = nextRank(state.xp);
+  el.rankName.textContent = rank.name;
+  el.xpVal.textContent = state.xp.toLocaleString();
+  if (nxt){
+    el.xpNext.textContent = `/ ${nxt.min.toLocaleString()}`;
+    const pct = ((state.xp - rank.min) / (nxt.min - rank.min))*100;
+    el.xpBar.style.width = Math.max(2,Math.min(100,pct))+'%';
+  } else {
+    el.xpNext.textContent = '/ MAX';
+    el.xpBar.style.width = '100%';
+  }
+  el.missionsDone.textContent = state.missionsDone;
+  el.streak.textContent = state.streak;
+  const activeN = state.missions.filter(m=>m.status!=='done').length;
+  el.activeCount.textContent = activeN;
+  el.queueCount.textContent = `${state.queue.length} queued`;
+}
+
+function classBadge(cls){
+  const c = CLASSES[cls] || CLASSES.ops;
+  return `<span class="m-class ${c.color}">${c.label}</span>`;
+}
+
+function renderMissions(){
+  // order: input > blocked > running > done (done near bottom)
+  const order = { input:0, blocked:1, running:2, done:3 };
+  const list = [...state.missions].sort((a,b)=>order[a.status]-order[b.status]);
+  el.missions.innerHTML = list.map(m => {
+    const statusLabel = {
+      running:'RUNNING', blocked:'BLOCKED', input:'NEEDS INPUT', done:'COMPLETE'
+    }[m.status];
+    const etaTxt = m.status==='done'
+      ? 'COMPLETE'
+      : m.status==='running'
+        ? `ETA ${fmtClock(Math.max(0, m.eta - (Date.now()-m.startedAt)))}`
+        : m.status==='blocked' ? 'ETA ——' : 'ETA ——';
+
+    const progressPct = Math.round(m.progress);
+
+    const actions = m.status==='input'
+      ? `<button class="m-btn primary" data-act="respond" data-id="${m.id}">▸ Respond</button>
+         <button class="m-btn" data-act="defer" data-id="${m.id}">Defer</button>
+         <button class="m-btn danger" data-act="abort" data-id="${m.id}">Abort</button>`
+      : m.status==='blocked'
+      ? `<button class="m-btn primary" data-act="unblock" data-id="${m.id}">▸ Unblock</button>
+         <button class="m-btn" data-act="retry" data-id="${m.id}">Retry</button>
+         <button class="m-btn danger" data-act="abort" data-id="${m.id}">Abort</button>`
+      : m.status==='done'
+      ? `<button class="m-btn" data-act="view" data-id="${m.id}">View Report</button>
+         <button class="m-btn" data-act="dismiss" data-id="${m.id}">Dismiss</button>`
+      : `<button class="m-btn" data-act="pause" data-id="${m.id}">Pause</button>
+         <button class="m-btn" data-act="detach" data-id="${m.id}">Detach</button>
+         <button class="m-btn danger" data-act="abort" data-id="${m.id}">Abort</button>`;
+
+    const subnote = m.status==='input'
+      ? `<div style="color:#ff8994; margin-top:6px; font-size:11px">? ${m.needsInput}</div>`
+      : m.status==='blocked'
+      ? `<div style="color:#ffb347; margin-top:6px; font-size:11px">! ${m.blockedReason}</div>`
+      : '';
+
+    const miniLog = (m.log||[]).slice(-3).map(([t,msg])=>`<div><span class="t">${t}</span>${msg}</div>`).join('');
+
+    return `
+      <article class="mission" data-status="${m.status}" data-id="${m.id}">
+        <div class="m-left">
+          <div class="m-top">
+            <span class="m-id">${m.id}</span>
+            ${classBadge(m.cls)}
+            <span class="m-name">${m.name}</span>
+            <span class="m-status"><span class="d"></span>${statusLabel}</span>
+          </div>
+          <div class="m-task">${m.task}</div>
+          ${subnote}
+          <div class="m-meta">
+            <span><b>T+</b> ${elapsed(m)}</span>
+            <span><b>STEP</b> ${m.step}</span>
+            <span><b>CH</b> A7</span>
+            <span><b>PRI</b> ${m.cls==='diagnostic'?'HIGH':m.cls==='ops'?'MED':'STD'}</span>
+          </div>
+        </div>
+        <div class="m-right">
+          <div class="progress-row">
+            <span>PROGRESS</span>
+            <span><b class="pct">${progressPct}%</b> <span style="color:var(--ink-faint);margin-left:10px">${etaTxt}</span></span>
+          </div>
+          <div class="progress"><i style="width:${progressPct}%"></i></div>
+          <div class="mini-log">${miniLog || '<div><span class="t">-</span>standby</div>'}</div>
+          <div class="m-actions">${actions}</div>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function renderQueue(){
+  el.queueMeta.textContent = `${state.queue.length} PENDING`;
+  if (state.queue.length===0){
+    el.queueList.innerHTML = `<div style="padding:20px 10px;font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.15em;text-align:center">QUEUE EMPTY</div>`;
+    return;
+  }
+  el.queueList.innerHTML = state.queue.map((q,i)=>`
+    <div class="q-item" data-qid="${q.id}">
+      <div class="q-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="q-task" title="${q.task}">${q.task}</div>
+      <div class="q-class">${CLASSES[q.cls].label}</div>
+    </div>
+  `).join('');
+}
+
+function renderAlerts(){
+  const active = state.alerts;
+  el.alertsMeta.textContent = `${active.length} ACTIVE`;
+  if (active.length===0){
+    el.alerts.innerHTML = `<div class="alert-empty">ALL CLEAR // NO ATTENTION REQUIRED</div>`;
+    return;
+  }
+  el.alerts.innerHTML = active.map(a=>{
+    const ago = Math.max(1,Math.floor((Date.now()-a.at)/1000));
+    const agoTxt = ago<60 ? `${ago}s ago` : `${Math.floor(ago/60)}m ${ago%60}s ago`;
+    const buttons = a.level==='critical'
+      ? `<button class="primary" data-alert="${a.id}" data-act="respond">Respond</button>
+         <button data-alert="${a.id}" data-act="snooze">Snooze</button>`
+      : `<button class="primary" data-alert="${a.id}" data-act="resolve">Resolve</button>
+         <button data-alert="${a.id}" data-act="dismiss">Dismiss</button>`;
+    return `
+      <div class="alert ${a.level==='warn'?'warn':''}">
+        <div class="alert-icon"></div>
+        <div class="alert-body">
+          <div class="alert-title">${a.title}</div>
+          <div class="alert-msg">${a.msg}</div>
+          <div class="alert-meta">${agoTxt} · ${a.missionId||'—'}</div>
+        </div>
+        <div class="alert-act">${buttons}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTele(){
+  el.tele.innerHTML = state.logs.map((l,i)=>`
+    <div class="log ${l.kind==='warn'?'warn':l.kind==='error'?'error':l.kind==='sys'?'sys':l.kind==='done'?'done':''} ${i===0?'new':''}">
+      <span class="ts">${l.ts}</span>
+      <span class="tag">${l.kind.toUpperCase()}</span>
+      <span class="msg">${l.msg}</span>
+    </div>
+  `).join('');
+}
+
+function renderAll(){
+  renderHUD();
+  renderMissions();
+  renderQueue();
+  renderAlerts();
+  renderTele();
+}
+
+/* ----------------- INTERACTIONS ----------------- */
+document.getElementById('classChips').addEventListener('click', (e)=>{
+  const t = e.target.closest('.chip');
+  if (!t) return;
+  document.querySelectorAll('#classChips .chip').forEach(c=>c.classList.remove('active'));
+  t.classList.add('active');
+  state.selectedClass = t.dataset.class;
+});
+
+document.getElementById('dispatchForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const inp = document.getElementById('taskInput');
+  const task = inp.value.trim();
+  if (!task){
+    inp.focus();
+    return;
+  }
+  const cls = state.selectedClass;
+  // Decide: dispatch immediately if fleet < 4 active, else queue
+  const activeRunning = state.missions.filter(m=>m.status!=='done').length;
+  if (activeRunning < 4){
+    dispatchMission(task, cls);
+  } else {
+    state.queue.push({ id:nextId(), task, cls });
+    pushLog('sys',`task queued :: ${task.slice(0,60)}`);
+  }
+  inp.value='';
+  renderAll();
+});
+
+el.missions.addEventListener('click', (e)=>{
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const id = b.dataset.id;
+  const act = b.dataset.act;
+  const m = state.missions.find(x=>x.id===id);
+  if (!m) return;
+
+  if (act==='respond' && m.status==='input'){
+    m.status='running';
+    m.step='resuming after operator input';
+    pushLog('sys',`${m.name} resumed by commander`);
+    state.alerts = state.alerts.filter(a=>a.missionId!==m.id);
+    awardXP(25,'OPS RESPONSE');
+  } else if (act==='unblock' && m.status==='blocked'){
+    m.status='running';
+    m.step='credentials refreshed';
+    pushLog('sys',`${m.name} unblocked · creds rotated`);
+    state.alerts = state.alerts.filter(a=>a.missionId!==m.id);
+    awardXP(15,'UNBLOCKED');
+  } else if (act==='abort'){
+    pushLog('error',`${m.name} aborted by commander`);
+    state.missions = state.missions.filter(x=>x.id!==m.id);
+    state.alerts = state.alerts.filter(a=>a.missionId!==m.id);
+    // pull from queue
+    pullFromQueue();
+  } else if (act==='dismiss' && m.status==='done'){
+    state.missions = state.missions.filter(x=>x.id!==m.id);
+  } else if (act==='view' && m.status==='done'){
+    pushLog('info',`${m.name} report opened`);
+  } else if (act==='retry' && m.status==='blocked'){
+    m.status='running';
+    m.step='retrying last step';
+    pushLog('sys',`${m.name} retry initiated`);
+  } else if (act==='pause'){
+    pushLog('info',`${m.name} paused`);
+  } else if (act==='detach'){
+    pushLog('info',`${m.name} detached to background`);
+  } else if (act==='defer'){
+    pushLog('info',`${m.name} deferred`);
+  }
+  renderAll();
+});
+
+el.alerts.addEventListener('click', (e)=>{
+  const b = e.target.closest('[data-alert]');
+  if (!b) return;
+  const aid = b.dataset.alert;
+  const act = b.dataset.act;
+  const a = state.alerts.find(x=>x.id===aid);
+  if (!a) return;
+  const m = state.missions.find(x=>x.id===a.missionId);
+  if (act==='respond' && m){
+    m.status='running'; m.step='resuming after operator input';
+    pushLog('sys',`${m.name} resumed by commander`);
+    awardXP(25,'OPS RESPONSE');
+  } else if (act==='resolve' && m){
+    m.status='running'; m.step='credentials refreshed';
+    pushLog('sys',`${m.name} unblocked`);
+    awardXP(15,'UNBLOCKED');
+  } else if (act==='snooze'){
+    a.at = Date.now() + 15000;
+    pushLog('info',`alert snoozed 15s :: ${a.title}`);
+  }
+  state.alerts = state.alerts.filter(x=>x.id!==aid);
+  renderAll();
+});
+
+el.queueList.addEventListener('click',(e)=>{
+  // double click to force-dispatch
+  const row = e.target.closest('.q-item');
+  if (!row) return;
+  row.classList.add('flash');
+  setTimeout(()=>row.classList.remove('flash'),800);
+});
+
+/* ----------------- CORE BEHAVIOR ----------------- */
+function dispatchMission(task, cls){
+  const m = {
+    id: nextId(),
+    name: pickName(),
+    task,
+    cls,
+    status:'running',
+    progress: 0,
+    startedAt: Date.now(),
+    eta: (2 + Math.random()*5) * 60 * 1000,
+    step: 'initializing agent runtime',
+    log: [[ '-0:00','spawn :: booting sandbox']],
+  };
+  state.missions.unshift(m);
+  pushLog('info',`${m.name} dispatched :: ${cls}`);
+  // burst
+  spawnXPBurst(`+DISPATCH // ${m.name}`, { x: window.innerWidth*0.5, y: 120 });
+}
+
+function pullFromQueue(){
+  if (state.queue.length === 0) return;
+  const activeN = state.missions.filter(m=>m.status!=='done').length;
+  if (activeN >= 4) return;
+  const q = state.queue.shift();
+  dispatchMission(q.task, q.cls);
+}
+
+function awardXP(amount, label){
+  state.xp += amount;
+  // rank-up?
+  const before = rankFor(state.xp - amount).name;
+  const after  = rankFor(state.xp).name;
+  if (before !== after){
+    pushLog('sys',`COMMANDER RANK UP :: ${after}`);
+    spawnXPBurst(`RANK UP // ${after}`, { x: window.innerWidth*0.5, y: window.innerHeight*0.25 });
+  }
+  spawnXPBurst(`+${amount} XP ${label?('// '+label):''}`, {
+    x: 260 + Math.random()*200,
+    y: 80 + Math.random()*40,
+  });
+}
+
+function spawnXPBurst(text, pos){
+  const n = document.createElement('div');
+  n.className = 'xp-burst';
+  n.textContent = text;
+  n.style.left = (pos.x)+'px';
+  n.style.top = (pos.y)+'px';
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(), 1500);
+}
+
+/* progress tick */
+setInterval(()=>{
+  let anyChange = false;
+  for (const m of state.missions){
+    if (m.status === 'running'){
+      // advance progress
+      const bump = 0.4 + Math.random()*2.2;
+      m.progress = Math.min(99.4, m.progress + bump);
+      // occasional log
+      if (Math.random() < 0.22){
+        const ts = '-'+fmtClock(Date.now() - m.startedAt);
+        const steps = [
+          'parsing response headers',
+          'diffing against baseline',
+          'caching interim result',
+          'spawning subprocess',
+          'joining stream A7',
+          'writing artifact to cold store',
+          'evaluating heuristic H-3',
+          'cross-checking with memory',
+          'computing rolling average',
+          'fetching reference dataset',
+        ];
+        const step = steps[Math.floor(Math.random()*steps.length)];
+        m.step = step;
+        m.log.push([ts, step]);
+        if (m.log.length>12) m.log.shift();
+        if (Math.random()<0.4) pushLog('info', `${m.name} :: ${step}`);
+      }
+      // small chance of completion if past 85%
+      if (m.progress > 85 && Math.random() < 0.12){
+        completeMission(m);
+        anyChange = true;
+      }
+      // rare: mission becomes blocked or needs input
+      if (m.progress > 30 && m.progress < 85 && Math.random() < 0.012){
+        if (Math.random() < 0.5){
+          triggerBlocked(m);
+        } else {
+          triggerInput(m);
+        }
+        anyChange = true;
+      }
+    }
+  }
+  // occasional queue pull
+  if (Math.random() < 0.35) pullFromQueue();
+
+  renderMissions();
+  renderQueue();
+  renderAlerts();
+  renderHUD();
+  renderTele();
+},1000);
+
+/* telemetry heartbeat */
+setInterval(()=>{
+  if (state.missions.filter(m=>m.status==='running').length && Math.random()<0.6){
+    const m = state.missions.filter(x=>x.status==='running');
+    if (!m.length) return;
+    const pick = m[Math.floor(Math.random()*m.length)];
+    const msgs = [
+      `${pick.name} · heartbeat ok (${(0.7+Math.random()*0.5).toFixed(2)}s)`,
+      `${pick.name} · buffer ${(Math.random()*100).toFixed(0)}% flushed`,
+      `${pick.name} · handshake A7 renewed`,
+    ];
+    pushLog('info', msgs[Math.floor(Math.random()*msgs.length)]);
+    renderTele();
+  }
+  // latency jitter
+  const ping = 60 + Math.floor(Math.random()*60);
+  el.latency.textContent = `PING ${ping}ms`;
+}, 2800);
+
+/* clock */
+setInterval(()=>{
+  const d = new Date();
+  el.clock.innerHTML = `${pad(d.getUTCHours())}<span class="sep">:</span>${pad(d.getUTCMinutes())}<span class="sep">:</span>${pad(d.getUTCSeconds())}`;
+  el.dateline.textContent = `MISSION DAY 043 // UTC ${d.toUTCString().slice(5,16)}`;
+},1000);
+
+function completeMission(m){
+  m.status = 'done';
+  m.progress = 100;
+  m.finishedAt = Date.now();
+  m.step = 'report generated';
+  m.log.push([ '-0:00','mission complete · artifact sealed' ]);
+  state.missionsDone += 1;
+  const reward = ({ recon:90, ops:140, research:160, diagnostic:180 })[m.cls] || 100;
+  pushLog('done', `${m.name} complete :: +${reward} xp`);
+  awardXP(reward, `${CLASSES[m.cls].label} COMPLETE`);
+  // remove oldest done if > 2
+  const doneList = state.missions.filter(x=>x.status==='done');
+  if (doneList.length > 2){
+    const oldest = doneList.sort((a,b)=>a.finishedAt-b.finishedAt)[0];
+    state.missions = state.missions.filter(x=>x.id!==oldest.id);
+  }
+}
+
+function triggerBlocked(m){
+  m.status = 'blocked';
+  m.blockedReason = 'Upstream dependency unreachable';
+  m.step = 'waiting on resolution';
+  pushLog('error', `${m.name} blocked · upstream timeout`);
+  state.alerts.unshift({
+    id: 'A-'+Math.random().toString(36).slice(2,7),
+    level:'warn', missionId: m.id,
+    title:'Mission Blocked',
+    msg:`${m.name} hit a dependency wall — ${m.blockedReason.toLowerCase()}.`,
+    at: Date.now(),
+  });
+}
+function triggerInput(m){
+  m.status = 'input';
+  m.needsInput = 'Ambiguous input detected. Confirm approach?';
+  m.step = 'awaiting commander decision';
+  pushLog('warn', `${m.name} requires operator input`);
+  state.alerts.unshift({
+    id: 'A-'+Math.random().toString(36).slice(2,7),
+    level:'critical', missionId: m.id,
+    title:'Input Required',
+    msg:`${m.name} paused for a decision: ${m.needsInput}`,
+    at: Date.now(),
+  });
+}
+
+/* keep alert timestamps ticking */
+setInterval(()=>renderAlerts(), 5000);
+
+/* subtle: occasionally auto-ack nothing; keep UI breathing */
+renderAll();
+
+</script>
+</body>
+</html>

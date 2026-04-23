@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timeline Dispatch</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0e27;
+      color: #e5e7eb;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .timeline-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #0f1629;
+    }
+
+    .timeline {
+      position: absolute;
+      width: 300%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.05s linear;
+    }
+
+    .lane {
+      flex: 1;
+      position: relative;
+      border-bottom: 1px solid #1e293b;
+      background: linear-gradient(90deg, rgba(15, 22, 41, 0) 0%, rgba(30, 41, 59, 0.3) 100%);
+      overflow: hidden;
+    }
+
+    .lane:nth-child(1) { --lane-color: #3b82f6; }
+    .lane:nth-child(2) { --lane-color: #8b5cf6; }
+    .lane:nth-child(3) { --lane-color: #ec4899; }
+    .lane:nth-child(4) { --lane-color: #f59e0b; }
+    .lane:nth-child(5) { --lane-color: #10b981; }
+    .lane:nth-child(6) { --lane-color: #06b6d4; }
+
+    .lane-label {
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--lane-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    .block {
+      position: absolute;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid var(--lane-color);
+      border-radius: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: grab;
+      user-select: none;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: #e5e7eb;
+      transition: all 0.1s ease;
+      box-shadow: 0 0 0 0px rgba(255, 255, 255, 0);
+    }
+
+    .block:hover {
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+    }
+
+    .block.queued {
+      opacity: 0.4;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .block.running {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--lane-color);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .block.running.pulse {
+      animation: pulse-glow 0.8s ease-in-out;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 16px rgba(255, 255, 255, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.1); }
+      50% { box-shadow: 0 0 24px rgba(255, 255, 255, 0.4), inset 0 0 12px rgba(255, 255, 255, 0.15); }
+    }
+
+    .block.done {
+      opacity: 0.2;
+      background: rgba(255, 255, 255, 0.02);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .block.pinned {
+      cursor: grabbing;
+      border-color: #fbbf24;
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.9);
+      color: #fbbf24;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 100;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .now-line {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 2px;
+      height: 100%;
+      background: #fbbf24;
+      z-index: 20;
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.6);
+      transform: translateX(-50%);
+    }
+
+    .now-label {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fbbf24;
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      z-index: 25;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: #0a0e27;
+      border-top: 1px solid #1e293b;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e5e7eb;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    button.active {
+      background: #fbbf24;
+      color: #000;
+      border-color: #fbbf24;
+    }
+
+    .dispatch-input {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e5e7eb;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .dispatch-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .dispatch-input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #fbbf24;
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+    }
+
+    .speed-display {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      min-width: 40px;
+    }
+
+    .status {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="timeline-wrapper" id="timelineWrapper">
+      <div class="timeline" id="timeline">
+        <div class="lane" data-lane="0">
+          <div class="lane-label">Sutra</div>
+        </div>
+        <div class="lane" data-lane="1">
+          <div class="lane-label">Relay</div>
+        </div>
+        <div class="lane" data-lane="2">
+          <div class="lane-label">Cortex</div>
+        </div>
+        <div class="lane" data-lane="3">
+          <div class="lane-label">Axiom</div>
+        </div>
+        <div class="lane" data-lane="4">
+          <div class="lane-label">Aura</div>
+        </div>
+        <div class="lane" data-lane="5">
+          <div class="lane-label">Drift</div>
+        </div>
+      </div>
+      <div class="now-line"></div>
+      <div class="now-label">NOW</div>
+    </div>
+
+    <div class="controls">
+      <button id="slowBtn">Slow</button>
+      <button id="pauseBtn" class="active">Pause</button>
+      <button id="fastBtn">Fast</button>
+      <span class="speed-display" id="speedDisplay">0px/s</span>
+      <input
+        type="text"
+        id="dispatchInput"
+        class="dispatch-input"
+        placeholder="Task name… Enter to dispatch"
+      >
+      <span class="status" id="status">Ready</span>
+    </div>
+  </div>
+
+  <script>
+    // Constants
+    const SCROLL_SPEED_SLOW = 30;
+    const SCROLL_SPEED_NORMAL = 100;
+    const SCROLL_SPEED_FAST = 200;
+    const TIMELINE_WIDTH = 8000;
+    const START_OFFSET = TIMELINE_WIDTH / 3;
+    const NOW_POS = window.innerWidth / 2;
+    const LANE_HEIGHT = window.innerHeight - 60; // Account for controls
+    const LANE_COUNT = 6;
+    const PULSE_INTERVAL = 8000;
+    const COMPACT_INTERVAL = 12000;
+
+    // State
+    let state = {
+      scrollPos: START_OFFSET,
+      scrollSpeed: 0,
+      isPaused: true,
+      selectedLane: null,
+      blocks: [],
+      blockIdCounter: 0,
+      draggingBlock: null,
+      dragOffset: 0,
+    };
+
+    const timeline = document.getElementById('timeline');
+    const dispatchInput = document.getElementById('dispatchInput');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const slowBtn = document.getElementById('slowBtn');
+    const fastBtn = document.getElementById('fastBtn');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const statusEl = document.getElementById('status');
+    const timelineWrapper = document.getElementById('timelineWrapper');
+
+    // Initialize with seed state
+    function initializeBlocks() {
+      const seedTasks = [
+        { name: 'Review PRs', lane: 0, offset: -300 },
+        { name: 'Deploy', lane: 0, offset: 400 },
+        { name: 'Debug', lane: 1, offset: -200 },
+        { name: 'Design mockup', lane: 1, offset: 500 },
+        { name: 'Test suite', lane: 2, offset: -100 },
+        { name: 'Build docs', lane: 2, offset: 600 },
+        { name: 'Code review', lane: 3, offset: 0 },
+        { name: 'Optimize DB', lane: 3, offset: 700 },
+        { name: 'API audit', lane: 4, offset: -50 },
+        { name: 'Refactor utils', lane: 4, offset: 800 },
+        { name: 'Monitor logs', lane: 5, offset: 100 },
+        { name: 'Write spec', lane: 5, offset: 900 },
+      ];
+
+      seedTasks.forEach(task => {
+        createBlock(task.name, task.lane, task.offset);
+      });
+    }
+
+    function createBlock(name, laneIndex, xOffset = 0) {
+      const block = {
+        id: state.blockIdCounter++,
+        name,
+        laneIndex,
+        x: NOW_POS + xOffset,
+        width: Math.max(100, Math.min(200, name.length * 7 + 16)),
+        isDone: false,
+        isPinned: false,
+        createdAt: Date.now(),
+      };
+
+      state.blocks.push(block);
+      renderBlock(block);
+      return block;
+    }
+
+    function renderBlock(block) {
+      const lane = timeline.querySelectorAll('.lane')[block.laneIndex];
+      if (!lane) return;
+
+      let blockEl = document.querySelector(`[data-block-id="${block.id}"]`);
+      if (!blockEl) {
+        blockEl = document.createElement('div');
+        blockEl.className = 'block';
+        blockEl.dataset.blockId = block.id;
+        lane.appendChild(blockEl);
+      }
+
+      blockEl.textContent = block.name;
+      blockEl.style.left = block.x + 'px';
+      blockEl.style.width = block.width + 'px';
+
+      // Determine block state
+      const relPos = block.x - NOW_POS;
+      let status = 'queued';
+      if (relPos < -block.width && block.x < 100) {
+        status = 'done';
+        block.isDone = true;
+      } else if (relPos <= 0 && relPos > -block.width) {
+        status = 'running';
+      }
+
+      blockEl.classList.remove('queued', 'running', 'done', 'pinned');
+      blockEl.classList.add(status);
+      if (block.isPinned) blockEl.classList.add('pinned');
+
+      // Mouse events
+      blockEl.addEventListener('mouseenter', (e) => showTooltip(e, block));
+      blockEl.addEventListener('mouseleave', hideTooltip);
+      blockEl.addEventListener('mousedown', (e) => startDrag(e, block));
+      blockEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (e.detail === 1 && !state.draggingBlock) {
+          togglePin(block);
+        }
+      });
+    }
+
+    function updateBlockPositions() {
+      state.blocks.forEach(block => {
+        if (!block.isPinned && !state.isPaused) {
+          block.x -= state.scrollSpeed / 60; // Adjust for frame rate
+        }
+        renderBlock(block);
+      });
+    }
+
+    function togglePin(block) {
+      block.isPinned = !block.isPinned;
+      renderBlock(block);
+      statusEl.textContent = block.isPinned ? 'Pinned' : 'Unpinned';
+    }
+
+    function startDrag(e, block) {
+      state.draggingBlock = block;
+      state.dragOffset = e.clientX - block.x;
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', stopDrag);
+    }
+
+    function onDrag(e) {
+      if (!state.draggingBlock) return;
+      const block = state.draggingBlock;
+      block.x = e.clientX - state.dragOffset;
+      renderBlock(block);
+    }
+
+    function stopDrag() {
+      state.draggingBlock = null;
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    }
+
+    function showTooltip(e, block) {
+      const remaining = Math.max(0, NOW_POS - block.x);
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      tooltip.textContent = `${block.name} • ${Math.round(remaining)}px`;
+      tooltip.style.left = block.x + 'px';
+      tooltip.style.top = e.clientY - 30 + 'px';
+      document.body.appendChild(tooltip);
+      e.target._tooltip = tooltip;
+
+      setTimeout(() => tooltip.remove(), 3000);
+    }
+
+    function hideTooltip(e) {
+      if (e.target._tooltip) e.target._tooltip.remove();
+    }
+
+    function dispatchTask() {
+      const taskName = dispatchInput.value.trim();
+      if (!taskName) return;
+
+      const laneIndex = state.selectedLane ?? Math.floor(Math.random() * LANE_COUNT);
+      createBlock(taskName, laneIndex, 500);
+
+      dispatchInput.value = '';
+      statusEl.textContent = `Dispatched to lane ${laneIndex}`;
+      setTimeout(() => {
+        statusEl.textContent = 'Ready';
+      }, 2000);
+    }
+
+    function setScrollSpeed(speed) {
+      state.scrollSpeed = speed;
+      state.isPaused = speed === 0;
+      updateControlUI();
+      speedDisplay.textContent = speed + 'px/s';
+    }
+
+    function updateControlUI() {
+      pauseBtn.classList.toggle('active', state.isPaused);
+      slowBtn.classList.toggle('active', state.scrollSpeed === SCROLL_SPEED_SLOW);
+      fastBtn.classList.toggle('active', state.scrollSpeed === SCROLL_SPEED_FAST);
+    }
+
+    function animate() {
+      if (!state.isPaused) {
+        state.scrollPos -= state.scrollSpeed / 60;
+      }
+
+      updateBlockPositions();
+
+      // Pulse running blocks every 8s
+      if (Math.floor(Date.now() / PULSE_INTERVAL) % 2 === 0) {
+        state.blocks.forEach(block => {
+          const relPos = block.x - NOW_POS;
+          if (relPos <= 0 && relPos > -block.width) {
+            const blockEl = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (blockEl) {
+              blockEl.classList.remove('pulse');
+              setTimeout(() => blockEl.classList.add('pulse'), 10);
+            }
+          }
+        });
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Event listeners
+    pauseBtn.addEventListener('click', () => setScrollSpeed(state.isPaused ? SCROLL_SPEED_NORMAL : 0));
+    slowBtn.addEventListener('click', () => setScrollSpeed(state.scrollSpeed === SCROLL_SPEED_SLOW ? 0 : SCROLL_SPEED_SLOW));
+    fastBtn.addEventListener('click', () => setScrollSpeed(state.scrollSpeed === SCROLL_SPEED_FAST ? 0 : SCROLL_SPEED_FAST));
+
+    dispatchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        dispatchTask();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && document.activeElement !== dispatchInput) {
+        e.preventDefault();
+        setScrollSpeed(state.isPaused ? SCROLL_SPEED_NORMAL : 0);
+      }
+    });
+
+    timelineWrapper.addEventListener('click', (e) => {
+      if (e.target.classList.contains('lane')) {
+        state.selectedLane = Array.from(timeline.querySelectorAll('.lane')).indexOf(e.target);
+        statusEl.textContent = `Lane ${state.selectedLane} selected`;
+      }
+    });
+
+    // Initialize
+    initializeBlocks();
+    setScrollSpeed(0);
+    animate();
+  </script>
+</body>
+</html>

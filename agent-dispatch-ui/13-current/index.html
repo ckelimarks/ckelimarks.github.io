@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Current</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0e1012;
+    --bg-2: #141619;
+    --ink: #e8e6e1;
+    --ink-dim: #8a8880;
+    --ink-mute: #4a4a46;
+    --rule: #24262a;
+    --now: #f0e3bf;           /* pale gold */
+    --amber: #d9a54a;
+    --red: #c4594c;
+
+    /* muted paint chips */
+    --ln:  #6a8fb3;           /* LoveNotes  - slate blue */
+    --hg:  #7a9e78;           /* HG         - sage */
+    --ct:  #b88a6a;           /* Content    - clay */
+    --lf:  #8a7ba8;           /* Life       - dusty lilac */
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  .app {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- top bar ---------- */
+  .top {
+    flex: 0 0 auto;
+    height: 52px;
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+  .brand b { color: var(--ink); font-weight: 500; }
+  .clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    letter-spacing: 0.08em;
+  }
+  .clock .sep { color: var(--ink-mute); margin: 0 10px; }
+
+  /* ---------- stage ---------- */
+  .stage {
+    flex: 1 1 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bands {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-rows: 1fr 1fr 1fr 1fr;
+  }
+
+  .band {
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+    transition: box-shadow 400ms ease;
+  }
+  .band:last-child { border-bottom: none; }
+
+  .band.attention::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-top: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+    pointer-events: none;
+    animation: bandglow 1.6s ease-in-out infinite;
+  }
+  @keyframes bandglow {
+    0%, 100% { opacity: 0.35; }
+    50%      { opacity: 0.9; }
+  }
+
+  .band-label {
+    position: absolute;
+    left: 22px;
+    top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .band-label .chip {
+    width: 8px; height: 8px; border-radius: 1px;
+    background: var(--accent);
+  }
+  .band-label .name { color: var(--ink); }
+  .band-label .meta { color: var(--ink-mute); font-size: 10px; letter-spacing: 0.16em; }
+
+  /* band hairlines for time gridding */
+  .band-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    z-index: 0;
+  }
+  .band-grid::before,
+  .band-grid::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--rule);
+  }
+  .band-grid::before { top: 33%; }
+  .band-grid::after  { top: 66%; }
+
+  /* ---------- workers ---------- */
+  .worker {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ink);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    transition: left 420ms cubic-bezier(.22,.61,.36,1), top 420ms cubic-bezier(.22,.61,.36,1);
+    pointer-events: none;
+  }
+  .worker.b { opacity: 0.55; width: 4px; height: 4px; }
+
+  /* ---------- blocks ---------- */
+  .block {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 56px;
+    padding: 10px 14px 10px 16px;
+    background: color-mix(in srgb, var(--accent) 14%, var(--bg-2));
+    border-left: 2px solid var(--accent);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    z-index: 2;
+    will-change: left;
+    cursor: pointer;
+    user-select: none;
+  }
+  .block .title {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .block .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .block .progress {
+    position: absolute;
+    left: 0; bottom: 0;
+    height: 2px;
+    width: 0%;
+    background: var(--accent);
+    opacity: 0.8;
+  }
+
+  .block.queued   { opacity: 0.42; }
+  .block.running  { opacity: 1; }
+  .block.done     { opacity: 0.22; height: 28px; }
+  .block.done .sub { display: none; }
+  .block.done .title { font-size: 11px; color: var(--ink-dim); }
+
+  .block.needs-input {
+    background: color-mix(in srgb, var(--amber) 20%, var(--bg-2));
+    border-left-color: var(--amber);
+    animation: pulseAmber 1.4s ease-in-out infinite;
+  }
+  .block.needs-input .sub { color: var(--amber); }
+  @keyframes pulseAmber {
+    0%, 100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 15%, transparent); }
+    50%      { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 70%, transparent); }
+  }
+
+  .block.blocked {
+    background: color-mix(in srgb, var(--red) 18%, var(--bg-2));
+    border-left-color: var(--red);
+    animation: pulseRed 1.1s ease-in-out infinite;
+  }
+  .block.blocked .sub { color: var(--red); }
+  @keyframes pulseRed {
+    0%, 100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 20%, transparent); }
+    50%      { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 80%, transparent); }
+  }
+
+  /* ---------- NOW line ---------- */
+  .nowline {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--now);
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--now) 55%, transparent);
+  }
+  .nowline::before,
+  .nowline::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--now);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--now) 70%, transparent);
+  }
+  .nowline::before { top: -3.5px; }
+  .nowline::after  { bottom: -3.5px; }
+
+  .nowlabel {
+    position: absolute;
+    top: 8px;
+    left: calc(var(--now-x, 33%) + 10px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    color: var(--now);
+    opacity: 0.85;
+    z-index: 6;
+    pointer-events: none;
+  }
+
+  /* fade edges so blocks enter/exit like ink */
+  .stage::before,
+  .stage::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 60px;
+    pointer-events: none;
+    z-index: 4;
+  }
+  .stage::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg) 0%, transparent 100%);
+  }
+  .stage::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg) 0%, transparent 100%);
+  }
+
+  /* ---------- dispatch rail ---------- */
+  .rail {
+    flex: 0 0 auto;
+    height: 68px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 18px;
+  }
+
+  .rail-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  .area-picker {
+    display: flex;
+    gap: 2px;
+    border: 1px solid var(--rule);
+  }
+  .area-picker button {
+    background: transparent;
+    border: none;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    cursor: pointer;
+    position: relative;
+    transition: color 180ms ease, background 180ms ease;
+  }
+  .area-picker button:hover { color: var(--ink); }
+  .area-picker button.active {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--accent, #fff) 10%, transparent);
+    box-shadow: inset 0 -2px 0 0 var(--accent);
+  }
+
+  .input-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-wrap .prompt {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-mute);
+    margin-right: 10px;
+  }
+  input[type="text"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    transition: border-color 180ms ease;
+  }
+  input[type="text"]:focus { border-bottom-color: var(--ink-dim); }
+  input[type="text"]::placeholder { color: var(--ink-mute); }
+
+  .enter-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  /* ---------- transport ---------- */
+  .transport {
+    position: fixed;
+    right: 28px;
+    bottom: 88px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 10;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+  }
+  .transport .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--now);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--now) 70%, transparent);
+    animation: beat 2s ease-in-out infinite;
+  }
+  .transport .dot.paused {
+    background: var(--ink-mute);
+    box-shadow: none;
+    animation: none;
+  }
+  @keyframes beat {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
+  }
+  .transport .tempo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .transport .tempo button {
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-dim);
+    width: 22px; height: 22px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 180ms, border-color 180ms;
+  }
+  .transport .tempo button:hover { color: var(--ink); border-color: var(--ink-dim); }
+  .transport .tempo .val {
+    color: var(--ink);
+    min-width: 36px;
+    text-align: center;
+  }
+  .transport .hint {
+    color: var(--ink-mute);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- burst (new block) ---------- */
+  .burst {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    pointer-events: none;
+    z-index: 3;
+    animation: burst 700ms ease-out forwards;
+  }
+  @keyframes burst {
+    0%   { opacity: 0.9; box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+    100% { opacity: 0;   box-shadow: 0 0 0 28px color-mix(in srgb, var(--accent) 0%, transparent); transform: translate(-50%, -50%) scale(3); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <div class="brand">personal os <span class="sep" style="color:var(--ink-mute); margin:0 10px;">/</span> <b>current</b></div>
+    <div class="clock" id="clock">— — : — —</div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="bands" id="bands"></div>
+    <div class="nowline" id="nowline" style="left: 33%;"></div>
+    <div class="nowlabel" id="nowlabel">NOW</div>
+  </div>
+
+  <div class="transport">
+    <div class="dot" id="statedot"></div>
+    <div class="tempo">
+      <span class="hint">tempo</span>
+      <button id="tempoDn">−</button>
+      <span class="val" id="tempoVal">1.0x</span>
+      <button id="tempoUp">+</button>
+    </div>
+    <span class="hint" id="pauseHint">space to pause</span>
+  </div>
+
+  <div class="rail">
+    <div class="rail-label">dispatch</div>
+    <div class="area-picker" id="areaPicker">
+      <button data-area="ln" class="active">LoveNotes</button>
+      <button data-area="hg">HG</button>
+      <button data-area="ct">Content</button>
+      <button data-area="lf">Life</button>
+    </div>
+    <div class="input-wrap">
+      <span class="prompt">›</span>
+      <input id="taskInput" type="text" placeholder="new task — e.g. review PR #482, draft Q2 OKRs, book dentist, reply to Sarah" autocomplete="off" spellcheck="false" />
+    </div>
+    <div class="enter-hint">⏎ deploy</div>
+  </div>
+
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Current — time-flow dispatch
+   --------------------------------------------------------------------------- */
+
+const AREAS = {
+  ln: { key: 'ln', name: 'LoveNotes', meta: 'sms · ai',       accent: 'var(--ln)' },
+  hg: { key: 'hg', name: 'HG',        meta: 'coaching',       accent: 'var(--hg)' },
+  ct: { key: 'ct', name: 'Content',   meta: 'writing',        accent: 'var(--ct)' },
+  lf: { key: 'lf', name: 'Life',      meta: 'personal',       accent: 'var(--lf)' },
+};
+
+const AREA_ORDER = ['ln', 'hg', 'ct', 'lf'];
+
+/* px per second at tempo = 1.0 */
+const BASE_PX_PER_SEC = 22;
+
+const state = {
+  paused: false,
+  tempo: 1.0,
+  lastTs: 0,
+  nowX: 0,            // px from left
+  stageW: 0,
+  blocks: [],         // all blocks
+  nextId: 1,
+  pickedArea: 'ln',
+  workers: {},        // per-band worker positions
+};
+
+/* ---------- seed tasks (real-feeling) ---------- */
+/*
+   positions: x offset from NOW in seconds (negative = left/done, positive = right/queued)
+   duration: seconds of work (=> width)
+*/
+const seed = [
+  // --- LoveNotes ---
+  { area: 'ln', title: 'review PR #482 — streak reset bug',           offsetSec: -110, duration: 55 },
+  { area: 'ln', title: 'triage Supabase webhook retries',              offsetSec: -40,  duration: 35, state: 'done' },
+  { area: 'ln', title: 'draft onboarding SMS copy (v3)',               offsetSec: -15,  duration: 60, state: 'running' },
+  { area: 'ln', title: 'QA: Twilio opt-out flow on staging',           offsetSec: 55,   duration: 40 },
+  { area: 'ln', title: 'write changelog for 1.8.2',                    offsetSec: 105,  duration: 25 },
+  { area: 'ln', title: 'reply to churned user — refund policy',        offsetSec: 145,  duration: 20, flag: 'needs-input' },
+
+  // --- HG ---
+  { area: 'hg', title: 'prep notes — call w/ Maya 11:30',              offsetSec: -80,  duration: 30, state: 'done' },
+  { area: 'hg', title: 'draft Q2 OKRs — coaching cohort',              offsetSec: -10,  duration: 70, state: 'running' },
+  { area: 'hg', title: 'score intake responses (7 new)',               offsetSec: 70,   duration: 35 },
+  { area: 'hg', title: 'outline "retention mechanics" workshop',       offsetSec: 120,  duration: 50 },
+
+  // --- Content ---
+  { area: 'ct', title: 'essay draft — "tools that disappear"',         offsetSec: -130, duration: 80, state: 'done' },
+  { area: 'ct', title: 'edit: newsletter #44 — cold open',             offsetSec: -5,   duration: 45, state: 'running' },
+  { area: 'ct', title: 'record loom — timeline DAW concept',           offsetSec: 65,   duration: 30 },
+  { area: 'ct', title: 'outline twitter thread on dispatch UIs',       offsetSec: 110,  duration: 25 },
+  { area: 'ct', title: 'pull quotes from Maya interview',              offsetSec: 155,  duration: 35 },
+
+  // --- Life ---
+  { area: 'lf', title: 'book dentist — follow up crown',               offsetSec: -55,  duration: 15, state: 'done' },
+  { area: 'lf', title: 'reply to Sarah re: contract',                  offsetSec: 0,    duration: 30, state: 'running' },
+  { area: 'lf', title: 'grocery run — before 7pm',                     offsetSec: 60,   duration: 40 },
+  { area: 'lf', title: 'pay March AmEx',                               offsetSec: 115,  duration: 10 },
+];
+
+/* ---------- build bands ---------- */
+const bandsEl = document.getElementById('bands');
+AREA_ORDER.forEach(key => {
+  const a = AREAS[key];
+  const band = document.createElement('div');
+  band.className = 'band';
+  band.dataset.area = key;
+  band.style.setProperty('--accent', a.accent);
+
+  const grid = document.createElement('div');
+  grid.className = 'band-grid';
+  band.appendChild(grid);
+
+  const label = document.createElement('div');
+  label.className = 'band-label';
+  label.innerHTML = `
+    <span class="chip" style="background: ${a.accent};"></span>
+    <span class="name">${a.name}</span>
+    <span class="meta">${a.meta}</span>
+  `;
+  band.appendChild(label);
+
+  // primary worker
+  const w1 = document.createElement('div');
+  w1.className = 'worker';
+  w1.style.setProperty('--accent', a.accent);
+  band.appendChild(w1);
+
+  // secondary worker (quieter)
+  const w2 = document.createElement('div');
+  w2.className = 'worker b';
+  w2.style.setProperty('--accent', a.accent);
+  band.appendChild(w2);
+
+  state.workers[key] = { el1: w1, el2: w2 };
+  bandsEl.appendChild(band);
+});
+
+/* ---------- build blocks ---------- */
+function pxPerSec() { return BASE_PX_PER_SEC; }
+
+function createBlock(def) {
+  const band = bandsEl.querySelector(`.band[data-area="${def.area}"]`);
+  const el = document.createElement('div');
+  el.className = 'block';
+  if (def.flag === 'needs-input')   el.classList.add('needs-input');
+  if (def.flag === 'blocked')       el.classList.add('blocked');
+
+  el.style.setProperty('--accent', AREAS[def.area].accent);
+  el.innerHTML = `
+    <div class="title"></div>
+    <div class="sub"></div>
+    <div class="progress"></div>
+  `;
+  el.querySelector('.title').textContent = def.title;
+
+  const width = Math.max(90, def.duration * pxPerSec());
+  el.style.width = width + 'px';
+
+  band.appendChild(el);
+
+  const id = state.nextId++;
+  const block = {
+    id,
+    el,
+    area: def.area,
+    title: def.title,
+    duration: def.duration,       // seconds
+    width,
+    // x = left edge in px (stage coords). Positive offsetSec => block starts to the right of NOW.
+    // left edge position: nowX + offsetSec * pxPerSec()
+    x: 0,
+    offsetSec: def.offsetSec,
+    status: def.flag || 'auto',   // 'needs-input' | 'blocked' | 'auto'
+    flag: def.flag || null,
+    runStart: null,
+    _stopped: def.flag === 'needs-input' || def.flag === 'blocked',
+  };
+
+  // click to resolve attention
+  el.addEventListener('click', () => {
+    if (block.flag === 'needs-input' || block.flag === 'blocked') {
+      block.flag = null;
+      block._stopped = false;
+      el.classList.remove('needs-input', 'blocked');
+      refreshAttention();
+    }
+  });
+
+  state.blocks.push(block);
+  positionBlock(block);
+  return block;
+}
+
+/* ---------- positioning & flow ---------- */
+
+function positionBlock(b) {
+  // NOW at state.nowX. block left edge at nowX + offsetSec * pxPerSec
+  const left = state.nowX + b.offsetSec * pxPerSec();
+  b.x = left;
+  b.el.style.left = left + 'px';
+  updateBlockVisual(b);
+}
+
+function updateBlockVisual(b) {
+  const left = b.x;
+  const right = b.x + b.width;
+  const now = state.nowX;
+
+  b.el.classList.remove('queued', 'running', 'done');
+
+  if (right < now - 2) {
+    b.el.classList.add('done');
+  } else if (left > now + 2) {
+    b.el.classList.add('queued');
+  } else {
+    b.el.classList.add('running');
+    // progress fill: how far NOW has advanced through block
+    const pct = Math.max(0, Math.min(1, (now - left) / b.width));
+    b.el.querySelector('.progress').style.width = (pct * 100) + '%';
+  }
+}
+
+/* attention: a running, stopped block halts the flow for its band */
+function isBandBlocked(areaKey) {
+  return state.blocks.some(b =>
+    b.area === areaKey &&
+    b._stopped &&
+    b.x <= state.nowX && (b.x + b.width) >= state.nowX
+  );
+}
+
+function refreshAttention() {
+  AREA_ORDER.forEach(k => {
+    const band = bandsEl.querySelector(`.band[data-area="${k}"]`);
+    band.classList.toggle('attention', isBandBlocked(k));
+  });
+}
+
+/* ---------- workers ---------- */
+function updateWorkers() {
+  AREA_ORDER.forEach(k => {
+    const band = bandsEl.querySelector(`.band[data-area="${k}"]`);
+    const rect = band.getBoundingClientRect();
+    const w = state.workers[k];
+
+    // find the block currently running at NOW
+    const running = state.blocks.find(b =>
+      b.area === k &&
+      b.x <= state.nowX && (b.x + b.width) >= state.nowX
+    );
+
+    if (running) {
+      // worker sits just left of the running block's leading edge? The spec says
+      // "just to the LEFT of the active block". Interpret as left edge side, slightly inside/before.
+      const x = running.x - 6;
+      w.el1.style.left = x + 'px';
+      w.el1.style.top  = '50%';
+      w.el1.style.opacity = 1;
+
+      // secondary worker slightly offset
+      w.el2.style.left = (x - 10) + 'px';
+      w.el2.style.top  = 'calc(50% - 10px)';
+      w.el2.style.opacity = 0.55;
+    } else {
+      // next queued
+      const next = state.blocks
+        .filter(b => b.area === k && b.x > state.nowX)
+        .sort((a,b) => a.x - b.x)[0];
+      if (next) {
+        w.el1.style.left = (next.x - 10) + 'px';
+        w.el1.style.top  = '50%';
+        w.el1.style.opacity = 0.7;
+        w.el2.style.left = (next.x - 20) + 'px';
+        w.el2.style.top  = 'calc(50% - 10px)';
+        w.el2.style.opacity = 0.4;
+      } else {
+        w.el1.style.opacity = 0;
+        w.el2.style.opacity = 0;
+      }
+    }
+  });
+}
+
+/* ---------- sizing ---------- */
+function measure() {
+  const stage = document.getElementById('stage');
+  const rect = stage.getBoundingClientRect();
+  state.stageW = rect.width;
+  state.nowX = Math.round(rect.width * 0.33);
+  document.getElementById('nowline').style.left = state.nowX + 'px';
+  document.getElementById('nowlabel').style.left = (state.nowX + 10) + 'px';
+}
+window.addEventListener('resize', () => {
+  measure();
+  // Re-anchor blocks by their offsetSec so they stay in logical time
+  state.blocks.forEach(b => positionBlock(b));
+});
+
+/* ---------- main loop ---------- */
+function tick(ts) {
+  if (!state.lastTs) state.lastTs = ts;
+  const dt = (ts - state.lastTs) / 1000;
+  state.lastTs = ts;
+
+  if (!state.paused) {
+    const deltaPx = dt * pxPerSec() * state.tempo;
+
+    for (const b of state.blocks) {
+      if (b._stopped) {
+        // pin this block at NOW — do not move it, and block everything behind it on the same band
+        // We achieve "band stops" by not advancing any blocks on this band
+      }
+    }
+
+    AREA_ORDER.forEach(k => {
+      const halted = state.blocks.some(b =>
+        b.area === k && b._stopped &&
+        b.x <= state.nowX && (b.x + b.width) >= state.nowX
+      );
+      if (halted) {
+        // pin the halted block exactly at NOW (left edge at NOW), nudge others behind
+        const halt = state.blocks.find(b =>
+          b.area === k && b._stopped &&
+          b.x <= state.nowX && (b.x + b.width) >= state.nowX
+        );
+        const desired = state.nowX; // pin left edge at NOW
+        const shift = desired - halt.x;
+        if (Math.abs(shift) > 0.5) {
+          // ease toward pin
+          const ease = shift * Math.min(1, dt * 6);
+          state.blocks
+            .filter(b => b.area === k)
+            .forEach(b => { b.x += ease; });
+        }
+      } else {
+        // normal flow on this band — everything drifts left
+        state.blocks
+          .filter(b => b.area === k)
+          .forEach(b => { b.x -= deltaPx; });
+      }
+
+      // also update offsetSec so resizes work
+      state.blocks
+        .filter(b => b.area === k)
+        .forEach(b => {
+          b.offsetSec = (b.x - state.nowX) / pxPerSec();
+        });
+    });
+
+    // cull far-left
+    state.blocks = state.blocks.filter(b => {
+      const offscreen = (b.x + b.width) < -80;
+      if (offscreen) b.el.remove();
+      return !offscreen;
+    });
+
+    // paint
+    for (const b of state.blocks) {
+      b.el.style.left = b.x + 'px';
+      updateBlockVisual(b);
+    }
+    updateWorkers();
+    refreshAttention();
+  }
+
+  updateClock();
+  requestAnimationFrame(tick);
+}
+
+/* ---------- clock ---------- */
+function updateClock() {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  const ss = String(d.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').innerHTML =
+    `${hh}:${mm}<span class="sep">:</span>${ss}`;
+}
+
+/* ---------- transport controls ---------- */
+const tempos = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0];
+function setTempo(v) {
+  state.tempo = v;
+  document.getElementById('tempoVal').textContent = v.toFixed(1) + 'x';
+}
+document.getElementById('tempoUp').addEventListener('click', () => {
+  const i = tempos.indexOf(state.tempo);
+  setTempo(tempos[Math.min(tempos.length - 1, i + 1)]);
+});
+document.getElementById('tempoDn').addEventListener('click', () => {
+  const i = tempos.indexOf(state.tempo);
+  setTempo(tempos[Math.max(0, i - 1)]);
+});
+
+function setPaused(p) {
+  state.paused = p;
+  const dot = document.getElementById('statedot');
+  dot.classList.toggle('paused', p);
+  document.getElementById('pauseHint').textContent = p ? 'space to resume' : 'space to pause';
+}
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && document.activeElement !== document.getElementById('taskInput')) {
+    e.preventDefault();
+    setPaused(!state.paused);
+  }
+});
+
+/* ---------- dispatch ---------- */
+const picker = document.getElementById('areaPicker');
+picker.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-area]');
+  if (!btn) return;
+  picker.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.pickedArea = btn.dataset.area;
+  btn.style.setProperty('--accent', AREAS[btn.dataset.area].accent);
+  picker.style.setProperty('--accent', AREAS[btn.dataset.area].accent);
+});
+// initialize picker accent
+picker.querySelectorAll('button').forEach(b => {
+  b.style.setProperty('--accent', AREAS[b.dataset.area].accent);
+});
+picker.style.setProperty('--accent', AREAS[state.pickedArea].accent);
+
+function autoDetectArea(title) {
+  const t = title.toLowerCase();
+  if (/\b(sms|twilio|lovenote|onboarding|webhook|streak|churn|opt-?out|supabase)\b/.test(t)) return 'ln';
+  if (/\b(coaching|cohort|okr|intake|maya|workshop|client|retention)\b/.test(t)) return 'hg';
+  if (/\b(essay|draft|newsletter|thread|blog|post|loom|record|outline|quote)\b/.test(t)) return 'ct';
+  if (/\b(dentist|grocery|amex|pay|bill|sarah|household|doctor|car)\b/.test(t)) return 'lf';
+  return null;
+}
+
+const input = document.getElementById('taskInput');
+input.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const title = input.value.trim();
+  if (!title) return;
+
+  const detected = autoDetectArea(title);
+  const area = detected || state.pickedArea;
+
+  // deploy at far right
+  const band = bandsEl.querySelector(`.band[data-area="${area}"]`);
+  const bandRect = band.getBoundingClientRect();
+  const stage = document.getElementById('stage');
+  const stageRect = stage.getBoundingClientRect();
+
+  const rightX = stageRect.width - 40;
+  const offsetSec = (rightX - state.nowX) / pxPerSec();
+
+  // duration: rough heuristic by title length, clamped
+  const estDur = Math.min(90, Math.max(18, Math.round(title.length * 1.6)));
+
+  const block = createBlock({
+    area,
+    title,
+    offsetSec,
+    duration: estDur,
+  });
+
+  // burst
+  const burst = document.createElement('div');
+  burst.className = 'burst';
+  burst.style.setProperty('--accent', AREAS[area].accent);
+  burst.style.left = rightX + 'px';
+  band.appendChild(burst);
+  setTimeout(() => burst.remove(), 750);
+
+  // if auto-detected differed from picker, briefly flash the correct picker
+  if (detected && detected !== state.pickedArea) {
+    const btn = picker.querySelector(`button[data-area="${detected}"]`);
+    if (btn) {
+      btn.animate(
+        [{ background: 'transparent' }, { background: `color-mix(in srgb, ${AREAS[detected].accent} 30%, transparent)` }, { background: 'transparent' }],
+        { duration: 900, easing: 'ease-out' }
+      );
+    }
+  }
+
+  input.value = '';
+});
+
+/* ---------- boot ---------- */
+measure();
+seed.forEach(s => createBlock(s));
+refreshAttention();
+updateWorkers();
+updateClock();
+setTempo(1.0);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

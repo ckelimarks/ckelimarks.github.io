@@ -1,0 +1,1546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3efe7;
+    --paper: #ebe5d9;
+    --ink: #2a2722;
+    --ink-soft: #6d675d;
+    --ink-faint: #a8a196;
+    --line: #cfc6b4;
+    --line-soft: #ddd4c1;
+    --accent: #d98a3c;
+    --accent-soft: rgba(217, 138, 60, 0.18);
+    --ok: #6b8e4e;
+
+    --lovenotes: #c8d5c9;
+    --lovenotes-ink: #4e6b50;
+    --hg: #d9cdb8;
+    --hg-ink: #7a6a4d;
+    --content: #c9d0d9;
+    --content-ink: #4e5d72;
+    --life: #d9c8c8;
+    --life-ink: #7a5858;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    padding: 24px 32px;
+    gap: 16px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 14px;
+  }
+  .title {
+    font-weight: 400;
+    font-size: 18px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  .subtitle {
+    color: var(--ink-soft);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .stats {
+    display: flex;
+    gap: 28px;
+    color: var(--ink-soft);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+  .stat-value {
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 9.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* Studio */
+  .studio-wrap {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 18px;
+    min-height: 0;
+  }
+  .studio {
+    position: relative;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .studio svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Side panel */
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .panel-section {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 14px 16px;
+    border-radius: 2px;
+  }
+  .panel-label {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+  .room-queue {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .room-queue-name {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .queue-task {
+    font-size: 12px;
+    color: var(--ink);
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--line-soft);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .queue-task:last-child { border-bottom: none; }
+  .queue-task .muted {
+    color: var(--ink-faint);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+  }
+  .panel-empty {
+    color: var(--ink-faint);
+    font-size: 11.5px;
+    font-style: italic;
+  }
+
+  /* Agent list */
+  .agent-roster {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .agent-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .agent-swatch {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--ink);
+    flex-shrink: 0;
+  }
+  .agent-row .name { color: var(--ink); letter-spacing: 0.03em; }
+  .agent-row .state { margin-left: auto; color: var(--ink-faint); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* Deploy bar */
+  .deploy {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .deploy-label {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-right: 4px;
+  }
+  .deploy input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 4px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    letter-spacing: 0.02em;
+  }
+  .deploy input:focus { border-bottom-color: var(--ink); }
+  .deploy input::placeholder { color: var(--ink-faint); font-style: italic; }
+  .room-select {
+    display: flex;
+    gap: 4px;
+  }
+  .room-chip {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 6px 10px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 2px;
+    transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+  }
+  .room-chip:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .room-chip.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .deploy-btn {
+    background: transparent;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    padding: 7px 16px;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 2px;
+    transition: background 140ms ease, color 140ms ease;
+  }
+  .deploy-btn:hover { background: var(--ink); color: var(--bg); }
+
+  /* Popover */
+  .popover {
+    position: absolute;
+    min-width: 220px;
+    background: var(--bg);
+    border: 1px solid var(--ink);
+    padding: 14px 16px;
+    border-radius: 2px;
+    box-shadow: 0 8px 24px rgba(42,39,34,0.14);
+    z-index: 20;
+    font-size: 12px;
+  }
+  .popover .pop-label {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .popover .pop-task {
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .popover .pop-meta {
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .popover .pop-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .popover button {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 7px 10px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 2px;
+  }
+  .popover button.primary {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .popover button.primary:hover {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  /* SVG styling */
+  .room-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5px;
+    letter-spacing: 0.28em;
+    fill: var(--ink-soft);
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .room-sublabel {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    fill: var(--ink-faint);
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .wall { stroke: var(--ink); stroke-width: 1.2; fill: none; }
+  .wall-soft { stroke: var(--line); stroke-width: 1; fill: none; stroke-dasharray: 3 3; }
+  .desk {
+    fill: var(--paper);
+    stroke: var(--ink-soft);
+    stroke-width: 1;
+    cursor: pointer;
+  }
+  .desk-seat {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 0.8;
+  }
+  .desk.attention {
+    stroke: var(--accent);
+    stroke-width: 1.4;
+  }
+  .room-glow-attention {
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    fill: none;
+    opacity: 0.9;
+  }
+  .doorway {
+    stroke: var(--paper);
+    stroke-width: 3;
+  }
+  .progress-ring-bg {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 1.2;
+  }
+  .progress-ring {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 400ms linear;
+  }
+  .agent-dot {
+    cursor: pointer;
+  }
+  .agent-body {
+    fill: var(--ink);
+    stroke: var(--paper);
+    stroke-width: 1.2;
+  }
+  .agent-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5px;
+    font-weight: 500;
+    fill: var(--paper);
+    text-anchor: middle;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+  .agent-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5px;
+    fill: var(--ink-soft);
+    text-anchor: middle;
+    pointer-events: none;
+    letter-spacing: 0.06em;
+  }
+
+  .chip {
+    cursor: default;
+  }
+  .chip-bg {
+    fill: var(--bg);
+    stroke: var(--ink-soft);
+    stroke-width: 0.8;
+    rx: 3;
+  }
+  .chip-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5px;
+    fill: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .chip-count {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5px;
+    fill: var(--ink-faint);
+    letter-spacing: 0.06em;
+  }
+
+  .spark {
+    fill: var(--ok);
+    opacity: 0;
+  }
+
+  .attention-pulse {
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.95; }
+  }
+
+  .common-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5px;
+    letter-spacing: 0.24em;
+    fill: var(--ink-faint);
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .footprint {
+    fill: var(--line);
+    opacity: 0.25;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="title">Atelier</div>
+      <div class="subtitle">A studio, observed from above</div>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="stat-agents">6</div>
+        <div class="stat-label">In studio</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-completed">14</div>
+        <div class="stat-label">Done today</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-streak">9d</div>
+        <div class="stat-label">Streak</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="studio-wrap">
+    <div class="studio" id="studio">
+      <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" id="svg"></svg>
+    </div>
+    <aside class="panel">
+      <div class="panel-section">
+        <div class="panel-label">Selection</div>
+        <div id="selection-body">
+          <div class="panel-empty">Click a room or an agent to inspect.</div>
+        </div>
+      </div>
+      <div class="panel-section" style="flex:1; min-height:0; overflow:auto;">
+        <div class="panel-label">Roster</div>
+        <div class="agent-roster" id="roster"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="deploy">
+    <span class="deploy-label">Dispatch</span>
+    <input type="text" id="task-input" placeholder="e.g. review PR #482, draft Q2 OKRs, book dentist appt" />
+    <div class="room-select" id="room-select">
+      <button class="room-chip active" data-room="lovenotes">LoveNotes</button>
+      <button class="room-chip" data-room="hg">HG</button>
+      <button class="room-chip" data-room="content">Content</button>
+      <button class="room-chip" data-room="life">Life</button>
+    </div>
+    <button class="deploy-btn" id="deploy-btn">Send</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ATELIER — spatial agent dispatch
+   ========================================================= */
+
+const W = 1000, H = 620;
+
+/* Floor plan: four rooms around a central corridor.
+   Rooms:
+     LoveNotes: top-left
+     HG:        top-right
+     Content:   bottom-left
+     Life:      bottom-right
+   Common area: center horizontal corridor. */
+
+const ROOMS = {
+  lovenotes: {
+    id: 'lovenotes',
+    name: 'LoveNotes',
+    sub: 'AI SMS · product',
+    rect: { x: 40,  y: 40,  w: 400, h: 230 },
+    tint: 'var(--lovenotes)',
+    ink:  'var(--lovenotes-ink)',
+    door: { x: 240, y: 270 },           // doorway center (opens to corridor)
+    desks: [
+      { id: 'ln-a', x: 150, y: 130 },
+      { id: 'ln-b', x: 300, y: 130 },
+      { id: 'ln-c', x: 225, y: 210 },
+    ],
+  },
+  hg: {
+    id: 'hg',
+    name: 'HG',
+    sub: 'Coaching',
+    rect: { x: 560, y: 40,  w: 400, h: 230 },
+    tint: 'var(--hg)',
+    ink:  'var(--hg-ink)',
+    door: { x: 760, y: 270 },
+    desks: [
+      { id: 'hg-a', x: 670, y: 130 },
+      { id: 'hg-b', x: 830, y: 130 },
+      { id: 'hg-c', x: 750, y: 210 },
+    ],
+  },
+  content: {
+    id: 'content',
+    name: 'Content',
+    sub: 'Writing · publishing',
+    rect: { x: 40,  y: 380, w: 400, h: 200 },
+    tint: 'var(--content)',
+    ink:  'var(--content-ink)',
+    door: { x: 240, y: 380 },
+    desks: [
+      { id: 'ct-a', x: 150, y: 470 },
+      { id: 'ct-b', x: 300, y: 470 },
+      { id: 'ct-c', x: 225, y: 540 },
+    ],
+  },
+  life: {
+    id: 'life',
+    name: 'Life',
+    sub: 'Personal · household',
+    rect: { x: 560, y: 380, w: 400, h: 200 },
+    tint: 'var(--life)',
+    ink:  'var(--life-ink)',
+    door: { x: 760, y: 380 },
+    desks: [
+      { id: 'lf-a', x: 670, y: 470 },
+      { id: 'lf-b', x: 830, y: 470 },
+      { id: 'lf-c', x: 750, y: 540 },
+    ],
+  },
+};
+
+// Common area: a horizontal band in the middle of the floor plan
+const COMMON = {
+  rect: { x: 40, y: 280, w: 920, h: 90 },
+  restPoints: [
+    { x: 180, y: 325 },
+    { x: 360, y: 325 },
+    { x: 540, y: 325 },
+    { x: 720, y: 325 },
+    { x: 880, y: 325 },
+  ],
+  corridorY: 325,
+};
+
+/* Agents */
+const AGENTS = [
+  { id: 'a1', name: 'Ada',  initial: 'A' },
+  { id: 'a2', name: 'Niko', initial: 'N' },
+  { id: 'a3', name: 'Rhea', initial: 'R' },
+  { id: 'a4', name: 'Juno', initial: 'J' },
+  { id: 'a5', name: 'Milo', initial: 'M' },
+  { id: 'a6', name: 'Soren',initial: 'S' },
+];
+
+/* Realistic seeded task pool */
+const TASK_POOL = {
+  lovenotes: [
+    'review PR #482 — retry queue',
+    'triage Sentry spike in send-sms',
+    'write migration for messages.sent_at',
+    'respond to Supabase support ticket',
+    'draft launch email for weekly recap',
+    'QA new tone picker on staging',
+  ],
+  hg: [
+    'prep agenda for Tuesday 1:1 with R.',
+    'outline HG Q2 offer structure',
+    'review client notes — Ellis',
+    'respond to intake form (3 pending)',
+    'refine coaching rubric v2',
+  ],
+  content: [
+    'outline essay — "Systems that feel alive"',
+    'record voice memo for ep. 31',
+    'edit draft: "Notes on dispatch"',
+    'schedule thread for Friday AM',
+    'repurpose newsletter into 3 posts',
+  ],
+  life: [
+    'book dentist appt',
+    'reply to Sarah re: contract',
+    'schedule filter replacement',
+    'confirm Thursday dinner, 7pm',
+    'renew CA vehicle registration',
+    'call re: solar inspection',
+  ],
+};
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+const state = {
+  agents: {},       // id -> agent runtime
+  desks: {},        // deskId -> { roomId, pos, agentId?, task?, progress, attention }
+  rooms: {},        // roomId -> { queue: [tasks] }
+  selection: null,  // { type: 'room'|'agent'|'desk', id }
+  completedToday: 14,
+  streak: '9d',
+  selectedRoom: 'lovenotes',
+};
+
+/* Build desk index */
+Object.values(ROOMS).forEach(room => {
+  state.rooms[room.id] = { queue: [] };
+  room.desks.forEach(d => {
+    state.desks[d.id] = {
+      id: d.id,
+      roomId: room.id,
+      pos: { x: d.x, y: d.y },
+      agentId: null,
+      task: null,
+      progress: 0,
+      attention: false,
+    };
+  });
+});
+
+/* =========================================================
+   PATHFINDING — desk -> corridor -> target
+   Agents travel by going from their current point to the
+   room's doorway, down to the corridor line, across to the
+   target doorway, then up into the target desk.
+   ========================================================= */
+
+function pointInRoom(p, room) {
+  const r = room.rect;
+  return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+}
+function findRoomOfPoint(p) {
+  for (const r of Object.values(ROOMS)) {
+    if (pointInRoom(p, r)) return r;
+  }
+  return null;
+}
+
+function pathFromTo(from, to) {
+  // Compose waypoints: current -> source door (if in room) -> corridor at sourceX
+  //                    -> corridor at targetX -> target door (if going into room) -> target
+  const pts = [ { ...from } ];
+
+  const fromRoom = findRoomOfPoint(from);
+  const toRoom = findRoomOfPoint(to);
+
+  if (fromRoom) {
+    pts.push({ x: fromRoom.door.x, y: fromRoom.door.y });
+    pts.push({ x: fromRoom.door.x, y: COMMON.corridorY });
+  } else {
+    pts.push({ x: from.x, y: COMMON.corridorY });
+  }
+
+  if (toRoom) {
+    pts.push({ x: toRoom.door.x, y: COMMON.corridorY });
+    pts.push({ x: toRoom.door.x, y: toRoom.door.y });
+    pts.push({ x: to.x, y: to.y });
+  } else {
+    pts.push({ x: to.x, y: COMMON.corridorY });
+    pts.push({ x: to.x, y: to.y });
+  }
+  // Dedupe consecutive identical points
+  const clean = [];
+  for (const p of pts) {
+    const last = clean[clean.length - 1];
+    if (!last || (Math.abs(last.x - p.x) > 0.5 || Math.abs(last.y - p.y) > 0.5)) {
+      clean.push(p);
+    }
+  }
+  return clean;
+}
+
+function pathLength(pts) {
+  let d = 0;
+  for (let i = 1; i < pts.length; i++) {
+    d += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+  }
+  return d;
+}
+
+function pointAlong(pts, dist) {
+  let remaining = dist;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i-1], b = pts[i];
+    const seg = Math.hypot(b.x - a.x, b.y - a.y);
+    if (remaining <= seg) {
+      const t = seg === 0 ? 0 : remaining / seg;
+      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    }
+    remaining -= seg;
+  }
+  return { ...pts[pts.length - 1] };
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+
+const svg = document.getElementById('svg');
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent = svg) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) {
+    if (attrs[k] !== undefined && attrs[k] !== null) n.setAttribute(k, attrs[k]);
+  }
+  parent.appendChild(n);
+  return n;
+}
+
+/* Layered groups (paint order) */
+const gFloor   = el('g', { id: 'g-floor' });
+const gWalls   = el('g', { id: 'g-walls' });
+const gLabels  = el('g', { id: 'g-labels' });
+const gDesks   = el('g', { id: 'g-desks' });
+const gChips   = el('g', { id: 'g-chips' });
+const gAgents  = el('g', { id: 'g-agents' });
+const gOverlay = el('g', { id: 'g-overlay' });
+
+/* Draw floor tints */
+function drawFloor() {
+  // Outer frame
+  el('rect', { x: 20, y: 20, width: W - 40, height: H - 40, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 1.2 }, gFloor);
+
+  // Subtle room tints
+  Object.values(ROOMS).forEach(room => {
+    const r = room.rect;
+    el('rect', {
+      x: r.x, y: r.y, width: r.w, height: r.h,
+      fill: room.tint, opacity: 0.35,
+    }, gFloor);
+  });
+
+  // Common corridor subtle indicator
+  el('rect', {
+    x: COMMON.rect.x, y: COMMON.rect.y,
+    width: COMMON.rect.w, height: COMMON.rect.h,
+    fill: 'var(--bg)', opacity: 0.4,
+  }, gFloor);
+
+  // Corridor center line (dashed soft)
+  el('line', {
+    x1: COMMON.rect.x + 20, y1: COMMON.corridorY,
+    x2: COMMON.rect.x + COMMON.rect.w - 20, y2: COMMON.corridorY,
+    class: 'wall-soft',
+  }, gFloor);
+
+  el('text', {
+    x: W / 2, y: 308,
+    'text-anchor': 'middle',
+    class: 'common-label',
+  }, gFloor).textContent = 'Common';
+}
+
+/* Draw walls and doorways */
+function drawWalls() {
+  Object.values(ROOMS).forEach(room => {
+    const r = room.rect;
+    // Four walls as path, with a gap where the doorway is
+    // We'll draw each wall as a line and cut a doorway on the corridor-facing side.
+    const doorGap = 34;
+
+    // Top wall
+    el('line', { x1: r.x, y1: r.y, x2: r.x + r.w, y2: r.y, class: 'wall' }, gWalls);
+    // Bottom wall (may have doorway if room is on top side of corridor)
+    const bottomIsDoor = r.y + r.h === 270; // LoveNotes/HG
+    if (bottomIsDoor) {
+      el('line', { x1: r.x, y1: r.y + r.h, x2: room.door.x - doorGap/2, y2: r.y + r.h, class: 'wall' }, gWalls);
+      el('line', { x1: room.door.x + doorGap/2, y1: r.y + r.h, x2: r.x + r.w, y2: r.y + r.h, class: 'wall' }, gWalls);
+    } else {
+      el('line', { x1: r.x, y1: r.y + r.h, x2: r.x + r.w, y2: r.y + r.h, class: 'wall' }, gWalls);
+    }
+    // Top wall for bottom-row rooms is the doorway wall
+    const topIsDoor = r.y === 380; // Content/Life
+    if (topIsDoor) {
+      el('line', { x1: r.x, y1: r.y, x2: room.door.x - doorGap/2, y2: r.y, class: 'wall' }, gWalls);
+      el('line', { x1: room.door.x + doorGap/2, y1: r.y, x2: r.x + r.w, y2: r.y, class: 'wall' }, gWalls);
+    }
+    // Left wall
+    el('line', { x1: r.x, y1: r.y, x2: r.x, y2: r.y + r.h, class: 'wall' }, gWalls);
+    // Right wall
+    el('line', { x1: r.x + r.w, y1: r.y, x2: r.x + r.w, y2: r.y + r.h, class: 'wall' }, gWalls);
+  });
+
+  // Outer corridor walls (top & bottom of common area against the outer frame)
+  // top of corridor (which is bottom of top rooms — already done)
+  // left and right corridor end walls
+  el('line', { x1: 40, y1: 280, x2: 40, y2: 370, class: 'wall' }, gWalls);
+  el('line', { x1: 960, y1: 280, x2: 960, y2: 370, class: 'wall' }, gWalls);
+
+  // Frame
+  el('rect', { x: 40, y: 40, width: 920, height: 540, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.2 }, gWalls);
+}
+
+/* Room labels */
+function drawLabels() {
+  Object.values(ROOMS).forEach(room => {
+    const r = room.rect;
+    const x = r.x + 18, y = r.y + 26;
+    el('text', { x, y, class: 'room-label' }, gLabels).textContent = room.name;
+    el('text', { x, y: y + 14, class: 'room-sublabel' }, gLabels).textContent = room.sub;
+
+    // Click target on room (invisible rect)
+    const hit = el('rect', {
+      x: r.x, y: r.y, width: r.w, height: r.h,
+      fill: 'transparent',
+      style: 'cursor:pointer;',
+    }, gLabels);
+    hit.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectRoom(room.id);
+    });
+  });
+}
+
+/* Desks */
+const deskNodes = {}; // deskId -> { rect, ring, ringBg, attention }
+
+function drawDesks() {
+  Object.values(ROOMS).forEach(room => {
+    room.desks.forEach(d => {
+      const g = el('g', { class: 'desk-group' }, gDesks);
+      const deskRect = el('rect', {
+        x: d.x - 18, y: d.y - 12, width: 36, height: 24,
+        rx: 2, class: 'desk',
+        'data-desk': d.id,
+      }, g);
+      // Seat (small circle on corridor-facing side)
+      const seatY = (d.y > 300) ? d.y - 22 : d.y + 22;
+      el('circle', { cx: d.x, cy: seatY, r: 5, class: 'desk-seat' }, g);
+
+      // Progress ring (hidden until working)
+      const ringR = 26;
+      const ringBg = el('circle', {
+        cx: d.x, cy: d.y, r: ringR,
+        class: 'progress-ring-bg',
+        opacity: 0,
+      }, g);
+      const C = 2 * Math.PI * ringR;
+      const ring = el('circle', {
+        cx: d.x, cy: d.y, r: ringR,
+        class: 'progress-ring',
+        'stroke-dasharray': C,
+        'stroke-dashoffset': C,
+        opacity: 0,
+      }, g);
+
+      // Spark (completion flash)
+      const spark = el('circle', {
+        cx: d.x, cy: d.y, r: 3, class: 'spark',
+      }, g);
+
+      deskRect.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectDesk(d.id);
+      });
+
+      deskNodes[d.id] = { rect: deskRect, ring, ringBg, spark, C };
+    });
+  });
+}
+
+/* Agents */
+const agentNodes = {}; // id -> { g, body, label, name }
+
+function drawAgents() {
+  AGENTS.forEach(a => {
+    const g = el('g', { class: 'agent-dot', 'data-agent': a.id }, gAgents);
+    const body = el('circle', {
+      cx: 0, cy: 0, r: 8, class: 'agent-body',
+    }, g);
+    const label = el('text', {
+      x: 0, y: 3, class: 'agent-label',
+    }, g);
+    label.textContent = a.initial;
+    const name = el('text', {
+      x: 0, y: -14, class: 'agent-name',
+    }, g);
+    name.textContent = a.name;
+
+    g.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectAgent(a.id);
+    });
+
+    agentNodes[a.id] = { g, body, label, name };
+  });
+}
+
+/* Chips (pending tasks at doorways) */
+const chipNodes = {}; // roomId -> array of chip g
+
+function renderChips() {
+  // Clear
+  while (gChips.firstChild) gChips.removeChild(gChips.firstChild);
+
+  Object.values(ROOMS).forEach(room => {
+    const q = state.rooms[room.id].queue;
+    if (!q.length) return;
+
+    // Chip stack beside doorway, offset into the corridor
+    const door = room.door;
+    const onTopSide = door.y === 270; // LoveNotes/HG — chips go below door into corridor
+    const dir = onTopSide ? 1 : -1;
+
+    q.slice(0, 3).forEach((t, i) => {
+      const cy = door.y + dir * (14 + i * 14);
+      const cx = door.x + 44;
+      const g = el('g', { class: 'chip' }, gChips);
+      const text = t.title.length > 22 ? t.title.slice(0, 21) + '…' : t.title;
+
+      // Measure approx width
+      const w = Math.max(90, text.length * 5.2 + 18);
+      el('rect', {
+        x: cx - w/2, y: cy - 8, width: w, height: 16,
+        class: 'chip-bg', rx: 3,
+      }, g);
+      el('text', {
+        x: cx - w/2 + 8, y: cy + 3.5, class: 'chip-text',
+      }, g).textContent = text;
+
+      // Small queue count indicator on first chip
+      if (i === 0 && q.length > 3) {
+        el('text', {
+          x: cx + w/2 + 8, y: cy + 3.5, class: 'chip-count',
+        }, g).textContent = '+' + (q.length - 3);
+      }
+    });
+  });
+}
+
+/* =========================================================
+   AGENT RUNTIME
+   ========================================================= */
+
+function createAgentRuntime(agent, opts = {}) {
+  return {
+    ...agent,
+    pos: opts.pos || { x: COMMON.restPoints[0].x, y: COMMON.restPoints[0].y },
+    mode: opts.mode || 'idle', // idle | walking | working | stuck
+    path: null,
+    pathLen: 0,
+    pathStart: 0,
+    pathDur: 0,
+    targetDeskId: null,
+    restIdx: opts.restIdx ?? 0,
+    workStart: 0,
+    workDur: 0,
+    task: null,
+    attention: false,
+  };
+}
+
+function assignAgentToDesk(agentRt, deskId, task, workDurationMs = null) {
+  const desk = state.desks[deskId];
+  if (desk.agentId && desk.agentId !== agentRt.id) return false;
+  desk.agentId = agentRt.id;
+  desk.task = task;
+  desk.progress = 0;
+
+  agentRt.task = task;
+  agentRt.targetDeskId = deskId;
+  // Path from current pos to desk
+  const path = pathFromTo(agentRt.pos, desk.pos);
+  const len = pathLength(path);
+  const speed = 85; // px/sec
+  agentRt.path = path;
+  agentRt.pathLen = len;
+  agentRt.pathStart = performance.now();
+  agentRt.pathDur = (len / speed) * 1000;
+  agentRt.mode = 'walking';
+  agentRt.workDur = workDurationMs ?? (12000 + Math.random() * 16000);
+
+  return true;
+}
+
+function sendAgentToRest(agentRt) {
+  // Pick next rest slot
+  const idx = pickRestSlot();
+  agentRt.restIdx = idx;
+  const target = COMMON.restPoints[idx];
+  const path = pathFromTo(agentRt.pos, target);
+  const len = pathLength(path);
+  const speed = 75;
+  agentRt.path = path;
+  agentRt.pathLen = len;
+  agentRt.pathStart = performance.now();
+  agentRt.pathDur = (len / speed) * 1000;
+  agentRt.mode = 'resting-walk';
+  agentRt.task = null;
+  agentRt.targetDeskId = null;
+}
+
+function pickRestSlot() {
+  const taken = new Set(
+    Object.values(state.agents)
+      .filter(a => a.mode === 'idle' || a.mode === 'resting-walk')
+      .map(a => a.restIdx)
+  );
+  for (let i = 0; i < COMMON.restPoints.length; i++) {
+    if (!taken.has(i)) return i;
+  }
+  return Math.floor(Math.random() * COMMON.restPoints.length);
+}
+
+function freeAgentPickup() {
+  // For each room with a queue, try to assign an idle agent
+  Object.values(ROOMS).forEach(room => {
+    const q = state.rooms[room.id].queue;
+    if (!q.length) return;
+    // Find an open desk in that room
+    const openDesk = room.desks.find(d => !state.desks[d.id].agentId);
+    if (!openDesk) return;
+    // Find idle agent
+    const idle = Object.values(state.agents).find(a =>
+      a.mode === 'idle' || a.mode === 'resting-walk'
+    );
+    if (!idle) return;
+    const task = q.shift();
+    assignAgentToDesk(idle, openDesk.id, task);
+    renderChips();
+  });
+}
+
+/* =========================================================
+   TICK LOOP
+   ========================================================= */
+
+function tick(now) {
+  for (const a of Object.values(state.agents)) {
+    if (a.mode === 'walking' || a.mode === 'resting-walk') {
+      const elapsed = now - a.pathStart;
+      const t = Math.min(1, elapsed / a.pathDur);
+      const eased = easeInOut(t);
+      const dist = a.pathLen * eased;
+      a.pos = pointAlong(a.path, dist);
+      if (t >= 1) {
+        if (a.mode === 'walking') {
+          // Begin work
+          a.mode = 'working';
+          a.workStart = now;
+          const desk = state.desks[a.targetDeskId];
+          desk.progress = 0;
+        } else {
+          // Resting
+          a.mode = 'idle';
+          a.path = null;
+        }
+      }
+    } else if (a.mode === 'working') {
+      const desk = state.desks[a.targetDeskId];
+      const elapsed = now - a.workStart;
+      const p = Math.min(1, elapsed / a.workDur);
+      desk.progress = p;
+      a.pos = { x: desk.pos.x, y: desk.pos.y + (desk.pos.y > 300 ? -22 : 22) };
+      if (p >= 1 && !desk.attention) {
+        // Complete
+        flashSpark(desk.id);
+        state.completedToday += 1;
+        document.getElementById('stat-completed').textContent = state.completedToday;
+        desk.agentId = null;
+        desk.task = null;
+        desk.progress = 0;
+        // Check if queue in room has more work
+        const q = state.rooms[desk.roomId].queue;
+        if (q.length) {
+          const nextTask = q.shift();
+          assignAgentToDesk(a, desk.id, nextTask);
+          renderChips();
+        } else {
+          sendAgentToRest(a);
+        }
+      }
+    } else if (a.mode === 'stuck') {
+      // Parked at desk; pulse handled via CSS on room/desk
+      const desk = state.desks[a.targetDeskId];
+      a.pos = { x: desk.pos.x, y: desk.pos.y + (desk.pos.y > 300 ? -22 : 22) };
+    } else if (a.mode === 'idle') {
+      const target = COMMON.restPoints[a.restIdx];
+      a.pos = { x: target.x, y: target.y };
+    }
+  }
+
+  // Try to assign idle agents to queued rooms
+  freeAgentPickup();
+
+  // Render agents
+  for (const a of Object.values(state.agents)) {
+    const n = agentNodes[a.id];
+    n.g.setAttribute('transform', `translate(${a.pos.x}, ${a.pos.y})`);
+  }
+
+  // Render desks (progress rings)
+  for (const d of Object.values(state.desks)) {
+    const n = deskNodes[d.id];
+    if (d.agentId && !d.attention) {
+      n.ringBg.setAttribute('opacity', 0.9);
+      n.ring.setAttribute('opacity', 1);
+      const off = n.C * (1 - d.progress);
+      n.ring.setAttribute('stroke-dashoffset', off);
+    } else if (d.attention) {
+      n.ringBg.setAttribute('opacity', 0.9);
+      n.ring.setAttribute('opacity', 1);
+      n.ring.setAttribute('stroke', 'var(--accent)');
+      n.ringBg.setAttribute('stroke', 'var(--accent-soft)');
+      const off = n.C * (1 - d.progress);
+      n.ring.setAttribute('stroke-dashoffset', off);
+      n.rect.classList.add('attention');
+    } else {
+      n.ringBg.setAttribute('opacity', 0);
+      n.ring.setAttribute('opacity', 0);
+      n.ring.setAttribute('stroke', 'var(--ink)');
+      n.rect.classList.remove('attention');
+    }
+  }
+
+  renderRoomAttention();
+
+  requestAnimationFrame(tick);
+}
+
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+/* Spark on completion */
+function flashSpark(deskId) {
+  const n = deskNodes[deskId];
+  n.spark.setAttribute('opacity', 1);
+  n.spark.setAttribute('r', 3);
+  const start = performance.now();
+  function anim(now) {
+    const t = Math.min(1, (now - start) / 900);
+    n.spark.setAttribute('opacity', 1 - t);
+    n.spark.setAttribute('r', 3 + t * 18);
+    if (t < 1) requestAnimationFrame(anim);
+    else n.spark.setAttribute('opacity', 0);
+  }
+  requestAnimationFrame(anim);
+}
+
+/* Room attention (amber glow around doorway & room outline) */
+let attentionOverlays = {};
+function renderRoomAttention() {
+  // For each room, check if any desk in that room is attention
+  Object.values(ROOMS).forEach(room => {
+    const needs = room.desks.some(d => state.desks[d.id].attention);
+    const existing = attentionOverlays[room.id];
+    if (needs && !existing) {
+      const r = room.rect;
+      const rect = el('rect', {
+        x: r.x - 2, y: r.y - 2, width: r.w + 4, height: r.h + 4,
+        class: 'room-glow-attention attention-pulse',
+        rx: 2,
+      }, gOverlay);
+      attentionOverlays[room.id] = rect;
+    } else if (!needs && existing) {
+      existing.remove();
+      delete attentionOverlays[room.id];
+    }
+  });
+}
+
+/* =========================================================
+   SELECTION & PANEL
+   ========================================================= */
+
+const panelBody = document.getElementById('selection-body');
+
+function selectRoom(roomId) {
+  state.selection = { type: 'room', id: roomId };
+  renderPanel();
+}
+function selectAgent(agentId) {
+  state.selection = { type: 'agent', id: agentId };
+  renderPanel();
+}
+function selectDesk(deskId) {
+  const desk = state.desks[deskId];
+  if (desk.agentId) {
+    state.selection = { type: 'agent', id: desk.agentId };
+  } else {
+    state.selection = { type: 'room', id: desk.roomId };
+  }
+  renderPanel();
+}
+
+function renderPanel() {
+  const s = state.selection;
+  if (!s) {
+    panelBody.innerHTML = '<div class="panel-empty">Click a room or an agent to inspect.</div>';
+    return;
+  }
+
+  if (s.type === 'room') {
+    const room = ROOMS[s.id];
+    const q = state.rooms[s.id].queue;
+    const busy = room.desks.filter(d => state.desks[d.id].agentId);
+    const atWork = busy.map(d => {
+      const ag = state.agents[state.desks[d.id].agentId];
+      const t = state.desks[d.id].task;
+      const attn = state.desks[d.id].attention;
+      return { name: ag?.name || '—', task: t?.title || '—', attn };
+    });
+
+    let html = `
+      <div class="room-queue-name">${room.name}</div>
+      <div class="panel-label" style="margin-top:10px">At work</div>
+    `;
+    if (atWork.length === 0) {
+      html += `<div class="panel-empty">No active work.</div>`;
+    } else {
+      html += `<div class="room-queue">`;
+      for (const w of atWork) {
+        html += `
+          <div class="queue-task">
+            <span>${escapeHtml(w.task)}</span>
+            <span class="muted">${escapeHtml(w.name)}${w.attn ? ' · stuck' : ''}</span>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+    html += `<div class="panel-label" style="margin-top:14px">Queue (${q.length})</div>`;
+    if (q.length === 0) {
+      html += `<div class="panel-empty">Empty.</div>`;
+    } else {
+      html += `<div class="room-queue">`;
+      for (const t of q.slice(0, 4)) {
+        html += `<div class="queue-task"><span>${escapeHtml(t.title)}</span><span class="muted">pending</span></div>`;
+      }
+      if (q.length > 4) html += `<div class="queue-task"><span class="muted">+${q.length - 4} more</span></div>`;
+      html += `</div>`;
+    }
+    panelBody.innerHTML = html;
+  } else if (s.type === 'agent') {
+    const a = state.agents[s.id];
+    if (!a) return;
+    let modeLabel = a.mode;
+    let taskLabel = a.task?.title || '—';
+    let actions = '';
+    if (a.mode === 'stuck') {
+      actions = `
+        <div style="margin-top:10px;">
+          <button class="deploy-btn" id="resume-btn" style="width:100%;">Resume</button>
+        </div>`;
+    }
+    panelBody.innerHTML = `
+      <div class="room-queue-name">${escapeHtml(a.name)}</div>
+      <div class="panel-label" style="margin-top:10px">Status</div>
+      <div class="queue-task"><span>${labelForMode(a.mode)}</span><span class="muted">${a.targetDeskId ? ROOMS[state.desks[a.targetDeskId].roomId].name : 'Common'}</span></div>
+      <div class="panel-label" style="margin-top:14px">Current task</div>
+      <div class="queue-task"><span>${escapeHtml(taskLabel)}</span></div>
+      ${actions}
+    `;
+    const rb = document.getElementById('resume-btn');
+    if (rb) rb.addEventListener('click', () => resumeAgent(a.id));
+  }
+}
+
+function labelForMode(m) {
+  return {
+    idle: 'resting',
+    'resting-walk': 'returning',
+    walking: 'walking',
+    working: 'working',
+    stuck: 'needs input',
+  }[m] || m;
+}
+
+function resumeAgent(agentId) {
+  const a = state.agents[agentId];
+  if (!a || a.mode !== 'stuck') return;
+  const desk = state.desks[a.targetDeskId];
+  desk.attention = false;
+  a.mode = 'working';
+  a.workStart = performance.now();
+  // Finish within 6-10s
+  a.workDur = 6000 + Math.random() * 4000;
+  renderPanel();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/* =========================================================
+   ROSTER
+   ========================================================= */
+
+function renderRoster() {
+  const el = document.getElementById('roster');
+  el.innerHTML = '';
+  for (const a of Object.values(state.agents)) {
+    const row = document.createElement('div');
+    row.className = 'agent-row';
+    const locLabel = a.targetDeskId
+      ? ROOMS[state.desks[a.targetDeskId].roomId].name
+      : 'Common';
+    row.innerHTML = `
+      <span class="agent-swatch"></span>
+      <span class="name">${a.name}</span>
+      <span class="state">${labelForMode(a.mode)} · ${locLabel}</span>
+    `;
+    row.addEventListener('click', () => selectAgent(a.id));
+    el.appendChild(row);
+  }
+}
+
+/* Re-render roster periodically */
+setInterval(renderRoster, 800);
+setInterval(() => {
+  if (state.selection) renderPanel();
+}, 800);
+
+/* =========================================================
+   DEPLOY BAR
+   ========================================================= */
+
+document.querySelectorAll('.room-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.room-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.selectedRoom = btn.dataset.room;
+  });
+});
+
+document.getElementById('deploy-btn').addEventListener('click', deployTask);
+document.getElementById('task-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') deployTask();
+});
+
+function deployTask() {
+  const input = document.getElementById('task-input');
+  const title = input.value.trim();
+  if (!title) return;
+  const roomId = state.selectedRoom;
+  const task = { id: 't' + Date.now(), title, roomId };
+
+  // Try to place on an open desk directly; else queue
+  const room = ROOMS[roomId];
+  const openDesk = room.desks.find(d => !state.desks[d.id].agentId);
+  const idle = Object.values(state.agents).find(a =>
+    a.mode === 'idle' || a.mode === 'resting-walk'
+  );
+  if (openDesk && idle) {
+    assignAgentToDesk(idle, openDesk.id, task);
+  } else {
+    state.rooms[roomId].queue.push(task);
+    renderChips();
+  }
+  input.value = '';
+  selectRoom(roomId);
+}
+
+/* Click background to clear selection */
+document.getElementById('svg').addEventListener('click', () => {
+  state.selection = null;
+  renderPanel();
+});
+
+/* =========================================================
+   SEED STATE
+   ========================================================= */
+
+function seed() {
+  drawFloor();
+  drawWalls();
+  drawLabels();
+  drawDesks();
+  drawAgents();
+
+  // Instantiate agents
+  AGENTS.forEach((a, i) => {
+    state.agents[a.id] = createAgentRuntime(a, {
+      pos: { ...COMMON.restPoints[i % COMMON.restPoints.length] },
+      mode: 'idle',
+      restIdx: i % COMMON.restPoints.length,
+    });
+  });
+
+  // A1 (Ada) — working in LoveNotes, ~40%
+  const adaDesk = 'ln-a';
+  const adaTask = { id: 't-seed-1', title: 'review PR #482 — retry queue', roomId: 'lovenotes' };
+  Object.assign(state.desks[adaDesk], { agentId: 'a1', task: adaTask, progress: 0.40 });
+  const ada = state.agents['a1'];
+  ada.mode = 'working';
+  ada.task = adaTask;
+  ada.targetDeskId = adaDesk;
+  ada.workDur = 45000;
+  ada.workStart = performance.now() - 0.40 * 45000;
+
+  // A2 (Niko) — working in HG, ~75%
+  const nikoDesk = 'hg-a';
+  const nikoTask = { id: 't-seed-2', title: 'prep agenda for Tuesday 1:1 with R.', roomId: 'hg' };
+  Object.assign(state.desks[nikoDesk], { agentId: 'a2', task: nikoTask, progress: 0.75 });
+  const niko = state.agents['a2'];
+  niko.mode = 'working';
+  niko.task = nikoTask;
+  niko.targetDeskId = nikoDesk;
+  niko.workDur = 40000;
+  niko.workStart = performance.now() - 0.75 * 40000;
+
+  // A3 (Rhea) — working in Content, ~20%
+  const rheaDesk = 'ct-b';
+  const rheaTask = { id: 't-seed-3', title: 'outline essay — "Systems that feel alive"', roomId: 'content' };
+  Object.assign(state.desks[rheaDesk], { agentId: 'a3', task: rheaTask, progress: 0.20 });
+  const rhea = state.agents['a3'];
+  rhea.mode = 'working';
+  rhea.task = rheaTask;
+  rhea.targetDeskId = rheaDesk;
+  rhea.workDur = 55000;
+  rhea.workStart = performance.now() - 0.20 * 55000;
+
+  // A4 (Juno) — STUCK in Life, ~55%
+  const junoDesk = 'lf-a';
+  const junoTask = { id: 't-seed-4', title: 'reply to Sarah re: contract', roomId: 'life' };
+  Object.assign(state.desks[junoDesk], { agentId: 'a4', task: junoTask, progress: 0.55, attention: true });
+  const juno = state.agents['a4'];
+  juno.mode = 'stuck';
+  juno.task = junoTask;
+  juno.targetDeskId = junoDesk;
+  juno.attention = true;
+
+  // A5 (Milo) — walking from HG to Content (new task dispatch)
+  const miloDesk = 'ct-a';
+  const miloTask = { id: 't-seed-5', title: 'schedule thread for Friday AM', roomId: 'content' };
+  Object.assign(state.desks[miloDesk], { agentId: 'a5', task: miloTask, progress: 0 });
+  const milo = state.agents['a5'];
+  milo.pos = { x: 760, y: 270 }; // exiting HG doorway
+  const miloPath = pathFromTo(milo.pos, state.desks[miloDesk].pos);
+  const miloLen = pathLength(miloPath);
+  milo.path = miloPath;
+  milo.pathLen = miloLen;
+  milo.pathStart = performance.now() - 400;
+  milo.pathDur = (miloLen / 85) * 1000;
+  milo.mode = 'walking';
+  milo.task = miloTask;
+  milo.targetDeskId = miloDesk;
+  milo.workDur = 30000;
+
+  // A6 (Soren) — idle in common
+  const soren = state.agents['a6'];
+  soren.mode = 'idle';
+  soren.restIdx = 4;
+  soren.pos = { ...COMMON.restPoints[4] };
+
+  // Pending chips at doorways
+  state.rooms.lovenotes.queue.push(
+    { id: 't-seed-q1', title: 'triage Sentry spike', roomId: 'lovenotes' },
+    { id: 't-seed-q2', title: 'QA new tone picker on staging', roomId: 'lovenotes' },
+  );
+  state.rooms.life.queue.push(
+    { id: 't-seed-q3', title: 'book dentist appt', roomId: 'life' },
+  );
+
+  renderChips();
+  renderRoster();
+
+  document.getElementById('stat-agents').textContent = Object.keys(state.agents).length;
+
+  requestAnimationFrame(tick);
+}
+
+seed();
+
+/* Periodically seed new simulated tasks so the studio feels alive */
+setInterval(() => {
+  // 35% chance to add a task to some random room
+  if (Math.random() > 0.35) return;
+  const roomIds = Object.keys(ROOMS);
+  const rid = roomIds[Math.floor(Math.random() * roomIds.length)];
+  const pool = TASK_POOL[rid];
+  const title = pool[Math.floor(Math.random() * pool.length)];
+  state.rooms[rid].queue.push({ id: 't' + Date.now(), title, roomId: rid });
+  renderChips();
+}, 9000);
+
+/* Rarely, cause an agent to get stuck mid-work */
+setInterval(() => {
+  const working = Object.values(state.agents).filter(a => a.mode === 'working');
+  if (!working.length) return;
+  if (Math.random() < 0.18) {
+    const a = working[Math.floor(Math.random() * working.length)];
+    const desk = state.desks[a.targetDeskId];
+    // Only if not nearly done
+    if (desk.progress < 0.8) {
+      desk.attention = true;
+      a.mode = 'stuck';
+      a.attention = true;
+    }
+  }
+}, 14000);
+</script>
+</body>
+</html>

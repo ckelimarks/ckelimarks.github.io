@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Quiet Garden — Agent Dispatch</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root{
+    --moss-0:#f4efe3;
+    --moss-1:#e8dfc8;
+    --moss-2:#cfc29a;
+    --sage-1:#9eb38a;
+    --sage-2:#6f8a63;
+    --sage-3:#4d6848;
+    --sage-4:#2f4233;
+    --terracotta:#c97b56;
+    --terracotta-2:#a85a3a;
+    --amber:#e8b45c;
+    --bark:#6b4a34;
+    --cream:#fbf6ea;
+    --ink:#2b342c;
+    --ink-soft:#5b6a5c;
+    --shadow-soft: 0 1px 2px rgba(47,66,51,.06), 0 8px 24px rgba(47,66,51,.08);
+    --shadow-card: 0 1px 0 rgba(255,255,255,.6) inset, 0 10px 30px rgba(47,66,51,.10);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:'Inter', system-ui, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 80% -10%, #f7e7bd 0%, transparent 55%),
+      radial-gradient(900px 600px at -10% 110%, #c6d6ae 0%, transparent 55%),
+      linear-gradient(180deg, #fbf6ea 0%, #f1ead5 100%);
+    overflow-x:hidden;
+  }
+
+  /* Ambient drifting motes */
+  .motes{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden}
+  .mote{
+    position:absolute; width:6px; height:6px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #fff7d6, #e8b45c 70%, transparent 72%);
+    opacity:.55; filter:blur(.3px);
+    animation: drift linear infinite;
+  }
+  @keyframes drift{
+    0%{transform:translate3d(0,110vh,0) scale(.6); opacity:0}
+    10%{opacity:.8}
+    90%{opacity:.6}
+    100%{transform:translate3d(40px,-10vh,0) scale(1); opacity:0}
+  }
+
+  .app{
+    position:relative; z-index:1;
+    max-width:1280px; margin:0 auto;
+    padding:28px 28px 80px;
+    display:grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap:22px;
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    grid-column: 1 / -1;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 6px 6px 2px;
+  }
+  .brand{display:flex; align-items:center; gap:14px}
+  .crest{
+    width:44px; height:44px; border-radius:14px;
+    background:
+      radial-gradient(circle at 30% 30%, #fff3c9, transparent 55%),
+      linear-gradient(135deg, var(--sage-2), var(--sage-4));
+    display:grid; place-items:center;
+    box-shadow: var(--shadow-card);
+    position:relative;
+  }
+  .crest svg{width:26px; height:26px}
+  .brand h1{
+    font-family:'Fraunces', serif;
+    font-weight:500; font-size:26px; letter-spacing:.2px;
+    margin:0; color:var(--sage-4);
+  }
+  .brand p{margin:0; color:var(--ink-soft); font-size:12.5px; letter-spacing:.08em; text-transform:uppercase}
+
+  .weather{
+    display:flex; align-items:center; gap:18px;
+    background:rgba(255,255,255,.55);
+    backdrop-filter: blur(8px);
+    border:1px solid rgba(111,138,99,.18);
+    padding:10px 16px;
+    border-radius:999px;
+    box-shadow: var(--shadow-soft);
+  }
+  .weather .pill{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft)}
+  .weather .pill strong{color:var(--sage-4); font-weight:600}
+  .sun{
+    width:18px; height:18px; border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #fff1b8, #e8b45c 70%);
+    box-shadow: 0 0 18px #f4cf7b;
+  }
+
+  /* ---------- Panels ---------- */
+  .panel{
+    background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.55));
+    border:1px solid rgba(111,138,99,.18);
+    border-radius:22px;
+    padding:18px;
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(6px);
+  }
+  .panel h2{
+    font-family:'Fraunces', serif; font-weight:500; font-size:18px;
+    margin:0 0 4px; color:var(--sage-4);
+  }
+  .panel .subtitle{font-size:12px; color:var(--ink-soft); margin-bottom:14px}
+
+  /* ---------- Left: Seed packet ---------- */
+  .seed-packet .seeds{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+    margin-bottom:14px;
+  }
+  .seed{
+    position:relative;
+    border:1px solid rgba(111,138,99,.22);
+    background: linear-gradient(160deg, #fff8e5, #f1e6c4);
+    border-radius:14px;
+    padding:10px 8px 8px;
+    text-align:center;
+    cursor:pointer;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s;
+  }
+  .seed:hover{transform: translateY(-2px); box-shadow: var(--shadow-soft)}
+  .seed.active{
+    border-color: var(--sage-3);
+    box-shadow: 0 0 0 3px rgba(111,138,99,.18), var(--shadow-soft);
+    background: linear-gradient(160deg, #fbf1ce, #ead9a7);
+  }
+  .seed.locked{opacity:.45; cursor:not-allowed; filter:grayscale(.3)}
+  .seed .glyph{font-size:20px; display:block; margin:2px 0 4px}
+  .seed .name{font-size:11.5px; font-weight:600; color:var(--sage-4)}
+  .seed .kind{font-size:10px; color:var(--ink-soft)}
+  .seed .lock{position:absolute; top:4px; right:6px; font-size:10px; color:var(--bark)}
+
+  .field label{font-size:12px; color:var(--ink-soft); display:block; margin-bottom:6px}
+  .field textarea{
+    width:100%; min-height:74px; resize:vertical;
+    font-family:inherit; font-size:13.5px; color:var(--ink);
+    background: rgba(255,255,255,.8);
+    border:1px solid rgba(111,138,99,.25);
+    border-radius:12px; padding:10px 12px;
+    outline:none; transition:border-color .2s, box-shadow .2s;
+  }
+  .field textarea:focus{
+    border-color:var(--sage-3);
+    box-shadow: 0 0 0 3px rgba(111,138,99,.18);
+  }
+  .plant-btn{
+    margin-top:12px; width:100%;
+    border:none; cursor:pointer;
+    font-family:'Fraunces', serif; font-weight:500; font-size:15px;
+    color:#fff;
+    background: linear-gradient(180deg, #789b6a, #4d6848);
+    padding:12px 14px; border-radius:14px;
+    letter-spacing:.2px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 10px 18px rgba(77,104,72,.25);
+    transition: transform .12s ease, box-shadow .2s;
+  }
+  .plant-btn:hover{transform: translateY(-1px)}
+  .plant-btn:active{transform: translateY(0)}
+
+  /* ---------- Center: Garden ---------- */
+  .garden{
+    position:relative;
+    min-height: 560px;
+    background:
+      radial-gradient(600px 340px at 50% 110%, #d8c69a 0%, transparent 60%),
+      linear-gradient(180deg, #f5ecd3 0%, #e4d3a7 75%, #b89969 100%);
+    border-radius:24px;
+    padding:22px;
+    overflow:hidden;
+    border:1px solid rgba(107,74,52,.18);
+    box-shadow: var(--shadow-card);
+  }
+  .garden::before{
+    /* sun shaft */
+    content:""; position:absolute; top:-80px; right:-80px;
+    width:320px; height:320px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,241,184,.85), rgba(255,241,184,0) 60%);
+    pointer-events:none;
+  }
+  .garden::after{
+    /* soil grain */
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:
+      radial-gradient(rgba(107,74,52,.09) 1px, transparent 1.4px),
+      radial-gradient(rgba(107,74,52,.06) 1px, transparent 1.2px);
+    background-size: 18px 18px, 11px 11px;
+    background-position: 0 0, 5px 7px;
+    mix-blend-mode: multiply;
+    opacity:.5;
+    mask-image: linear-gradient(180deg, transparent 40%, #000 75%);
+  }
+  .garden-header{
+    position:relative; z-index:2;
+    display:flex; align-items:flex-end; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .garden-header h2{
+    font-family:'Fraunces', serif; font-weight:500;
+    font-size:22px; margin:0; color:var(--sage-4);
+  }
+  .garden-header p{margin:2px 0 0; color:var(--ink-soft); font-size:12.5px}
+
+  .legend{display:flex; gap:10px; font-size:11.5px; color:var(--ink-soft)}
+  .legend .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:middle}
+  .dot.thirsty{background:#7cb3d9}
+  .dot.sparkle{background:#e8b45c; box-shadow:0 0 6px #f4cf7b}
+  .dot.wilt{background:#c97b56}
+
+  .beds{
+    position:relative; z-index:2;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:14px;
+  }
+  .bed{
+    position:relative;
+    aspect-ratio: 1 / 0.95;
+    border-radius:18px;
+    background:
+      radial-gradient(120% 80% at 50% 120%, #8d6a46 0%, #6b4a34 60%, #4d3422 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,.1),
+      inset 0 -12px 20px rgba(0,0,0,.25),
+      0 6px 14px rgba(77,52,34,.25);
+    overflow:hidden;
+    cursor:pointer;
+    transition: transform .2s ease;
+  }
+  .bed:hover{transform: translateY(-2px)}
+  .bed .ground{
+    position:absolute; inset:auto 0 0 0; height:42%;
+    background:
+      radial-gradient(80% 100% at 50% 0%, rgba(255,255,255,.06), transparent 60%),
+      linear-gradient(180deg, #6b4a34, #3e2a1a);
+  }
+  .bed .plant-anchor{
+    position:absolute; left:50%; bottom:30%;
+    transform: translateX(-50%);
+    transform-origin: 50% 100%;
+    animation: sway 5.5s ease-in-out infinite;
+  }
+  .bed .plant-anchor.fast{animation-duration: 3.5s}
+  .bed .plant-anchor.still{animation: none}
+  @keyframes sway{
+    0%,100%{transform: translateX(-50%) rotate(-1.4deg)}
+    50%{transform: translateX(-50%) rotate(1.4deg)}
+  }
+
+  .bed .name{
+    position:absolute; left:12px; top:10px;
+    font-family:'Fraunces', serif; font-size:14px; font-weight:500;
+    color:#fff7e6; letter-spacing:.2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,.35);
+  }
+  .bed .stage-tag{
+    position:absolute; right:10px; top:10px;
+    font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:#fff2c6; background:rgba(0,0,0,.22);
+    padding:3px 7px; border-radius:999px;
+    backdrop-filter: blur(3px);
+  }
+  .bed .task{
+    position:absolute; left:12px; right:12px; bottom:10px;
+    font-size:11.5px; color:#ffe9c2; opacity:.92;
+    line-height:1.3;
+    text-shadow: 0 1px 2px rgba(0,0,0,.3);
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .bed .progress{
+    position:absolute; left:12px; right:12px; bottom:36px;
+    height:4px; border-radius:999px;
+    background: rgba(255,255,255,.18);
+    overflow:hidden;
+  }
+  .bed .progress > span{
+    display:block; height:100%;
+    background: linear-gradient(90deg, #b9d49f, #e8b45c);
+    transition: width .8s ease;
+  }
+  .bed .attention{
+    position:absolute; left:50%; top:14px; transform:translateX(-50%);
+    font-size:11px; font-weight:600;
+    padding:4px 9px; border-radius:999px;
+    color:#fff;
+    display:none;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  .bed.attention-thirsty .attention{display:inline-flex; background:#4a7fa4}
+  .bed.attention-wilt .attention{display:inline-flex; background:#a85a3a}
+  .bed.attention-sparkle .attention{display:inline-flex; background:linear-gradient(90deg,#e8b45c,#f7d689); color:#5a3e14}
+  @keyframes pulse{
+    0%,100%{opacity:.75; transform:translateX(-50%) scale(1)}
+    50%{opacity:1; transform:translateX(-50%) scale(1.05)}
+  }
+  .bed.attention-sparkle::before{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:3;
+    background:
+      radial-gradient(2px 2px at 20% 30%, #fff7d6, transparent 60%),
+      radial-gradient(2px 2px at 70% 50%, #fff7d6, transparent 60%),
+      radial-gradient(2px 2px at 40% 70%, #fff7d6, transparent 60%),
+      radial-gradient(2px 2px at 85% 25%, #fff7d6, transparent 60%);
+    animation: sparkle 2.4s linear infinite;
+  }
+  @keyframes sparkle{
+    0%,100%{opacity:.3}
+    50%{opacity:1}
+  }
+  .bed.attention-wilt .plant-anchor{
+    filter: saturate(.55) brightness(.92);
+    animation: wilt 4s ease-in-out infinite;
+  }
+  @keyframes wilt{
+    0%,100%{transform: translateX(-50%) rotate(-8deg)}
+    50%{transform: translateX(-50%) rotate(-10deg)}
+  }
+
+  .bed.dormant .ground{filter:brightness(.9)}
+  .bed.dormant .name{opacity:.7}
+
+  /* Garden footer stats */
+  .garden-footer{
+    position:relative; z-index:2;
+    display:grid; grid-template-columns:repeat(4,1fr);
+    gap:10px; margin-top:16px;
+  }
+  .stat{
+    background:rgba(255,255,255,.6);
+    border:1px solid rgba(111,138,99,.2);
+    border-radius:14px;
+    padding:10px 12px;
+    backdrop-filter: blur(6px);
+  }
+  .stat .k{font-size:11px; color:var(--ink-soft); letter-spacing:.06em; text-transform:uppercase}
+  .stat .v{font-family:'Fraunces', serif; font-weight:500; font-size:20px; color:var(--sage-4); margin-top:2px}
+  .stat .sub{font-size:11px; color:var(--ink-soft)}
+
+  /* ---------- Right: Harvest + Journal ---------- */
+  .right-col{display:flex; flex-direction:column; gap:16px}
+
+  .harvest .basket{
+    display:flex; flex-wrap:wrap; gap:8px;
+    min-height:70px;
+    padding:10px;
+    background:
+      radial-gradient(60% 100% at 50% 0%, rgba(255,255,255,.2), transparent 60%),
+      linear-gradient(180deg, #d4a36a, #a8773f);
+    border-radius:14px;
+    border:1px solid rgba(107,74,52,.25);
+    box-shadow: inset 0 -6px 12px rgba(0,0,0,.18);
+  }
+  .fruit{
+    width:32px; height:32px; border-radius:50%;
+    display:grid; place-items:center;
+    font-size:16px;
+    background: radial-gradient(circle at 30% 30%, #fff0c2, #e8b45c 55%, #a85a3a);
+    box-shadow: 0 2px 4px rgba(0,0,0,.25), inset 0 -2px 3px rgba(0,0,0,.18);
+    cursor:pointer;
+    transition: transform .2s ease;
+    animation: pop .5s ease-out backwards;
+  }
+  .fruit:hover{transform: scale(1.1) rotate(-6deg)}
+  @keyframes pop{
+    from{transform:scale(0); opacity:0}
+    to{transform:scale(1); opacity:1}
+  }
+  .harvest .empty{color:#4d3422; font-size:12px; opacity:.7; padding:8px}
+  .harvest-actions{
+    display:flex; gap:8px; margin-top:10px;
+  }
+  .btn-soft{
+    flex:1; border:1px solid rgba(111,138,99,.25);
+    background:rgba(255,255,255,.7);
+    color:var(--sage-4);
+    font-family:'Inter', sans-serif; font-size:12.5px; font-weight:500;
+    padding:9px 10px; border-radius:12px;
+    cursor:pointer; transition: background .2s, transform .1s;
+  }
+  .btn-soft:hover{background:#fff}
+  .btn-soft:active{transform: translateY(1px)}
+
+  .xp-bar{
+    position:relative; margin-top:12px;
+    height:10px; border-radius:999px;
+    background: rgba(111,138,99,.18);
+    overflow:hidden;
+  }
+  .xp-bar > span{
+    display:block; height:100%;
+    background: linear-gradient(90deg, #9eb38a, #e8b45c);
+    transition: width .6s ease;
+  }
+  .xp-row{display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink-soft); margin-top:6px}
+
+  /* Journal */
+  .journal .log{
+    max-height: 260px; overflow-y:auto;
+    padding-right:4px;
+  }
+  .journal .log::-webkit-scrollbar{width:6px}
+  .journal .log::-webkit-scrollbar-thumb{background:rgba(111,138,99,.25); border-radius:999px}
+  .entry{
+    display:flex; gap:10px; padding:8px 0;
+    border-bottom:1px dashed rgba(111,138,99,.2);
+    font-size:13px;
+  }
+  .entry:last-child{border-bottom:none}
+  .entry .t{font-size:11px; color:var(--ink-soft); min-width:44px; padding-top:2px; font-variant-numeric: tabular-nums}
+  .entry .msg{color:var(--ink); line-height:1.45}
+  .entry .msg em{color:var(--sage-3); font-style:normal; font-weight:500}
+
+  /* Celebration */
+  .toast{
+    position:fixed; left:50%; top:30px; transform:translateX(-50%);
+    background: linear-gradient(180deg, #fff7d6, #f7d689);
+    color:#5a3e14;
+    font-family:'Fraunces', serif; font-size:15px; font-weight:500;
+    padding:10px 18px; border-radius:999px;
+    border:1px solid rgba(168,90,58,.25);
+    box-shadow: 0 10px 30px rgba(168,90,58,.2);
+    z-index:50; opacity:0; pointer-events:none;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .toast.show{opacity:1; transform:translate(-50%, 6px)}
+
+  /* Collection */
+  .collection{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .seedling-chip{
+    font-size:11px; color:var(--sage-4);
+    background: rgba(158,179,138,.25);
+    padding:4px 8px; border-radius:999px;
+    border:1px solid rgba(111,138,99,.2);
+  }
+  .seedling-chip.locked{opacity:.45; color:var(--ink-soft)}
+
+  @media (max-width: 1100px){
+    .app{grid-template-columns: 1fr}
+    .beds{grid-template-columns: repeat(3, 1fr)}
+  }
+  @media (max-width: 640px){
+    .beds{grid-template-columns: repeat(2, 1fr)}
+    .garden-footer{grid-template-columns: repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<div class="motes" id="motes"></div>
+
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="crest">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c0-5 3-8 7-9-1 4-4 7-7 9Z" fill="#cfe3b7"/>
+          <path d="M12 22c0-5-3-8-7-9 1 4 4 7 7 9Z" fill="#b9d49f"/>
+          <path d="M12 22V9" stroke="#3e5a36" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="12" cy="7" r="3" fill="#e8b45c"/>
+        </svg>
+      </div>
+      <div>
+        <h1>The Quiet Garden</h1>
+        <p>Agent Dispatch &middot; tend, and let things grow</p>
+      </div>
+    </div>
+    <div class="weather">
+      <span class="pill"><span class="sun"></span> <strong id="season">Late Spring</strong></span>
+      <span class="pill">Garden Level <strong id="levelPill">3</strong></span>
+      <span class="pill">Harvest this week <strong id="weeklyPill">12</strong></span>
+      <span class="pill" id="timePill">—</span>
+    </div>
+  </header>
+
+  <!-- Left: Seed packet -->
+  <aside class="panel seed-packet">
+    <h2>Seed Packet</h2>
+    <div class="subtitle">Choose a seed, describe the task, tuck it into the soil.</div>
+
+    <div class="seeds" id="seeds"></div>
+
+    <div class="field">
+      <label for="taskDesc">What shall we grow?</label>
+      <textarea id="taskDesc" placeholder="e.g. Summarize the quarterly notes into three gentle paragraphs…"></textarea>
+    </div>
+    <button class="plant-btn" id="plantBtn">Plant this seed</button>
+
+    <div style="margin-top:18px">
+      <h2 style="font-size:15px">Seed Collection</h2>
+      <div class="subtitle" style="margin-bottom:6px">Unlock new varieties as your garden grows.</div>
+      <div class="collection" id="collection"></div>
+    </div>
+  </aside>
+
+  <!-- Center: Garden -->
+  <section class="garden">
+    <div class="garden-header">
+      <div>
+        <h2>Your garden</h2>
+        <p>Six beds &middot; tend gently, harvest when ready</p>
+      </div>
+      <div class="legend">
+        <span><span class="dot thirsty"></span>thirsty</span>
+        <span><span class="dot wilt"></span>wilting</span>
+        <span><span class="dot sparkle"></span>ready</span>
+      </div>
+    </div>
+
+    <div class="beds" id="beds"></div>
+
+    <div class="garden-footer">
+      <div class="stat"><div class="k">Blooms growing</div><div class="v" id="statGrowing">0</div><div class="sub">active agents</div></div>
+      <div class="stat"><div class="k">Ready to harvest</div><div class="v" id="statReady">0</div><div class="sub">sparkling</div></div>
+      <div class="stat"><div class="k">Needs attention</div><div class="v" id="statAttn">0</div><div class="sub">thirsty / wilting</div></div>
+      <div class="stat"><div class="k">Bloom score</div><div class="v" id="statBloom">—</div><div class="sub">streak of completions</div></div>
+    </div>
+  </section>
+
+  <!-- Right: Harvest + Journal -->
+  <aside class="right-col">
+    <div class="panel harvest">
+      <h2>Harvest basket</h2>
+      <div class="subtitle">Collect what's ready. Fruits become XP.</div>
+      <div class="basket" id="basket"><div class="empty">Nothing ripe yet. Give the garden a moment.</div></div>
+      <div class="harvest-actions">
+        <button class="btn-soft" id="harvestAllBtn">Harvest all ready</button>
+        <button class="btn-soft" id="waterBtn">Water thirsty</button>
+      </div>
+      <div class="xp-bar"><span id="xpFill" style="width:40%"></span></div>
+      <div class="xp-row">
+        <span>Level <strong id="levelTxt">3</strong></span>
+        <span><strong id="xpTxt">40</strong> / 100 XP</span>
+      </div>
+    </div>
+
+    <div class="panel journal">
+      <h2>Whisper log</h2>
+      <div class="subtitle">The garden speaks softly.</div>
+      <div class="log" id="log"></div>
+    </div>
+  </aside>
+
+</div>
+
+<div class="toast" id="toast">A fruit was harvested.</div>
+
+<!-- SVG templates (hidden) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+
+    <!-- Stage 0: Seed (a tucked-in mound) -->
+    <symbol id="stage-seed" viewBox="0 0 60 50">
+      <ellipse cx="30" cy="40" rx="18" ry="4" fill="#2b1d10" opacity=".3"/>
+      <path d="M18 42 Q30 32 42 42 Z" fill="#3e2a1a"/>
+      <ellipse cx="30" cy="37" rx="4" ry="2.5" fill="#6b4a34"/>
+    </symbol>
+
+    <!-- Stage 1: Sprout -->
+    <symbol id="stage-sprout" viewBox="0 0 60 70">
+      <path d="M30 68 L30 50" stroke="#4d6848" stroke-width="2" stroke-linecap="round"/>
+      <path d="M30 52 Q18 48 14 40 Q24 42 30 52 Z" fill="#9eb38a"/>
+      <path d="M30 52 Q42 48 46 40 Q36 42 30 52 Z" fill="#b9d49f"/>
+    </symbol>
+
+    <!-- Stage 2: Sapling -->
+    <symbol id="stage-sapling" viewBox="0 0 70 90">
+      <path d="M35 88 L35 50" stroke="#3e5a36" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M35 70 Q22 66 16 56 Q28 60 35 70 Z" fill="#8aa478"/>
+      <path d="M35 60 Q48 54 54 44 Q42 50 35 60 Z" fill="#b9d49f"/>
+      <path d="M35 50 Q24 44 20 34 Q30 38 35 50 Z" fill="#9eb38a"/>
+      <circle cx="35" cy="30" r="10" fill="#6f8a63"/>
+      <circle cx="32" cy="27" r="3" fill="#b9d49f" opacity=".6"/>
+    </symbol>
+
+    <!-- Stage 3: Bloom -->
+    <symbol id="stage-bloom" viewBox="0 0 90 110">
+      <path d="M45 108 L45 60" stroke="#3e5a36" stroke-width="3" stroke-linecap="round"/>
+      <path d="M45 84 Q28 78 20 64 Q36 72 45 84 Z" fill="#8aa478"/>
+      <path d="M45 72 Q62 66 70 52 Q54 60 45 72 Z" fill="#b9d49f"/>
+      <!-- flower -->
+      <g transform="translate(45 40)">
+        <circle r="16" fill="#9eb38a" opacity=".35"/>
+        <g>
+          <ellipse cx="0" cy="-14" rx="6" ry="10" fill="#f2a6b8"/>
+          <ellipse cx="13" cy="-6" rx="6" ry="10" fill="#f2a6b8" transform="rotate(60 13 -6)"/>
+          <ellipse cx="13" cy="8" rx="6" ry="10" fill="#f2a6b8" transform="rotate(120 13 8)"/>
+          <ellipse cx="0" cy="14" rx="6" ry="10" fill="#f2a6b8"/>
+          <ellipse cx="-13" cy="8" rx="6" ry="10" fill="#f2a6b8" transform="rotate(60 -13 8)"/>
+          <ellipse cx="-13" cy="-6" rx="6" ry="10" fill="#f2a6b8" transform="rotate(120 -13 -6)"/>
+          <circle r="6" fill="#e8b45c"/>
+          <circle r="3" fill="#a85a3a"/>
+        </g>
+      </g>
+    </symbol>
+
+    <!-- Stage 4: Fruiting -->
+    <symbol id="stage-fruit" viewBox="0 0 100 120">
+      <path d="M50 118 L50 64" stroke="#3e5a36" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M50 94 Q28 88 20 72 Q38 82 50 94 Z" fill="#8aa478"/>
+      <path d="M50 80 Q72 74 80 58 Q62 68 50 80 Z" fill="#b9d49f"/>
+      <ellipse cx="50" cy="44" rx="28" ry="26" fill="#6f8a63"/>
+      <ellipse cx="42" cy="36" rx="8" ry="6" fill="#9eb38a" opacity=".5"/>
+      <!-- fruits -->
+      <circle cx="38" cy="50" r="7" fill="#c97b56"/>
+      <circle cx="36" cy="48" r="2" fill="#ffd9a6" opacity=".7"/>
+      <circle cx="58" cy="44" r="8" fill="#a85a3a"/>
+      <circle cx="56" cy="42" r="2" fill="#ffd9a6" opacity=".7"/>
+      <circle cx="52" cy="58" r="6.5" fill="#e8b45c"/>
+      <circle cx="50" cy="56" r="1.8" fill="#fff6d9" opacity=".8"/>
+    </symbol>
+
+    <!-- Wilted variant -->
+    <symbol id="stage-wilt" viewBox="0 0 80 90">
+      <path d="M40 88 Q38 68 34 50" stroke="#6b6a44" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="M34 62 Q20 66 14 76 Q26 72 34 62 Z" fill="#8a8a5a"/>
+      <path d="M34 52 Q48 58 54 68 Q42 60 34 52 Z" fill="#a3a26b"/>
+      <circle cx="33" cy="48" r="8" fill="#8a8a5a"/>
+    </symbol>
+
+    <!-- Dormant (seed tag in soil) -->
+    <symbol id="stage-dormant" viewBox="0 0 60 40">
+      <rect x="22" y="10" width="16" height="22" rx="2" fill="#e8dfc8" stroke="#6b4a34" stroke-width="1"/>
+      <line x1="30" y1="32" x2="30" y2="40" stroke="#6b4a34" stroke-width="1"/>
+      <circle cx="30" cy="18" r="2" fill="#6f8a63"/>
+      <line x1="26" y1="24" x2="34" y2="24" stroke="#6b4a34" stroke-width=".6"/>
+      <line x1="26" y1="27" x2="34" y2="27" stroke="#6b4a34" stroke-width=".6"/>
+    </symbol>
+
+  </defs>
+</svg>
+
+<script>
+/* ---------- Data ---------- */
+const SEEDS = [
+  { id:'research',  glyph:'🌿', name:'Fern',     kind:'Research',   unlockLevel:1 },
+  { id:'writing',   glyph:'🌸', name:'Peony',    kind:'Writing',    unlockLevel:1 },
+  { id:'analysis',  glyph:'🌻', name:'Sunflower',kind:'Analysis',   unlockLevel:1 },
+  { id:'design',    glyph:'🌷', name:'Tulip',    kind:'Design',     unlockLevel:2 },
+  { id:'code',      glyph:'🌵', name:'Cactus',   kind:'Code',       unlockLevel:2 },
+  { id:'admin',     glyph:'🍅', name:'Tomato',   kind:'Admin',      unlockLevel:3 },
+  { id:'poetry',    glyph:'🌾', name:'Lavender', kind:'Poetry',     unlockLevel:4 },
+  { id:'strategy',  glyph:'🍋', name:'Meyer Lemon', kind:'Strategy', unlockLevel:5 },
+  { id:'teaching',  glyph:'🍇', name:'Muscadine',kind:'Teaching',   unlockLevel:6 },
+];
+
+const NAMES = ['Basil','Juniper','Fern','Willow','Sorrel','Clover','Aster','Thistle','Saffron','Marigold','Hazel','Poppy','Sage','Linden','Pine'];
+
+const STAGES = ['seed','sprout','sapling','bloom','fruit']; // progress stages
+function stageFor(progress){
+  if (progress < 0.08) return 'seed';
+  if (progress < 0.35) return 'sprout';
+  if (progress < 0.65) return 'sapling';
+  if (progress < 1.0)  return 'bloom';
+  return 'fruit';
+}
+
+const STATE = {
+  level: 3,
+  xp: 40,
+  weeklyHarvest: 12,
+  streak: 5,
+  season: 'Late Spring',
+  selectedSeed: 'writing',
+  basket: [], // { id, glyph, kind, name }
+  plants: [],
+  log: [],
+};
+
+/* ---------- Seed plants ---------- */
+function makePlant({ seedId, name, task, progress, status, stuckReason }){
+  const seed = SEEDS.find(s=>s.id===seedId);
+  return {
+    id: 'p_'+Math.random().toString(36).slice(2,8),
+    seedId,
+    seedGlyph: seed.glyph,
+    seedKind: seed.kind,
+    name: name || NAMES[Math.floor(Math.random()*NAMES.length)],
+    task,
+    progress: progress ?? 0,        // 0..1 growing, 1 = ready fruit
+    status: status || 'growing',     // growing | thirsty | wilting | ready | dormant | harvested
+    stuckReason: stuckReason || null,
+    createdAt: Date.now(),
+    speed: 0.0035 + Math.random()*0.004, // progress per tick (1s)
+  };
+}
+
+STATE.plants = [
+  makePlant({ seedId:'writing',  name:'Peony',    task:'Draft a gentle welcome email for new subscribers.',   progress:0.05, status:'growing' }),
+  makePlant({ seedId:'research', name:'Fernwood', task:'Gather five quiet references on urban beekeeping.',    progress:0.42, status:'growing' }),
+  makePlant({ seedId:'analysis', name:'Sunny',    task:'Compare last two quarters of engagement numbers.',    progress:0.82, status:'growing' }),
+  makePlant({ seedId:'design',   name:'Marigold', task:'Waiting on brand palette approval from Keli.',         progress:0.55, status:'wilting', stuckReason:'Needs your nod on palette.' }),
+  makePlant({ seedId:'code',     name:'Juniper',  task:'Refactor the nightly digest into smaller rituals.',    progress:1.0,  status:'ready' }),
+  makePlant({ seedId:'admin',    name:'Hazel',    task:'Inbox triage — starred only.',                         progress:0.0,  status:'dormant' }),
+];
+
+/* ---------- Journal ---------- */
+const whispers = {
+  planted: n => `A <em>${n}</em> seed was tucked into the soil.`,
+  sprouted: n => `🌱 <em>${n}</em> pushed through the earth.`,
+  thirsty:  n => `<em>${n}</em> looks thirsty — a little water would help.`,
+  wilting:  n => `<em>${n}</em> is wilting. It waits on you.`,
+  ready:    n => `Your <em>${n}</em> is ready to bloom — harvest when you like.`,
+  harvest:  n => `You harvested from <em>${n}</em>. The basket grows fuller.`,
+  watered:  n => `You watered <em>${n}</em>. It drinks, slowly.`,
+  level:    l => `The garden deepened — you've reached level <em>${l}</em>.`,
+  unlock:   s => `A new seed variety is available: <em>${s}</em>.`,
+};
+
+function logWhisper(msg){
+  const t = new Date();
+  const hh = t.getHours().toString().padStart(2,'0');
+  const mm = t.getMinutes().toString().padStart(2,'0');
+  STATE.log.unshift({ t:`${hh}:${mm}`, msg });
+  if (STATE.log.length > 40) STATE.log.pop();
+  renderLog();
+}
+
+/* ---------- Render ---------- */
+function renderSeeds(){
+  const el = document.getElementById('seeds');
+  el.innerHTML = '';
+  SEEDS.forEach(s => {
+    const locked = s.unlockLevel > STATE.level;
+    const active = !locked && STATE.selectedSeed === s.id;
+    const div = document.createElement('div');
+    div.className = 'seed' + (active?' active':'') + (locked?' locked':'');
+    div.innerHTML = `
+      ${locked ? `<span class="lock">Lv ${s.unlockLevel}</span>` : ''}
+      <span class="glyph">${s.glyph}</span>
+      <div class="name">${s.name}</div>
+      <div class="kind">${s.kind}</div>
+    `;
+    if (!locked) div.onclick = () => { STATE.selectedSeed = s.id; renderSeeds(); };
+    el.appendChild(div);
+  });
+  renderCollection();
+}
+
+function renderCollection(){
+  const el = document.getElementById('collection');
+  el.innerHTML = '';
+  SEEDS.forEach(s => {
+    const locked = s.unlockLevel > STATE.level;
+    const chip = document.createElement('span');
+    chip.className = 'seedling-chip' + (locked?' locked':'');
+    chip.textContent = `${s.glyph} ${s.name}${locked?` · Lv ${s.unlockLevel}`:''}`;
+    el.appendChild(chip);
+  });
+}
+
+function stageSymbol(plant){
+  if (plant.status === 'dormant') return 'stage-dormant';
+  if (plant.status === 'wilting') return 'stage-wilt';
+  if (plant.status === 'ready')   return 'stage-fruit';
+  const st = stageFor(plant.progress);
+  return 'stage-' + st;
+}
+
+function renderBeds(){
+  const el = document.getElementById('beds');
+  el.innerHTML = '';
+  STATE.plants.forEach(p => {
+    const bed = document.createElement('div');
+    bed.className = 'bed';
+    if (p.status === 'dormant') bed.classList.add('dormant');
+    if (p.status === 'thirsty') bed.classList.add('attention-thirsty');
+    if (p.status === 'wilting') bed.classList.add('attention-wilt');
+    if (p.status === 'ready')   bed.classList.add('attention-sparkle');
+
+    const sym = stageSymbol(p);
+    const stageLabel = p.status === 'dormant' ? 'Dormant'
+                    : p.status === 'wilting' ? 'Wilting'
+                    : p.status === 'ready'   ? 'Fruiting'
+                    : stageFor(p.progress);
+
+    const attnText = p.status === 'thirsty' ? 'thirsty'
+                   : p.status === 'wilting' ? 'needs you'
+                   : p.status === 'ready'   ? 'ready ✦'
+                   : '';
+
+    const swayClass = p.status === 'ready' ? 'fast' : (p.status === 'dormant' ? 'still' : '');
+
+    bed.innerHTML = `
+      <div class="name">${p.seedGlyph} ${p.name}</div>
+      <div class="stage-tag">${stageLabel}</div>
+      ${attnText ? `<div class="attention">${attnText}</div>`:''}
+      <div class="ground"></div>
+      <div class="plant-anchor ${swayClass}">
+        <svg viewBox="0 0 100 120" width="96" height="116">
+          <use href="#${sym}" />
+        </svg>
+      </div>
+      <div class="progress"><span style="width:${Math.round(p.progress*100)}%"></span></div>
+      <div class="task">${p.status === 'wilting' && p.stuckReason ? '⚑ '+p.stuckReason : p.task}</div>
+    `;
+
+    bed.onclick = () => {
+      if (p.status === 'ready') harvestPlant(p.id);
+      else if (p.status === 'wilting') unblockPlant(p.id);
+      else if (p.status === 'thirsty') waterPlant(p.id);
+      else if (p.status === 'dormant') awakenPlant(p.id);
+    };
+
+    el.appendChild(bed);
+  });
+
+  // Stats
+  const growing = STATE.plants.filter(p=>['growing','thirsty'].includes(p.status)).length;
+  const ready = STATE.plants.filter(p=>p.status==='ready').length;
+  const attn = STATE.plants.filter(p=>['thirsty','wilting'].includes(p.status)).length;
+  document.getElementById('statGrowing').textContent = growing;
+  document.getElementById('statReady').textContent = ready;
+  document.getElementById('statAttn').textContent = attn;
+  document.getElementById('statBloom').textContent = '✿'.repeat(Math.min(5, STATE.streak));
+}
+
+function renderBasket(){
+  const el = document.getElementById('basket');
+  if (STATE.basket.length === 0){
+    el.innerHTML = '<div class="empty">Nothing ripe yet. Give the garden a moment.</div>';
+    return;
+  }
+  el.innerHTML = '';
+  STATE.basket.slice(-20).forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'fruit';
+    d.title = `${f.kind} · from ${f.name}`;
+    d.textContent = f.glyph;
+    el.appendChild(d);
+  });
+}
+
+function renderLog(){
+  const el = document.getElementById('log');
+  el.innerHTML = '';
+  STATE.log.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'entry';
+    row.innerHTML = `<div class="t">${e.t}</div><div class="msg">${e.msg}</div>`;
+    el.appendChild(row);
+  });
+}
+
+function renderXP(){
+  const cap = 100;
+  const pct = Math.min(100, Math.round((STATE.xp/cap)*100));
+  document.getElementById('xpFill').style.width = pct + '%';
+  document.getElementById('xpTxt').textContent = STATE.xp;
+  document.getElementById('levelTxt').textContent = STATE.level;
+  document.getElementById('levelPill').textContent = STATE.level;
+  document.getElementById('weeklyPill').textContent = STATE.weeklyHarvest;
+}
+
+/* ---------- Interactions ---------- */
+function plantSeed(){
+  const desc = document.getElementById('taskDesc').value.trim();
+  if (!desc){
+    flashToast('Whisper the task first, then plant.');
+    return;
+  }
+  const seed = SEEDS.find(s=>s.id===STATE.selectedSeed);
+  const p = makePlant({ seedId:seed.id, task:desc, progress:0.02, status:'growing' });
+  STATE.plants.push(p);
+  // find a dormant bed to replace, else keep growing list
+  const dormantIdx = STATE.plants.findIndex((x,i)=> x.status==='dormant' && x.id!==p.id);
+  if (dormantIdx >= 0 && STATE.plants.length > 6){
+    // swap: remove new-added and replace dormant slot
+    STATE.plants.pop();
+    STATE.plants[dormantIdx] = p;
+  }
+  logWhisper(whispers.planted(seed.name));
+  setTimeout(()=> logWhisper(whispers.sprouted(p.name)), 900);
+  document.getElementById('taskDesc').value = '';
+  renderBeds();
+  flashToast(`${seed.glyph} ${seed.name} tucked in.`);
+}
+
+function harvestPlant(id){
+  const p = STATE.plants.find(x=>x.id===id);
+  if (!p || p.status !== 'ready') return;
+  STATE.basket.push({ id:p.id, glyph:p.seedGlyph, kind:p.seedKind, name:p.name });
+  logWhisper(whispers.harvest(p.name));
+  STATE.xp += 15 + Math.floor(Math.random()*6);
+  STATE.weeklyHarvest += 1;
+  STATE.streak += 1;
+  checkLevelUp();
+  // reset plant to dormant (empty bed)
+  p.status = 'dormant';
+  p.progress = 0;
+  p.task = 'Resting. Plant a seed here.';
+  renderBeds(); renderBasket(); renderXP();
+  flashToast(`A fruit from ${p.name} — sweet.`);
+}
+
+function harvestAll(){
+  const ready = STATE.plants.filter(p=>p.status==='ready');
+  if (ready.length === 0){ flashToast('Nothing sparkling yet.'); return; }
+  ready.forEach(p => harvestPlant(p.id));
+}
+
+function waterPlant(id){
+  const p = STATE.plants.find(x=>x.id===id);
+  if (!p) return;
+  if (p.status === 'thirsty'){
+    p.status = 'growing';
+    logWhisper(whispers.watered(p.name));
+    renderBeds();
+    flashToast(`${p.name} drinks deeply.`);
+  }
+}
+function waterAllThirsty(){
+  const thirsty = STATE.plants.filter(p=>p.status==='thirsty');
+  if (thirsty.length === 0){ flashToast('No thirsty plants right now.'); return; }
+  thirsty.forEach(p=> waterPlant(p.id));
+}
+
+function unblockPlant(id){
+  const p = STATE.plants.find(x=>x.id===id);
+  if (!p) return;
+  p.status = 'growing';
+  p.stuckReason = null;
+  logWhisper(`You tended <em>${p.name}</em>. It uncurls.`);
+  renderBeds();
+  flashToast(`${p.name} feels unstuck.`);
+}
+
+function awakenPlant(id){
+  document.getElementById('taskDesc').focus();
+  flashToast('Pick a seed, then whisper the task.');
+}
+
+function checkLevelUp(){
+  if (STATE.xp >= 100){
+    STATE.xp -= 100;
+    STATE.level += 1;
+    logWhisper(whispers.level(STATE.level));
+    // unlock new seeds
+    SEEDS.filter(s=>s.unlockLevel === STATE.level).forEach(s=>{
+      logWhisper(whispers.unlock(`${s.glyph} ${s.name}`));
+    });
+    renderSeeds();
+    flashToast(`Level ${STATE.level} — the garden deepens.`);
+  }
+}
+
+function flashToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ---------- Simulation ---------- */
+function tick(){
+  let changed = false;
+  STATE.plants.forEach(p => {
+    if (p.status === 'growing'){
+      const prevStage = stageFor(p.progress);
+      p.progress = Math.min(1, p.progress + p.speed);
+      const newStage = stageFor(p.progress);
+      if (newStage !== prevStage && newStage !== 'seed'){
+        changed = true;
+        if (newStage === 'sprout') logWhisper(whispers.sprouted(p.name));
+        if (newStage === 'bloom')  logWhisper(`Your <em>${p.name}</em> is blooming.`);
+      }
+      if (p.progress >= 1){
+        p.status = 'ready';
+        logWhisper(whispers.ready(p.name));
+        changed = true;
+      }
+      // random attention
+      if (Math.random() < 0.003){
+        p.status = 'thirsty';
+        logWhisper(whispers.thirsty(p.name));
+        changed = true;
+      }
+    } else if (p.status === 'thirsty'){
+      // slow growth while thirsty
+      p.progress = Math.min(1, p.progress + p.speed * 0.2);
+      if (Math.random() < 0.002){
+        p.status = 'wilting';
+        p.stuckReason = 'Too long without water.';
+        logWhisper(whispers.wilting(p.name));
+        changed = true;
+      }
+    }
+  });
+  if (changed) renderBeds();
+}
+
+/* ---------- Time / Motes ---------- */
+function updateTime(){
+  const now = new Date();
+  const h = now.getHours();
+  let season = 'Late Spring';
+  if (h < 7) season = 'Early Dawn';
+  else if (h < 11) season = 'Morning Light';
+  else if (h < 15) season = 'High Sun';
+  else if (h < 19) season = 'Amber Hour';
+  else season = 'Garden Dusk';
+  STATE.season = season;
+  document.getElementById('season').textContent = season;
+  document.getElementById('timePill').textContent =
+    now.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+}
+
+function seedMotes(n=14){
+  const host = document.getElementById('motes');
+  for (let i=0;i<n;i++){
+    const m = document.createElement('div');
+    m.className = 'mote';
+    m.style.left = Math.random()*100 + 'vw';
+    m.style.animationDuration = (18 + Math.random()*18) + 's';
+    m.style.animationDelay = (-Math.random()*20) + 's';
+    m.style.transform = `scale(${0.6 + Math.random()*1.2})`;
+    host.appendChild(m);
+  }
+}
+
+/* ---------- Init ---------- */
+document.getElementById('plantBtn').addEventListener('click', plantSeed);
+document.getElementById('harvestAllBtn').addEventListener('click', harvestAll);
+document.getElementById('waterBtn').addEventListener('click', waterAllThirsty);
+document.getElementById('taskDesc').addEventListener('keydown', (e)=>{
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') plantSeed();
+});
+
+renderSeeds();
+renderBeds();
+renderBasket();
+renderXP();
+
+// Seed journal
+logWhisper(`The garden stirs awake. Six beds, one quiet breeze.`);
+logWhisper(whispers.ready('Juniper'));
+logWhisper(whispers.wilting('Marigold'));
+logWhisper('A new seed variety is available: <em>🌷 Tulip</em>.');
+
+seedMotes(16);
+updateTime();
+setInterval(updateTime, 30 * 1000);
+setInterval(tick, 1000);
+</script>
+
+</body>
+</html>

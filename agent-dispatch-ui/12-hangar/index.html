@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hangar — Agent Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0a0d12;
+    --bg-1: #0f1318;
+    --bg-2: #141a21;
+    --bg-3: #1b232c;
+    --line: #232d38;
+    --line-soft: #1a2028;
+    --ink-0: #e8ecf1;
+    --ink-1: #b4bcc7;
+    --ink-2: #7c8593;
+    --ink-3: #4e5763;
+    --accent: #ffb547;        /* warm amber */
+    --accent-dim: #b8802e;
+    --accent-glow: rgba(255, 181, 71, 0.35);
+    --warn: #ff7a59;
+    --warn-glow: rgba(255, 122, 89, 0.45);
+    --ok: #6ee7b7;
+    --blue: #7aa2ff;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-travel: cubic-bezier(0.65, 0.05, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 13px;
+    color: var(--ink-0);
+    background: var(--bg-0);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(900px 600px at 12% 30%, rgba(255, 181, 71, 0.04), transparent 60%),
+      radial-gradient(800px 500px at 85% 70%, rgba(122, 162, 255, 0.03), transparent 60%),
+      linear-gradient(180deg, #0a0d12 0%, #07090d 100%);
+    z-index: 0;
+    pointer-events: none;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 56px 1fr 72px;
+  }
+
+  /* ============ TOP BAR ============ */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--line-soft);
+    background: rgba(10, 13, 18, 0.6);
+    backdrop-filter: blur(12px);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-mark {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--accent);
+    border-radius: 3px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .brand-mark::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 1px;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .brand-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-0);
+  }
+  .brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-left: 4px;
+  }
+  .topbar-meta {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+  .meta-stat { display: flex; align-items: center; gap: 8px; }
+  .meta-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+    animation: pulse 2s infinite ease-in-out;
+  }
+  .meta-label { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; }
+  .meta-value { color: var(--ink-0); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+
+  /* ============ MAIN LAYOUT ============ */
+  .main {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ============ HANGAR (LEFT) ============ */
+  .hangar {
+    border-right: 1px solid var(--line-soft);
+    background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .hangar-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .zone-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .zone-label::before {
+    content: "";
+    width: 14px; height: 1px;
+    background: var(--ink-3);
+  }
+  .zone-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink-0);
+    letter-spacing: -0.01em;
+  }
+  .zone-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-2);
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  .hangar-grid {
+    flex: 1;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 108px;
+    gap: 10px;
+    overflow-y: auto;
+    align-content: start;
+  }
+
+  .agent-card {
+    position: relative;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 260ms var(--ease), border-color 200ms ease, background 200ms ease, box-shadow 260ms var(--ease);
+    overflow: hidden;
+  }
+  .agent-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 60%, rgba(255,255,255,0.02) 100%);
+    pointer-events: none;
+  }
+  .agent-card:hover {
+    border-color: var(--ink-3);
+    transform: translateY(-1px);
+    background: var(--bg-3);
+  }
+  .agent-card.selected {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(255,181,71,0.06), var(--bg-3));
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+      0 12px 28px -8px rgba(0,0,0,0.55),
+      0 0 0 1px var(--accent),
+      0 0 28px -4px var(--accent-glow);
+  }
+  .agent-card.traveling {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease;
+  }
+  .agent-card.empty {
+    border-style: dashed;
+    border-color: var(--line);
+    background: transparent;
+    cursor: default;
+  }
+  .agent-card.empty:hover { transform: none; background: transparent; border-color: var(--line); }
+  .agent-card.empty .agent-top, .agent-card.empty .agent-bot { opacity: 0.25; }
+
+  .agent-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .agent-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-1);
+    flex-shrink: 0;
+  }
+  .agent-card.selected .agent-icon {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(255,181,71,0.08);
+  }
+  .agent-icon svg { width: 14px; height: 14px; }
+
+  .agent-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(110, 231, 183, 0.08);
+    color: var(--ok);
+    border: 1px solid rgba(110, 231, 183, 0.25);
+  }
+
+  .agent-bot {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .agent-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-0);
+    letter-spacing: -0.01em;
+  }
+  .agent-spec {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ============ TARGETS (CENTER) ============ */
+  .targets {
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .target {
+    position: relative;
+    background: var(--bg-1);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: border-color 220ms ease, box-shadow 260ms var(--ease), background 220ms ease;
+  }
+  .target::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+    opacity: 0;
+    transition: opacity 260ms ease;
+  }
+  .target.targetable {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(255,181,71,0.04), var(--bg-1));
+    box-shadow: inset 0 0 0 1px var(--accent), 0 0 40px -10px var(--accent-glow);
+    cursor: pointer;
+  }
+  .target.targetable::before { opacity: 1; }
+  .target.dim { opacity: 0.55; }
+
+  .target-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .target-title-wrap { display: flex; align-items: center; gap: 10px; }
+  .target-marker {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .target-marker.life  { background: var(--blue); box-shadow: 0 0 10px rgba(122,162,255,0.4); }
+  .target-marker.hg    { background: var(--ok);   box-shadow: 0 0 10px rgba(110,231,183,0.4); }
+  .target-marker.ln    { background: var(--accent); }
+  .target-marker.ct    { background: #c084fc; box-shadow: 0 0 10px rgba(192,132,252,0.4); }
+  .target-name {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .target-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .target-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+  }
+
+  .target-ops {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .op {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    transition: border-color 200ms ease, background 200ms ease;
+    cursor: pointer;
+  }
+  .op:hover { border-color: var(--ink-3); background: var(--bg-3); }
+  .op.selected {
+    border-color: var(--accent);
+    background: linear-gradient(90deg, rgba(255,181,71,0.07), var(--bg-3));
+  }
+  .op.blocked {
+    border-color: rgba(255, 122, 89, 0.4);
+    animation: blockedPulse 2s infinite ease-in-out;
+  }
+  @keyframes blockedPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 122, 89, 0); }
+    50% { box-shadow: 0 0 22px -4px var(--warn-glow); border-color: rgba(255,122,89,0.7); }
+  }
+
+  .op-ring {
+    position: relative;
+    width: 30px; height: 30px;
+    flex-shrink: 0;
+  }
+  .op-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .op-ring circle { fill: none; stroke-width: 2; }
+  .op-ring .track { stroke: var(--line); }
+  .op-ring .fill { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 600ms var(--ease); }
+  .op.blocked .op-ring .fill { stroke: var(--warn); }
+  .op-ring-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-1);
+  }
+  .op-ring-icon svg { width: 11px; height: 11px; transform: none; }
+
+  .op-body { flex: 1; min-width: 0; }
+  .op-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-0);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .op-name .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .op-task {
+    font-size: 11px;
+    color: var(--ink-2);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .op-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+  }
+  .op.blocked .op-pct { color: var(--warn); }
+
+  .op-actions {
+    display: none;
+    align-items: center;
+    gap: 6px;
+  }
+  .op.selected .op-actions { display: flex; }
+  .op.selected .op-pct { display: none; }
+  .btn-recall {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid var(--ink-3);
+    color: var(--ink-1);
+    cursor: pointer;
+    transition: all 160ms ease;
+  }
+  .btn-recall:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-resolve {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background: var(--warn);
+    border: 1px solid var(--warn);
+    color: #2a0c06;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-resolve:hover { filter: brightness(1.1); }
+
+  /* Queue */
+  .queue {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .queue-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--ink-2);
+    padding: 4px 0;
+  }
+  .queue-item::before {
+    content: "";
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--ink-3);
+    flex-shrink: 0;
+  }
+  .queue-empty {
+    font-size: 11px;
+    color: var(--ink-3);
+    font-style: italic;
+    opacity: 0.6;
+  }
+
+  /* ============ DISPATCH RAIL (BOTTOM) ============ */
+  .dispatch {
+    border-top: 1px solid var(--line-soft);
+    background: linear-gradient(0deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+  }
+  .dispatch-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .dispatch-label::before {
+    content: "";
+    width: 6px; height: 6px;
+    border: 1px solid var(--accent);
+    transform: rotate(45deg);
+  }
+  .dispatch-input-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .dispatch-input {
+    flex: 1;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 52px 12px 16px;
+    color: var(--ink-0);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 180ms ease, background 180ms ease;
+  }
+  .dispatch-input:focus {
+    border-color: var(--accent);
+    background: var(--bg-3);
+    box-shadow: 0 0 0 3px rgba(255,181,71,0.08);
+  }
+  .dispatch-input::placeholder { color: var(--ink-3); }
+  .dispatch-kbd {
+    position: absolute;
+    right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    padding: 3px 6px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--bg-1);
+    pointer-events: none;
+  }
+  .dispatch-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+  }
+  .dispatch-hint b { color: var(--accent); font-weight: 500; }
+
+  /* ============ DEPLOY BANNER ============ */
+  .deploy-banner {
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(10, 13, 18, 0.92);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-0);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease, transform 300ms var(--ease);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 40px -10px var(--accent-glow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .deploy-banner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .deploy-banner .mark {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+    animation: pulse 1.4s infinite ease-in-out;
+  }
+  .deploy-banner .hint {
+    color: var(--ink-2);
+    font-size: 10px;
+  }
+  .deploy-banner b { color: var(--accent); font-weight: 600; }
+
+  /* ============ FLYING AGENT ============ */
+  .fly-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 150;
+  }
+  .fly-agent {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255,181,71,0.15), rgba(255,181,71,0.05));
+    border: 1px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    box-shadow:
+      0 0 0 1px var(--accent),
+      0 0 40px var(--accent-glow),
+      0 20px 40px rgba(0,0,0,0.5);
+    will-change: transform;
+  }
+  .fly-agent svg { width: 20px; height: 20px; }
+  .fly-agent::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 181, 71, 0.25);
+    animation: ring-expand 800ms ease-out infinite;
+  }
+  @keyframes ring-expand {
+    0% { transform: scale(0.9); opacity: 0.9; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* Travel trail */
+  .trail {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+    pointer-events: none;
+    animation: trail-fade 600ms ease-out forwards;
+  }
+  @keyframes trail-fade {
+    0% { opacity: 0.9; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.2); }
+  }
+
+  /* Dock flash */
+  .dock-flash {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    border: 2px solid var(--accent);
+    pointer-events: none;
+    animation: dock-flash 700ms var(--ease) forwards;
+  }
+  @keyframes dock-flash {
+    0% { opacity: 0; transform: scale(1.04); box-shadow: 0 0 0 0 rgba(255,181,71,0); }
+    30% { opacity: 1; box-shadow: 0 0 48px 4px var(--accent-glow); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+
+  /* Task prompt modal */
+  .prompt-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 7, 10, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .prompt-overlay.show { opacity: 1; pointer-events: auto; }
+  .prompt-card {
+    width: 480px;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 60px -20px var(--accent-glow);
+    transform: translateY(12px) scale(0.98);
+    transition: transform 260ms var(--ease);
+  }
+  .prompt-overlay.show .prompt-card { transform: translateY(0) scale(1); }
+  .prompt-route {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .prompt-route b { color: var(--accent); font-weight: 500; }
+  .prompt-route .arrow { color: var(--ink-3); }
+  .prompt-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .prompt-sub {
+    font-size: 12px;
+    color: var(--ink-2);
+    margin-bottom: 18px;
+  }
+  .prompt-input {
+    width: 100%;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--ink-0);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    margin-bottom: 16px;
+  }
+  .prompt-input:focus { border-color: var(--accent); }
+  .prompt-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 160ms ease;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-1);
+  }
+  .btn:hover { border-color: var(--ink-2); color: var(--ink-0); }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #2a1905;
+    font-weight: 600;
+  }
+  .btn.primary:hover { filter: brightness(1.08); }
+
+  /* Mismatch feedback */
+  .mismatch-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--warn);
+    letter-spacing: 0.06em;
+    margin-top: -6px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .mismatch-note.show { display: block; }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <span class="brand-title">Hangar</span>
+        <span class="brand-sub">/ dispatch</span>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <div class="meta-stat">
+        <span class="meta-dot"></span>
+        <span class="meta-label">Online</span>
+        <span class="meta-value" id="stat-active">0</span>
+        <span class="meta-label">Deployed</span>
+      </div>
+      <div class="meta-stat">
+        <span class="meta-label">Ready</span>
+        <span class="meta-value" id="stat-ready">0</span>
+      </div>
+      <div class="meta-stat">
+        <span class="meta-label">Cycle</span>
+        <span class="meta-value" id="stat-cycle">042</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+
+    <!-- Hangar -->
+    <aside class="hangar">
+      <div class="hangar-header">
+        <div class="zone-label">Hangar</div>
+        <div class="zone-title">Ready Agents</div>
+        <div class="zone-sub">select → target to deploy</div>
+      </div>
+      <div class="hangar-grid" id="hangar-grid"></div>
+    </aside>
+
+    <!-- Targets -->
+    <div class="targets" id="targets"></div>
+
+  </div>
+
+  <!-- ============ DISPATCH RAIL ============ -->
+  <div class="dispatch">
+    <div class="dispatch-label">Dispatch</div>
+    <div class="dispatch-input-wrap">
+      <input id="dispatch-input" class="dispatch-input" type="text"
+             placeholder="Type a task, select agent, click a life area to deploy..." />
+      <span class="dispatch-kbd">↵</span>
+    </div>
+    <div class="dispatch-hint">
+      select <b>agent</b> → click <b>target</b>
+    </div>
+  </div>
+
+</div>
+
+<!-- Deploy banner -->
+<div id="deploy-banner" class="deploy-banner">
+  <span class="mark"></span>
+  <span id="banner-text">Select deployment target</span>
+  <span class="hint" id="banner-hint">esc to cancel</span>
+</div>
+
+<!-- Fly layer -->
+<div class="fly-layer" id="fly-layer"></div>
+
+<!-- Task prompt -->
+<div class="prompt-overlay" id="prompt-overlay">
+  <div class="prompt-card">
+    <div class="prompt-route">
+      <span>Dispatch</span>
+      <span class="arrow">›</span>
+      <b id="prompt-agent">—</b>
+      <span class="arrow">→</span>
+      <b id="prompt-target">—</b>
+    </div>
+    <div class="prompt-title">Assign task</div>
+    <div class="prompt-sub" id="prompt-sub">What should this agent work on?</div>
+    <div class="mismatch-note" id="mismatch-note">Off-specialty route — deploy will be slower</div>
+    <input id="prompt-input" class="prompt-input" type="text" placeholder="e.g. review PR #482" />
+    <div class="prompt-actions">
+      <button class="btn" id="prompt-cancel">Cancel</button>
+      <button class="btn primary" id="prompt-confirm">Deploy</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ============================================================
+   HANGAR — Agent Dispatch Prototype
+   ============================================================ */
+
+// ---------- Icons ----------
+const ICONS = {
+  scout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  research: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12a0 0 0 0 1 0 0H4z"/><path d="M16 4v4h4"/><path d="M8 13h8M8 17h5"/></svg>',
+  writer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  ops: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  fixer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+  analyst: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 3-4 3 2 4-6"/></svg>',
+  courier: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="m10.29 3.86-8.18 14.18A2 2 0 0 0 3.84 21h16.32a2 2 0 0 0 1.73-2.96L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+  dot: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/></svg>',
+};
+
+// ---------- Agent archetypes ----------
+const AGENT_TYPES = {
+  scout:    { name: 'Scout',    spec: 'Recon',     icon: 'scout',    affinity: 'research' },
+  research: { name: 'Research', spec: 'Deep dive', icon: 'research', affinity: 'research' },
+  writer:   { name: 'Writer',   spec: 'Drafting',  icon: 'writer',   affinity: 'content' },
+  ops:      { name: 'Ops',      spec: 'Systems',   icon: 'ops',      affinity: 'lovenotes' },
+  fixer:    { name: 'Fixer',    spec: 'Logistics', icon: 'fixer',    affinity: 'life' },
+  analyst:  { name: 'Analyst',  spec: 'Metrics',   icon: 'analyst',  affinity: 'hg' },
+  courier:  { name: 'Courier',  spec: 'Routing',   icon: 'courier',  affinity: 'life' },
+};
+
+// ---------- Life areas ----------
+const TARGETS = [
+  { id: 'lovenotes', name: 'LoveNotes',  code: 'LN',  marker: 'ln',   affinity: 'lovenotes', tag: 'AI SMS' },
+  { id: 'hg',        name: 'HG',         code: 'HG',  marker: 'hg',   affinity: 'hg',        tag: 'Coaching' },
+  { id: 'content',   name: 'Content',    code: 'CT',  marker: 'ct',   affinity: 'content',   tag: 'Writing' },
+  { id: 'life',      name: 'Life',       code: 'LF',  marker: 'life', affinity: 'life',      tag: 'Personal' },
+];
+
+// ---------- State ----------
+let agentIdSeq = 0;
+const newId = () => `a${++agentIdSeq}`;
+
+const state = {
+  selectedAgent: null,       // agent in hangar, selected
+  selectedOp: null,          // deployed op, selected (for recall)
+  pendingInputText: '',      // what's currently in the dispatch input
+  cycle: 42,
+  agents: {},                // id -> agent
+  deployments: {},           // targetId -> array of deployment objects
+  queues: {},                // targetId -> array of queued tasks (strings)
+};
+
+TARGETS.forEach(t => {
+  state.deployments[t.id] = [];
+  state.queues[t.id] = [];
+});
+
+// ---------- Seed agents ----------
+function makeAgent(typeKey) {
+  const t = AGENT_TYPES[typeKey];
+  const id = newId();
+  return {
+    id,
+    type: typeKey,
+    name: t.name,
+    spec: t.spec,
+    icon: t.icon,
+    affinity: t.affinity,
+    status: 'ready',  // ready | deployed | traveling
+  };
+}
+
+// Start: 3 ready in hangar
+['scout', 'writer', 'fixer', 'analyst'].forEach(k => {
+  const a = makeAgent(k);
+  state.agents[a.id] = a;
+});
+
+// Start: 2 already deployed
+function seedDeployed(typeKey, targetId, task, progress, blocked) {
+  const a = makeAgent(typeKey);
+  a.status = 'deployed';
+  state.agents[a.id] = a;
+  state.deployments[targetId].push({
+    agentId: a.id,
+    task,
+    progress,   // 0..1
+    blocked: !!blocked,
+    rate: 0.003 + Math.random() * 0.003,
+    startedAt: Date.now(),
+  });
+}
+seedDeployed('ops', 'lovenotes', 'Tune SMS send-rate throttle', 0.64, false);
+seedDeployed('research', 'hg', 'Benchmark coaching intake forms', 0.38, false);
+
+// One in "needs input" state
+seedDeployed('writer', 'content', 'Draft Q2 essay on deploy mechanics', 0.55, true);
+
+// Seed queues
+state.queues.lovenotes.push('QA inbound webhook retries');
+state.queues.life.push('Book dentist appt');
+state.queues.content.push('Outline newsletter #12');
+
+// ---------- DOM refs ----------
+const hangarGrid   = document.getElementById('hangar-grid');
+const targetsEl    = document.getElementById('targets');
+const flyLayer     = document.getElementById('fly-layer');
+const banner       = document.getElementById('deploy-banner');
+const bannerText   = document.getElementById('banner-text');
+const bannerHint   = document.getElementById('banner-hint');
+const promptOverlay= document.getElementById('prompt-overlay');
+const promptInput  = document.getElementById('prompt-input');
+const promptAgentEl= document.getElementById('prompt-agent');
+const promptTargetEl=document.getElementById('prompt-target');
+const promptSub    = document.getElementById('prompt-sub');
+const promptCancel = document.getElementById('prompt-cancel');
+const promptConfirm= document.getElementById('prompt-confirm');
+const mismatchNote = document.getElementById('mismatch-note');
+const dispatchInput= document.getElementById('dispatch-input');
+const statActive   = document.getElementById('stat-active');
+const statReady    = document.getElementById('stat-ready');
+const statCycle    = document.getElementById('stat-cycle');
+
+// ---------- Render Hangar ----------
+function renderHangar() {
+  const readyAgents = Object.values(state.agents).filter(a => a.status === 'ready');
+  const slots = Math.max(6, readyAgents.length);
+  hangarGrid.innerHTML = '';
+
+  readyAgents.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'agent-card';
+    card.dataset.agentId = a.id;
+    if (state.selectedAgent === a.id) card.classList.add('selected');
+    card.innerHTML = `
+      <div class="agent-top">
+        <div class="agent-icon">${ICONS[a.icon]}</div>
+        <div class="agent-chip">Ready</div>
+      </div>
+      <div class="agent-bot">
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-spec">${a.spec}</div>
+      </div>
+    `;
+    card.addEventListener('click', () => selectAgent(a.id));
+    hangarGrid.appendChild(card);
+  });
+
+  // empty slots
+  for (let i = readyAgents.length; i < slots; i++) {
+    const card = document.createElement('div');
+    card.className = 'agent-card empty';
+    card.innerHTML = `
+      <div class="agent-top">
+        <div class="agent-icon">${ICONS.dot}</div>
+        <div class="agent-chip" style="background:transparent;color:var(--ink-3);border-color:var(--line)">Slot</div>
+      </div>
+      <div class="agent-bot">
+        <div class="agent-name" style="color:var(--ink-3)">—</div>
+        <div class="agent-spec">empty</div>
+      </div>
+    `;
+    hangarGrid.appendChild(card);
+  }
+
+  statReady.textContent = String(readyAgents.length).padStart(2, '0');
+}
+
+// ---------- Render Targets ----------
+function renderTargets() {
+  targetsEl.innerHTML = '';
+  let totalDeployed = 0;
+  TARGETS.forEach(t => {
+    const deps = state.deployments[t.id];
+    totalDeployed += deps.length;
+    const panel = document.createElement('div');
+    panel.className = 'target';
+    panel.dataset.targetId = t.id;
+    if (state.selectedAgent) panel.classList.add('targetable');
+
+    const opsHtml = deps.map(d => {
+      const a = state.agents[d.agentId];
+      const pct = Math.round(d.progress * 100);
+      const circumference = 2 * Math.PI * 12;
+      const dashOffset = circumference * (1 - d.progress);
+      const isSelected = state.selectedOp === d.agentId;
+      return `
+        <div class="op ${d.blocked ? 'blocked' : ''} ${isSelected ? 'selected' : ''}" data-op-id="${d.agentId}">
+          <div class="op-ring">
+            <svg viewBox="0 0 30 30">
+              <circle class="track" cx="15" cy="15" r="12"/>
+              <circle class="fill" cx="15" cy="15" r="12"
+                      stroke-dasharray="${circumference}"
+                      stroke-dashoffset="${dashOffset}"/>
+            </svg>
+            <div class="op-ring-icon">${d.blocked ? ICONS.alert : ICONS[a.icon]}</div>
+          </div>
+          <div class="op-body">
+            <div class="op-name">${a.name} <span class="tag">${a.spec}</span></div>
+            <div class="op-task">${d.task}</div>
+          </div>
+          <div class="op-pct">${d.blocked ? 'NEEDS INPUT' : pct + '%'}</div>
+          <div class="op-actions">
+            ${d.blocked
+              ? `<button class="btn-resolve" data-action="resolve" data-op-id="${d.agentId}">Resolve</button>`
+              : `<button class="btn-recall" data-action="recall" data-op-id="${d.agentId}">Recall</button>`
+            }
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const queue = state.queues[t.id];
+    const queueHtml = `
+      <div class="queue">
+        <div class="queue-label">
+          <span>Queue</span>
+          <span>${queue.length}</span>
+        </div>
+        ${queue.length
+          ? queue.map(q => `<div class="queue-item">${q}</div>`).join('')
+          : `<div class="queue-empty">No pending tasks</div>`
+        }
+      </div>
+    `;
+
+    panel.innerHTML = `
+      <div class="target-header">
+        <div class="target-title-wrap">
+          <span class="target-marker ${t.marker}"></span>
+          <span class="target-name">${t.name}</span>
+          <span class="target-code">${t.code} / ${t.tag}</span>
+        </div>
+        <div class="target-count">${deps.length} active</div>
+      </div>
+      <div class="target-ops">
+        ${opsHtml || `<div class="queue-empty" style="padding:12px">No active operations</div>`}
+      </div>
+      ${queueHtml}
+    `;
+
+    // click target (when agent selected → deploy)
+    panel.addEventListener('click', (e) => {
+      if (state.selectedAgent) {
+        // clicking the panel background (not an op) → deploy
+        if (!e.target.closest('.op')) {
+          openPrompt(t.id);
+        }
+      }
+    });
+
+    // wire up op clicks
+    panel.querySelectorAll('.op').forEach(opEl => {
+      opEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const opId = opEl.dataset.opId;
+        // if action button clicked, ignore here — handled below
+        if (e.target.closest('[data-action]')) return;
+        state.selectedOp = (state.selectedOp === opId) ? null : opId;
+        state.selectedAgent = null;
+        rerender();
+      });
+    });
+    panel.querySelectorAll('[data-action="recall"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        recall(btn.dataset.opId);
+      });
+    });
+    panel.querySelectorAll('[data-action="resolve"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resolveBlocked(btn.dataset.opId);
+      });
+    });
+
+    targetsEl.appendChild(panel);
+  });
+
+  statActive.textContent = String(totalDeployed).padStart(2, '0');
+}
+
+function rerender() {
+  renderHangar();
+  renderTargets();
+  updateBanner();
+}
+
+// ---------- Banner ----------
+function updateBanner() {
+  if (state.selectedAgent) {
+    const a = state.agents[state.selectedAgent];
+    bannerText.innerHTML = `<b>${a.name}</b> selected — choose deployment target`;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ---------- Select agent ----------
+function selectAgent(id) {
+  state.selectedOp = null;
+  state.selectedAgent = (state.selectedAgent === id) ? null : id;
+  rerender();
+}
+
+// ---------- Deploy prompt ----------
+let pendingDeploy = null;
+function openPrompt(targetId) {
+  const a = state.agents[state.selectedAgent];
+  const t = TARGETS.find(x => x.id === targetId);
+  pendingDeploy = { agentId: a.id, targetId };
+
+  promptAgentEl.textContent = a.name;
+  promptTargetEl.textContent = t.name;
+  promptSub.textContent = `${a.name} will begin a new operation in ${t.name}`;
+
+  // mismatch check
+  const mismatch = a.affinity !== t.affinity;
+  mismatchNote.classList.toggle('show', mismatch);
+
+  // prefill from dispatch input
+  promptInput.value = state.pendingInputText || '';
+  promptOverlay.classList.add('show');
+  setTimeout(() => promptInput.focus(), 50);
+}
+function closePrompt() {
+  promptOverlay.classList.remove('show');
+  pendingDeploy = null;
+}
+promptCancel.addEventListener('click', closePrompt);
+promptConfirm.addEventListener('click', () => {
+  const task = promptInput.value.trim() || 'General operation';
+  if (!pendingDeploy) return;
+  const { agentId, targetId } = pendingDeploy;
+  dispatchInput.value = '';
+  state.pendingInputText = '';
+  closePrompt();
+  executeDeploy(agentId, targetId, task);
+});
+promptInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') promptConfirm.click();
+  if (e.key === 'Escape') closePrompt();
+});
+
+// ---------- The deploy travel animation ----------
+function executeDeploy(agentId, targetId, task) {
+  const agent = state.agents[agentId];
+  const targetEl = targetsEl.querySelector(`[data-target-id="${targetId}"]`);
+  const cardEl = hangarGrid.querySelector(`[data-agent-id="${agentId}"]`);
+  if (!agent || !targetEl || !cardEl) return;
+
+  // Clear selection
+  state.selectedAgent = null;
+
+  const startRect = cardEl.getBoundingClientRect();
+  const endRect   = targetEl.getBoundingClientRect();
+
+  // Hide source card
+  cardEl.classList.add('traveling');
+
+  // Create flying agent
+  const fly = document.createElement('div');
+  fly.className = 'fly-agent';
+  fly.innerHTML = ICONS[agent.icon];
+  const startX = startRect.left + (startRect.width - 56) / 2;
+  const startY = startRect.top + (startRect.height - 56) / 2;
+  const endX   = endRect.left + (endRect.width - 56) / 2;
+  const endY   = endRect.top + 40;
+  fly.style.left = startX + 'px';
+  fly.style.top  = startY + 'px';
+  flyLayer.appendChild(fly);
+
+  // Mark agent as traveling in state; remove ready slot
+  agent.status = 'traveling';
+  rerender();
+
+  // Compute mismatch — slower travel if mismatched
+  const target = TARGETS.find(t => t.id === targetId);
+  const mismatch = agent.affinity !== target.affinity;
+  const duration = mismatch ? 900 : 620;
+
+  // Arc midpoint (lift upward)
+  const midX = (startX + endX) / 2;
+  const midY = Math.min(startY, endY) - 110;
+
+  // Animate with requestAnimationFrame along bezier
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - t0) / duration);
+    // ease-out for travel
+    const eased = 1 - Math.pow(1 - t, 3);
+    // quadratic bezier
+    const x = (1 - eased) * (1 - eased) * startX + 2 * (1 - eased) * eased * midX + eased * eased * endX;
+    const y = (1 - eased) * (1 - eased) * startY + 2 * (1 - eased) * eased * midY + eased * eased * endY;
+    const scale = 1 + 0.25 * Math.sin(eased * Math.PI); // peak scale mid-flight
+    const rot = (endX - startX) * 0.02 * Math.sin(eased * Math.PI);
+    fly.style.transform = `translate(${x - startX}px, ${y - startY}px) scale(${scale}) rotate(${rot}deg)`;
+
+    // trail particle every few frames
+    if (t < 0.95 && Math.random() < 0.6) {
+      spawnTrail(x + 20, y + 20);
+    }
+
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      // Dock
+      fly.remove();
+      dockAgent(agentId, targetId, task, targetEl);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function spawnTrail(x, y) {
+  const t = document.createElement('div');
+  t.className = 'trail';
+  t.style.left = x + 'px';
+  t.style.top = y + 'px';
+  flyLayer.appendChild(t);
+  setTimeout(() => t.remove(), 620);
+}
+
+function dockAgent(agentId, targetId, task, targetEl) {
+  const agent = state.agents[agentId];
+  agent.status = 'deployed';
+  state.deployments[targetId].push({
+    agentId,
+    task,
+    progress: 0.05,
+    blocked: false,
+    rate: 0.004 + Math.random() * 0.004,
+    startedAt: Date.now(),
+  });
+  rerender();
+
+  // Dock flash
+  const freshTargetEl = targetsEl.querySelector(`[data-target-id="${targetId}"]`);
+  if (freshTargetEl) {
+    const flash = document.createElement('div');
+    flash.className = 'dock-flash';
+    freshTargetEl.style.position = 'relative';
+    freshTargetEl.appendChild(flash);
+    setTimeout(() => flash.remove(), 800);
+  }
+
+  // Maybe refill hangar after a delay (simulate new agents arriving)
+  setTimeout(() => {
+    maybeRefillHangar();
+  }, 2200);
+}
+
+// ---------- Recall ----------
+function recall(agentId) {
+  // find which target
+  let sourceTargetId = null;
+  let depIdx = -1;
+  for (const t of TARGETS) {
+    const idx = state.deployments[t.id].findIndex(d => d.agentId === agentId);
+    if (idx >= 0) { sourceTargetId = t.id; depIdx = idx; break; }
+  }
+  if (!sourceTargetId) return;
+
+  const agent = state.agents[agentId];
+  const targetEl = targetsEl.querySelector(`[data-target-id="${sourceTargetId}"]`);
+  const opEl = targetEl.querySelector(`[data-op-id="${agentId}"]`);
+  const startRect = opEl.getBoundingClientRect();
+
+  // Remove from deployment first
+  state.deployments[sourceTargetId].splice(depIdx, 1);
+  agent.status = 'traveling';
+  state.selectedOp = null;
+  rerender();
+
+  // End rect: hangar first empty slot
+  const emptySlot = hangarGrid.querySelector('.agent-card.empty');
+  const endRect = emptySlot ? emptySlot.getBoundingClientRect() : hangarGrid.getBoundingClientRect();
+
+  const fly = document.createElement('div');
+  fly.className = 'fly-agent';
+  fly.innerHTML = ICONS[agent.icon];
+  const startX = startRect.left + (startRect.width - 56) / 2;
+  const startY = startRect.top + (startRect.height - 56) / 2;
+  const endX = endRect.left + (endRect.width - 56) / 2;
+  const endY = endRect.top + (endRect.height - 56) / 2;
+  fly.style.left = startX + 'px';
+  fly.style.top  = startY + 'px';
+  flyLayer.appendChild(fly);
+
+  const duration = 620;
+  const midX = (startX + endX) / 2;
+  const midY = Math.min(startY, endY) - 80;
+
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const x = (1 - eased) * (1 - eased) * startX + 2 * (1 - eased) * eased * midX + eased * eased * endX;
+    const y = (1 - eased) * (1 - eased) * startY + 2 * (1 - eased) * eased * midY + eased * eased * endY;
+    const scale = 1 + 0.15 * Math.sin(eased * Math.PI);
+    fly.style.transform = `translate(${x - startX}px, ${y - startY}px) scale(${scale})`;
+    if (t < 0.95 && Math.random() < 0.5) spawnTrail(x + 20, y + 20);
+    if (t < 1) requestAnimationFrame(tick);
+    else {
+      fly.remove();
+      agent.status = 'ready';
+      rerender();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// ---------- Resolve blocked ----------
+function resolveBlocked(agentId) {
+  for (const t of TARGETS) {
+    const dep = state.deployments[t.id].find(d => d.agentId === agentId);
+    if (dep) {
+      dep.blocked = false;
+      dep.rate = 0.004 + Math.random() * 0.004;
+      break;
+    }
+  }
+  state.selectedOp = null;
+  rerender();
+}
+
+// ---------- Refill Hangar ----------
+function maybeRefillHangar() {
+  const readyCount = Object.values(state.agents).filter(a => a.status === 'ready').length;
+  if (readyCount >= 4) return;
+  // Add a random agent type
+  const types = Object.keys(AGENT_TYPES);
+  const pick = types[Math.floor(Math.random() * types.length)];
+  const a = makeAgent(pick);
+  state.agents[a.id] = a;
+  rerender();
+}
+
+// ---------- Progress ticker ----------
+setInterval(() => {
+  let changed = false;
+  TARGETS.forEach(t => {
+    const deps = state.deployments[t.id];
+    for (let i = deps.length - 1; i >= 0; i--) {
+      const d = deps[i];
+      if (d.blocked) continue;
+      d.progress += d.rate;
+      if (d.progress >= 1) {
+        // completion → travel back
+        const agentId = d.agentId;
+        deps.splice(i, 1);
+        returnToHangar(agentId, t.id);
+
+        // pop queue if any
+        if (state.queues[t.id].length > 0) {
+          const task = state.queues[t.id].shift();
+          // will require an agent — stays queued visually, no auto-deploy for prototype
+          // (but we could auto-deploy if an affinity match is ready — skipped for simplicity)
+        }
+      }
+      changed = true;
+    }
+  });
+  if (changed) rerender();
+}, 650);
+
+function returnToHangar(agentId, sourceTargetId) {
+  const agent = state.agents[agentId];
+  if (!agent) return;
+  const targetEl = targetsEl.querySelector(`[data-target-id="${sourceTargetId}"]`);
+  if (!targetEl) { agent.status = 'ready'; rerender(); return; }
+
+  // Use target header area as start
+  const startRect = targetEl.getBoundingClientRect();
+  agent.status = 'traveling';
+  rerender();
+
+  const emptySlot = hangarGrid.querySelector('.agent-card.empty');
+  const endRect = emptySlot ? emptySlot.getBoundingClientRect() : hangarGrid.getBoundingClientRect();
+
+  const fly = document.createElement('div');
+  fly.className = 'fly-agent';
+  fly.innerHTML = ICONS.check;
+  fly.style.color = 'var(--ok)';
+  fly.style.borderColor = 'var(--ok)';
+  fly.style.boxShadow = '0 0 0 1px var(--ok), 0 0 40px rgba(110,231,183,0.4), 0 20px 40px rgba(0,0,0,0.5)';
+  const startX = startRect.left + 40;
+  const startY = startRect.top + 20;
+  const endX = endRect.left + (endRect.width - 56) / 2;
+  const endY = endRect.top + (endRect.height - 56) / 2;
+  fly.style.left = startX + 'px';
+  fly.style.top = startY + 'px';
+  flyLayer.appendChild(fly);
+
+  const duration = 700;
+  const midX = (startX + endX) / 2;
+  const midY = Math.min(startY, endY) - 90;
+
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const x = (1 - eased) * (1 - eased) * startX + 2 * (1 - eased) * eased * midX + eased * eased * endX;
+    const y = (1 - eased) * (1 - eased) * startY + 2 * (1 - eased) * eased * midY + eased * eased * endY;
+    fly.style.transform = `translate(${x - startX}px, ${y - startY}px)`;
+    if (t < 0.9 && Math.random() < 0.4) spawnTrail(x + 20, y + 20);
+    if (t < 1) requestAnimationFrame(tick);
+    else {
+      fly.remove();
+      agent.status = 'ready';
+      rerender();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// ---------- Dispatch input ----------
+dispatchInput.addEventListener('input', e => {
+  state.pendingInputText = e.target.value;
+});
+dispatchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const txt = dispatchInput.value.trim();
+    if (!txt) return;
+    // If agent selected → act as if confirm
+    if (state.selectedAgent) {
+      // pick best-affinity target
+      const a = state.agents[state.selectedAgent];
+      const t = TARGETS.find(x => x.affinity === a.affinity) || TARGETS[0];
+      pendingDeploy = { agentId: a.id, targetId: t.id };
+      dispatchInput.value = '';
+      state.pendingInputText = '';
+      executeDeploy(a.id, t.id, txt);
+    } else {
+      // enqueue on best-match target based on keyword heuristic
+      const target = guessTarget(txt);
+      state.queues[target].push(txt);
+      dispatchInput.value = '';
+      state.pendingInputText = '';
+      rerender();
+    }
+  }
+});
+
+function guessTarget(txt) {
+  const l = txt.toLowerCase();
+  if (/\b(sms|ln|lovenotes|webhook|twilio)\b/.test(l)) return 'lovenotes';
+  if (/\b(coach|hg|client|intake|okr)\b/.test(l)) return 'hg';
+  if (/\b(essay|newsletter|draft|post|write|content)\b/.test(l)) return 'content';
+  if (/\b(dentist|appt|book|laptop|household|life|vendor|grocery)\b/.test(l)) return 'life';
+  return 'life';
+}
+
+// ESC cancels selection / prompt
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (promptOverlay.classList.contains('show')) { closePrompt(); return; }
+    if (state.selectedAgent) { state.selectedAgent = null; rerender(); return; }
+    if (state.selectedOp)    { state.selectedOp = null; rerender(); return; }
+  }
+});
+
+// Cycle counter
+setInterval(() => {
+  state.cycle++;
+  statCycle.textContent = String(state.cycle).padStart(3, '0');
+}, 4500);
+
+// Click empty area → deselect
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.agent-card')) return;
+  if (e.target.closest('.target')) return;
+  if (e.target.closest('.prompt-card')) return;
+  if (e.target.closest('.dispatch')) return;
+  if (state.selectedAgent || state.selectedOp) {
+    state.selectedAgent = null;
+    state.selectedOp = null;
+    rerender();
+  }
+});
+
+// Initial paint
+rerender();
+
+// Periodically maybe throw one blocked event (every 18-22s, small chance)
+setInterval(() => {
+  if (Math.random() < 0.15) {
+    // pick random running deployment
+    const all = [];
+    TARGETS.forEach(t => state.deployments[t.id].forEach(d => {
+      if (!d.blocked && d.progress < 0.85) all.push(d);
+    }));
+    if (all.length) {
+      const pick = all[Math.floor(Math.random() * all.length)];
+      pick.blocked = true;
+      rerender();
+    }
+  }
+}, 9000);
+
+</script>
+</body>
+</html>

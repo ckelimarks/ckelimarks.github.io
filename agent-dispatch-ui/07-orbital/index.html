@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Orbital</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  :root {
+    --bg: #0b0d10;
+    --bg-2: #0e1114;
+    --ink: #cfd3d8;
+    --ink-dim: #7a8088;
+    --ink-faint: #3a3f46;
+    --accent: #7fb8c4;          /* muted cyan */
+    --accent-soft: rgba(127,184,196,0.55);
+    --accent-faint: rgba(127,184,196,0.14);
+    --amber: #c9a472;
+    --amber-soft: rgba(201,164,114,0.55);
+    --red: #b87b7b;
+    --red-soft: rgba(184,123,123,0.50);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: radial-gradient(1200px 800px at 50% 50%, var(--bg-2) 0%, var(--bg) 70%);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Corner meta */
+  .meta {
+    position: fixed;
+    top: 22px;
+    left: 28px;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 400;
+  }
+  .meta .dot {
+    display: inline-block;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--accent);
+    margin-right: 10px;
+    transform: translateY(-2px);
+    box-shadow: 0 0 8px var(--accent-soft);
+  }
+
+  .readout {
+    position: fixed;
+    top: 22px;
+    right: 28px;
+    text-align: right;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .readout .num {
+    color: var(--ink);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .readout .label {
+    font-size: 9.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* Stage */
+  .stage {
+    position: fixed;
+    inset: 0;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Dispatch input */
+  .dispatch {
+    position: fixed;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(520px, 70vw);
+    padding: 10px 16px;
+    border: 1px solid var(--ink-faint);
+    border-radius: 999px;
+    background: rgba(14,17,20,0.6);
+    backdrop-filter: blur(6px);
+    transition: border-color 260ms ease;
+  }
+  .dispatch:focus-within {
+    border-color: var(--accent-soft);
+  }
+  .dispatch .prompt {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    opacity: 0.8;
+  }
+  .dispatch input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+  }
+  .dispatch input::placeholder {
+    color: var(--ink-faint);
+    font-weight: 300;
+  }
+  .dispatch .hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+  }
+
+  /* Orbiting bodies */
+  .node {
+    cursor: pointer;
+  }
+  .node-core {
+    transition: filter 300ms ease;
+  }
+  .node-label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 11.5px;
+    fill: var(--ink);
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    opacity: 0.88;
+  }
+  .node-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    font-size: 9.5px;
+    fill: var(--ink-faint);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  /* Queue dots */
+  .queue-dot {
+    fill: var(--ink-faint);
+    opacity: 0.55;
+  }
+
+  /* Center ping */
+  @keyframes ping {
+    0%   { r: 2;  opacity: 0.8; }
+    100% { r: 140; opacity: 0; }
+  }
+  .ping {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 0.6;
+    animation: ping 1800ms cubic-bezier(0.16,0.8,0.3,1) forwards;
+  }
+
+  /* Completion bloom */
+  @keyframes bloom {
+    0%   { r: 1; opacity: 0.95; }
+    60%  { r: 14; opacity: 0.6; }
+    100% { r: 28; opacity: 0; }
+  }
+  .bloom {
+    fill: var(--accent);
+    animation: bloom 900ms ease-out forwards;
+  }
+
+  /* Pulses for stalled/blocked */
+  @keyframes amberPulse {
+    0%, 100% { opacity: 0.35; r: 3.2; }
+    50%      { opacity: 0.9;  r: 5.6; }
+  }
+  @keyframes redPulse {
+    0%, 100% { opacity: 0.45; }
+    50%      { opacity: 0.9; }
+  }
+  .state-stalled .halo {
+    fill: none;
+    stroke: var(--amber-soft);
+    stroke-width: 0.7;
+    animation: amberPulse 2200ms ease-in-out infinite;
+  }
+  .state-blocked .halo {
+    fill: none;
+    stroke: var(--red-soft);
+    stroke-width: 0.8;
+    animation: redPulse 1800ms ease-in-out infinite;
+  }
+
+  /* Completed ring particles (ambient gamification) */
+  .tally-particle {
+    fill: var(--accent);
+    opacity: 0.35;
+  }
+
+  /* Soft instructional whisper (barely there) */
+  .whisper {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9.5px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="meta"><span class="dot"></span>Orbital</div>
+
+<div class="readout">
+  <div><span class="num" id="completedNum">0</span> <span class="label">completed</span></div>
+  <div><span class="num" id="streakNum">0</span> <span class="label">streak</span></div>
+</div>
+
+<div class="stage">
+  <svg id="sky" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+</div>
+
+<form class="dispatch" id="dispatchForm" autocomplete="off">
+  <span class="prompt">›</span>
+  <input id="dispatchInput" type="text" placeholder="dispatch a task" maxlength="72" />
+  <span class="hint">ENTER</span>
+</form>
+
+<div class="whisper">click a stalled point to resume</div>
+
+<script>
+(() => {
+  const svg = document.getElementById('sky');
+  const W = 1000, H = 1000;
+  const CX = 500, CY = 500;
+
+  // Orbit radii (outer to inner)
+  const RINGS = [380, 300, 220, 140];
+  const OUTER = RINGS[0];
+  const INNER = RINGS[RINGS.length - 1];
+  const COMPLETE_R = 30;       // below this => spiral-in complete
+  const QUEUE_R = OUTER + 40;
+
+  // ---------- Static scene (rings, queue area) ----------
+  const ns = 'http://www.w3.org/2000/svg';
+
+  // Faint central disc
+  const coreDisc = document.createElementNS(ns, 'circle');
+  coreDisc.setAttribute('cx', CX);
+  coreDisc.setAttribute('cy', CY);
+  coreDisc.setAttribute('r', 8);
+  coreDisc.setAttribute('fill', 'rgba(127,184,196,0.10)');
+  svg.appendChild(coreDisc);
+
+  const coreRing = document.createElementNS(ns, 'circle');
+  coreRing.setAttribute('cx', CX);
+  coreRing.setAttribute('cy', CY);
+  coreRing.setAttribute('r', 3.2);
+  coreRing.setAttribute('fill', 'none');
+  coreRing.setAttribute('stroke', 'rgba(127,184,196,0.55)');
+  coreRing.setAttribute('stroke-width', '0.6');
+  svg.appendChild(coreRing);
+
+  // Orbit rings
+  RINGS.forEach((r, i) => {
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('cx', CX);
+    c.setAttribute('cy', CY);
+    c.setAttribute('r', r);
+    c.setAttribute('fill', 'none');
+    c.setAttribute('stroke', 'rgba(255,255,255,0.045)');
+    c.setAttribute('stroke-width', '0.6');
+    svg.appendChild(c);
+  });
+
+  // Completion tally ring (ambient — particles accrete here)
+  const tallyRadius = OUTER + 72;
+  const tallyGroup = document.createElementNS(ns, 'g');
+  tallyGroup.setAttribute('id', 'tally');
+  svg.appendChild(tallyGroup);
+
+  // Layer groups
+  const queueGroup = document.createElementNS(ns, 'g');
+  svg.appendChild(queueGroup);
+  const nodeGroup = document.createElementNS(ns, 'g');
+  svg.appendChild(nodeGroup);
+  const fxGroup = document.createElementNS(ns, 'g');
+  svg.appendChild(fxGroup);
+
+  // ---------- State ----------
+  let uid = 1;
+  const nodes = [];    // active orbiting points
+  const queue = [];    // pending tasks (outside outer ring)
+  let completed = 0;
+  let streak = 0;
+
+  const SEED_TASKS = [
+    { label: 'write Q2 roadmap',              progress: 0.15, state: 'active' },
+    { label: 'ship hotfix for #1829',         progress: 0.45, state: 'active' },
+    { label: 'reply to Sarah re: contract',   progress: 0.30, state: 'stalled' },
+    { label: 'research CRMs',                 progress: 0.60, state: 'active' },
+    { label: 'review design doc — auth v2',   progress: 0.72, state: 'active' },
+    { label: 'migrate analytics pipeline',    progress: 0.50, state: 'blocked' },
+    { label: 'draft onboarding email sequence', progress: 0.22, state: 'active' }
+  ];
+
+  const QUEUE_TASKS = [
+    'plan offsite agenda',
+    'reconcile March invoices',
+    'interview candidate — staff eng'
+  ];
+
+  // ---------- Helpers ----------
+  function progressToRadius(p) {
+    // p: 0 (just dispatched) -> OUTER, 1 (done) -> COMPLETE_R
+    const clamped = Math.max(0, Math.min(1, p));
+    return OUTER - (OUTER - COMPLETE_R) * clamped;
+  }
+
+  function angularSpeedForRadius(r) {
+    // Smaller orbit = faster angular speed (progress accelerates subtly near the center)
+    const t = (OUTER - r) / (OUTER - COMPLETE_R); // 0 outer .. 1 inner
+    return 0.00022 + t * 0.00050;                  // rad/ms
+  }
+
+  function fmt(n) { return String(n).padStart(2, '0'); }
+
+  // ---------- Node creation ----------
+  function createNode(taskLabel, opts = {}) {
+    const id = 'n' + (uid++);
+    const g = document.createElementNS(ns, 'g');
+    g.setAttribute('class', 'node state-active');
+    g.setAttribute('data-id', id);
+
+    // halo (only visible for stalled/blocked)
+    const halo = document.createElementNS(ns, 'circle');
+    halo.setAttribute('class', 'halo');
+    halo.setAttribute('r', 5.2);
+    halo.setAttribute('cx', 0);
+    halo.setAttribute('cy', 0);
+    halo.setAttribute('fill', 'none');
+    halo.setAttribute('stroke', 'none');
+    g.appendChild(halo);
+
+    // glow core
+    const core = document.createElementNS(ns, 'circle');
+    core.setAttribute('class', 'node-core');
+    core.setAttribute('r', 2.6);
+    core.setAttribute('cx', 0);
+    core.setAttribute('cy', 0);
+    core.setAttribute('fill', 'var(--accent)');
+    core.setAttribute('style', 'filter: drop-shadow(0 0 4px var(--accent-soft));');
+    g.appendChild(core);
+
+    // Label
+    const label = document.createElementNS(ns, 'text');
+    label.setAttribute('class', 'node-label');
+    label.setAttribute('x', 10);
+    label.setAttribute('y', -1);
+    label.textContent = taskLabel;
+    g.appendChild(label);
+
+    const sub = document.createElementNS(ns, 'text');
+    sub.setAttribute('class', 'node-sub');
+    sub.setAttribute('x', 10);
+    sub.setAttribute('y', 11);
+    sub.textContent = 'active';
+    g.appendChild(sub);
+
+    nodeGroup.appendChild(g);
+
+    const initialProgress = opts.progress ?? 0;
+    const r = progressToRadius(initialProgress);
+
+    const node = {
+      id,
+      g, core, halo, label, sub,
+      taskLabel,
+      angle: Math.random() * Math.PI * 2,
+      radius: r,
+      targetRadius: r,
+      progress: initialProgress,
+      angularDir: Math.random() < 0.5 ? 1 : -1,
+      angularJitter: 0.85 + Math.random() * 0.3,
+      state: opts.state || 'active',    // active | stalled | blocked | completing | done
+      spawnedAt: performance.now()
+    };
+
+    applyState(node, node.state);
+    positionNode(node, 0);
+
+    g.addEventListener('click', () => {
+      if (node.state === 'stalled') {
+        applyState(node, 'active');
+      } else if (node.state === 'blocked') {
+        // Blocked requires external unblock — nudge it once, no change
+      }
+    });
+
+    nodes.push(node);
+    return node;
+  }
+
+  function applyState(node, state) {
+    node.state = state;
+    node.g.classList.remove('state-active', 'state-stalled', 'state-blocked', 'state-completing');
+    node.g.classList.add('state-' + state);
+
+    if (state === 'active') {
+      node.core.setAttribute('fill', 'var(--accent)');
+      node.core.setAttribute('style', 'filter: drop-shadow(0 0 4px var(--accent-soft));');
+      node.halo.setAttribute('stroke', 'none');
+      node.sub.textContent = 'active';
+      node.sub.setAttribute('fill', 'var(--ink-faint)');
+    } else if (state === 'stalled') {
+      node.core.setAttribute('fill', 'var(--amber)');
+      node.core.setAttribute('style', 'filter: drop-shadow(0 0 5px var(--amber-soft));');
+      node.halo.setAttribute('stroke', 'var(--amber-soft)');
+      node.sub.textContent = 'needs input';
+      node.sub.setAttribute('fill', 'var(--amber)');
+    } else if (state === 'blocked') {
+      node.core.setAttribute('fill', 'var(--red)');
+      node.core.setAttribute('style', 'filter: drop-shadow(0 0 5px var(--red-soft));');
+      node.halo.setAttribute('stroke', 'var(--red-soft)');
+      node.sub.textContent = 'blocked';
+      node.sub.setAttribute('fill', 'var(--red)');
+    } else if (state === 'completing') {
+      node.sub.textContent = 'completing';
+      node.sub.setAttribute('fill', 'var(--accent)');
+    }
+  }
+
+  function positionNode(node, dt) {
+    // Angular motion: stalled/blocked don't rotate; completing does a gentle rotation inward
+    const moving = node.state === 'active' || node.state === 'completing';
+    if (moving) {
+      const speed = angularSpeedForRadius(node.radius) * node.angularJitter * node.angularDir;
+      node.angle += speed * dt;
+    }
+    const x = CX + Math.cos(node.angle) * node.radius;
+    const y = CY + Math.sin(node.angle) * node.radius;
+    node.g.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+
+    // Flip label side so it always sits "outside" the center
+    const cosA = Math.cos(node.angle);
+    if (cosA < -0.15) {
+      node.label.setAttribute('x', -10);
+      node.label.setAttribute('text-anchor', 'end');
+      node.sub.setAttribute('x', -10);
+      node.sub.setAttribute('text-anchor', 'end');
+    } else {
+      node.label.setAttribute('x', 10);
+      node.label.setAttribute('text-anchor', 'start');
+      node.sub.setAttribute('x', 10);
+      node.sub.setAttribute('text-anchor', 'start');
+    }
+  }
+
+  // ---------- Queue (pending tasks just beyond outer ring) ----------
+  function renderQueue() {
+    while (queueGroup.firstChild) queueGroup.removeChild(queueGroup.firstChild);
+    queue.forEach((task, i) => {
+      const angle = -Math.PI / 2 + (i - (queue.length - 1) / 2) * 0.18;
+      const x = CX + Math.cos(angle) * QUEUE_R;
+      const y = CY + Math.sin(angle) * QUEUE_R;
+
+      const g = document.createElementNS(ns, 'g');
+      g.setAttribute('transform', `translate(${x} ${y})`);
+
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('class', 'queue-dot');
+      dot.setAttribute('r', 1.6);
+      g.appendChild(dot);
+
+      const t = document.createElementNS(ns, 'text');
+      t.setAttribute('class', 'node-sub');
+      t.setAttribute('x', 0);
+      t.setAttribute('y', -8);
+      t.setAttribute('text-anchor', 'middle');
+      t.textContent = task;
+      g.appendChild(t);
+
+      queueGroup.appendChild(g);
+    });
+  }
+
+  function promoteFromQueue() {
+    if (queue.length === 0) return;
+    const task = queue.shift();
+    createNode(task, { progress: 0, state: 'active' });
+    renderQueue();
+  }
+
+  // ---------- Tally ring (ambient completion particles) ----------
+  function addTallyParticle() {
+    const angle = (completed - 1) * ((Math.PI * 2) / 48) - Math.PI / 2;
+    const x = CX + Math.cos(angle) * tallyRadius;
+    const y = CY + Math.sin(angle) * tallyRadius;
+    const p = document.createElementNS(ns, 'circle');
+    p.setAttribute('class', 'tally-particle');
+    p.setAttribute('r', 1.1);
+    p.setAttribute('cx', x);
+    p.setAttribute('cy', y);
+    tallyGroup.appendChild(p);
+  }
+
+  // ---------- Completion effect ----------
+  function emitPing() {
+    const ping = document.createElementNS(ns, 'circle');
+    ping.setAttribute('class', 'ping');
+    ping.setAttribute('cx', CX);
+    ping.setAttribute('cy', CY);
+    ping.setAttribute('r', 2);
+    fxGroup.appendChild(ping);
+    setTimeout(() => ping.remove(), 1900);
+  }
+  function emitBloom() {
+    const b = document.createElementNS(ns, 'circle');
+    b.setAttribute('class', 'bloom');
+    b.setAttribute('cx', CX);
+    b.setAttribute('cy', CY);
+    b.setAttribute('r', 1);
+    fxGroup.appendChild(b);
+    setTimeout(() => b.remove(), 950);
+  }
+
+  function completeNode(node) {
+    if (node.state === 'done') return;
+    node.state = 'done';
+    completed++;
+    streak++;
+    document.getElementById('completedNum').textContent = fmt(completed);
+    document.getElementById('streakNum').textContent = fmt(streak);
+    addTallyParticle();
+    emitBloom();
+    emitPing();
+
+    // fade + remove
+    node.g.style.transition = 'opacity 600ms ease';
+    node.g.style.opacity = '0';
+    setTimeout(() => {
+      node.g.remove();
+      const idx = nodes.indexOf(node);
+      if (idx >= 0) nodes.splice(idx, 1);
+      // Promote one from queue if available
+      if (queue.length > 0 && nodes.length < 9) promoteFromQueue();
+    }, 650);
+  }
+
+  // ---------- Simulation loop ----------
+  let lastT = performance.now();
+
+  function tick(now) {
+    const dt = Math.min(64, now - lastT);
+    lastT = now;
+
+    for (const node of nodes) {
+      if (node.state === 'active') {
+        // progress bleeds up slowly — each task ~60–120s of real-time to orbit inward
+        node.progress += dt * 0.00018 * (0.7 + Math.random() * 0.6);
+        node.radius = progressToRadius(node.progress);
+        if (node.progress >= 1 && node.radius <= COMPLETE_R + 0.5) {
+          applyState(node, 'completing');
+          node.completingStart = now;
+        }
+      } else if (node.state === 'completing') {
+        // Spiral in over ~2s
+        const t = Math.min(1, (now - node.completingStart) / 2000);
+        node.radius = COMPLETE_R * (1 - t) + 2 * (1 - t);
+        if (t >= 1) {
+          completeNode(node);
+        }
+      }
+      positionNode(node, dt);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- Occasional stalling ----------
+  setInterval(() => {
+    const candidates = nodes.filter(n => n.state === 'active');
+    if (candidates.length === 0) return;
+    // ~22% chance at each 8s interval to stall one
+    if (Math.random() < 0.22) {
+      const pick = candidates[Math.floor(Math.random() * candidates.length)];
+      applyState(pick, 'stalled');
+    }
+  }, 8000);
+
+  // Streak resets softly if a task sits stalled or blocked too long — no, keep it simple:
+  // streak increments on each completion, resets only if a node is dismissed (not implemented).
+
+  // ---------- Dispatch ----------
+  const form = document.getElementById('dispatchForm');
+  const input = document.getElementById('dispatchInput');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = input.value.trim();
+    if (!v) return;
+    if (nodes.length >= 10) {
+      // park it in queue if the sky is crowded
+      queue.push(v);
+      renderQueue();
+    } else {
+      createNode(v, { progress: 0, state: 'active' });
+    }
+    input.value = '';
+  });
+
+  // ---------- Seed ----------
+  SEED_TASKS.forEach(t => createNode(t.label, { progress: t.progress, state: t.state }));
+  QUEUE_TASKS.forEach(t => queue.push(t));
+  renderQueue();
+
+  requestAnimationFrame((t) => { lastT = t; tick(t); });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flow</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f8f8f6;
+    --bg-alt: #f2f2ef;
+    --ink: #17181a;
+    --ink-soft: #5a5d63;
+    --ink-mute: #9a9da2;
+    --line: #e6e5e1;
+    --line-soft: #eeede9;
+    --accent: #4c55a3;      /* muted indigo */
+    --accent-soft: #4c55a31a;
+    --amber: #c98a2b;
+    --amber-soft: #c98a2b14;
+    --red: #b04846;
+    --red-soft: #b0484614;
+    --p0: #b04846;
+    --p1: #c98a2b;
+    --p2: #9a9da2;
+    --card-bg: #ffffff;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---------- Top HUD ---------- */
+  .hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .hud-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .logo {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 14px;
+  }
+  .dispatch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    width: 340px;
+    transition: border-color 150ms ease;
+  }
+  .dispatch:focus-within {
+    border-color: var(--accent);
+  }
+  .dispatch input {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex: 1;
+    font: inherit;
+    color: var(--ink);
+    font-size: 12.5px;
+  }
+  .dispatch input::placeholder {
+    color: var(--ink-mute);
+  }
+  .dispatch .kbd {
+    font-size: 10px;
+    color: var(--ink-mute);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .hud-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .throughput {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .throughput .count {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .meter {
+    width: 120px;
+    height: 4px;
+    background: var(--line-soft);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 400ms ease;
+  }
+  .streak {
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .streak-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ---------- Pipeline ---------- */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    height: calc(100vh - 57px);
+    padding: 0;
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--line-soft);
+    min-height: 0;
+  }
+  .stage:last-child { border-right: none; }
+
+  .stage-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+  }
+  .stage-title {
+    font-size: 10.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-mute);
+  }
+  .stage-count {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .track {
+    flex: 1;
+    padding: 4px 14px 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    scrollbar-width: thin;
+  }
+  .track::-webkit-scrollbar { width: 6px; }
+  .track::-webkit-scrollbar-track { background: transparent; }
+  .track::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 9px 11px 9px 12px;
+    margin-bottom: 6px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    cursor: default;
+    transition:
+      transform 320ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 300ms ease,
+      border-color 200ms ease,
+      background 200ms ease,
+      box-shadow 150ms ease;
+    will-change: transform, opacity;
+  }
+  .card:hover {
+    transform: translateY(-1px);
+    border-color: #dcdad4;
+  }
+  .card.entering {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  .card.leaving {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+
+  .priority-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--p2);
+  }
+  .priority-dot.p0 { background: var(--p0); }
+  .priority-dot.p1 { background: var(--p1); }
+  .priority-dot.p2 { background: var(--p2); }
+
+  .card-title {
+    flex: 1;
+    font-size: 12.5px;
+    line-height: 1.3;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 400;
+  }
+
+  .assignee {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-alt);
+    color: var(--ink-soft);
+    font-size: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0;
+  }
+
+  /* Running progress bar */
+  .card .progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--line-soft);
+    overflow: hidden;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+  .card .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    opacity: 0.55;
+    transition: width 600ms linear;
+  }
+
+  /* States */
+  .card.needs-input {
+    border-left: 2px solid var(--amber);
+    cursor: pointer;
+  }
+  .card.needs-input::after {
+    content: 'input needed';
+    font-size: 9.5px;
+    color: var(--amber);
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    margin-left: 4px;
+  }
+  .card.blocked {
+    border-left: 2px solid var(--red);
+  }
+  .card.blocked::after {
+    content: 'blocked';
+    font-size: 9.5px;
+    color: var(--red);
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    margin-left: 4px;
+  }
+
+  .card.completing {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  /* Done stack */
+  .track.done-track .card {
+    min-height: 30px;
+    padding: 7px 10px;
+    margin-bottom: 3px;
+  }
+  .track.done-track .card .card-title {
+    color: var(--ink-soft);
+    text-decoration: line-through;
+    text-decoration-color: var(--ink-mute);
+    text-decoration-thickness: 1px;
+  }
+  .track.done-track .card[data-age="1"] { opacity: 0.75; }
+  .track.done-track .card[data-age="2"] { opacity: 0.55; }
+  .track.done-track .card[data-age="3"] { opacity: 0.35; }
+  .track.done-track .card[data-age="4"] { opacity: 0.22; }
+
+  /* Confetti */
+  .confetti-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 100;
+  }
+  .confetti-bit {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: var(--accent);
+    border-radius: 1px;
+    opacity: 0.9;
+  }
+
+  /* Empty state hint */
+  .track:empty::before {
+    content: '';
+  }
+</style>
+</head>
+<body>
+
+<header class="hud">
+  <div class="hud-left">
+    <div class="logo">Flow</div>
+    <form class="dispatch" id="dispatchForm" autocomplete="off">
+      <input id="dispatchInput" type="text" placeholder="Dispatch a task..." />
+      <span class="kbd">Enter</span>
+    </form>
+  </div>
+  <div class="hud-right">
+    <div class="streak" title="Daily streak">
+      <span class="streak-dot"></span>
+      <span id="streak">12 day streak</span>
+    </div>
+    <div class="throughput">
+      <span class="count"><span id="doneCount">0</span> / <span id="doneGoal">20</span> today</span>
+      <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+    </div>
+  </div>
+</header>
+
+<main class="pipeline" id="pipeline">
+  <section class="stage" data-stage="queue">
+    <div class="stage-head">
+      <span class="stage-title">Queue</span>
+      <span class="stage-count" data-count-for="queue">0</span>
+    </div>
+    <div class="track" id="track-queue"></div>
+  </section>
+  <section class="stage" data-stage="dispatched">
+    <div class="stage-head">
+      <span class="stage-title">Dispatched</span>
+      <span class="stage-count" data-count-for="dispatched">0</span>
+    </div>
+    <div class="track" id="track-dispatched"></div>
+  </section>
+  <section class="stage" data-stage="running">
+    <div class="stage-head">
+      <span class="stage-title">Running</span>
+      <span class="stage-count" data-count-for="running">0</span>
+    </div>
+    <div class="track" id="track-running"></div>
+  </section>
+  <section class="stage" data-stage="review">
+    <div class="stage-head">
+      <span class="stage-title">Review</span>
+      <span class="stage-count" data-count-for="review">0</span>
+    </div>
+    <div class="track" id="track-review"></div>
+  </section>
+  <section class="stage" data-stage="done">
+    <div class="stage-head">
+      <span class="stage-title">Done</span>
+      <span class="stage-count" data-count-for="done">0</span>
+    </div>
+    <div class="track done-track" id="track-done"></div>
+  </section>
+</main>
+
+<div class="confetti-layer" id="confetti"></div>
+
+<script>
+(() => {
+  // ---------- State ----------
+  const STAGES = ['queue', 'dispatched', 'running', 'review', 'done'];
+  const state = {
+    cards: new Map(),
+    doneCount: 0,
+    doneGoal: 20,
+  };
+
+  let idCounter = 1;
+  const nextId = () => `c${idCounter++}`;
+
+  // ---------- Seed ----------
+  const seed = [
+    { title: 'design new onboarding flow', priority: 'p1', assignee: 'M', stage: 'queue' },
+    { title: 'review Q1 budget with finance', priority: 'p2', assignee: 'J', stage: 'dispatched' },
+    { title: 'draft offsite agenda', priority: 'p2', assignee: 'C', stage: 'dispatched' },
+    { title: 'ship auth bugfix (#4821)', priority: 'p0', assignee: 'A', stage: 'running', progress: 62 },
+    { title: 'migrate analytics to v3 sdk', priority: 'p1', assignee: 'R', stage: 'running', progress: 34, needsInput: true },
+    { title: 'refactor billing webhook handler', priority: 'p1', assignee: 'S', stage: 'running', progress: 18 },
+    { title: 'plan 1:1 with Mira', priority: 'p2', assignee: 'C', stage: 'review' },
+    { title: 'publish changelog for v2.4', priority: 'p2', assignee: 'J', stage: 'done' },
+    { title: 'interview candidate – eng lead', priority: 'p1', assignee: 'M', stage: 'done' },
+  ];
+
+  // ---------- DOM helpers ----------
+  const tracks = {};
+  STAGES.forEach(s => { tracks[s] = document.getElementById('track-' + s); });
+
+  function renderCard(card) {
+    const el = document.createElement('div');
+    el.className = 'card entering';
+    el.dataset.id = card.id;
+    if (card.needsInput) el.classList.add('needs-input');
+    if (card.blocked) el.classList.add('blocked');
+
+    el.innerHTML = `
+      <span class="priority-dot ${card.priority}"></span>
+      <span class="card-title">${escapeHtml(card.title)}</span>
+      <span class="assignee">${escapeHtml(card.assignee)}</span>
+      <div class="progress"><div class="progress-fill" style="width:${card.progress || 0}%"></div></div>
+    `;
+
+    el.addEventListener('click', () => {
+      if (el.classList.contains('needs-input')) {
+        card.needsInput = false;
+        el.classList.remove('needs-input');
+      }
+    });
+
+    return el;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function addCard(cardData) {
+    const card = {
+      id: nextId(),
+      progress: 0,
+      needsInput: false,
+      blocked: false,
+      ...cardData,
+    };
+    const el = renderCard(card);
+    card.el = el;
+    state.cards.set(card.id, card);
+    tracks[card.stage].appendChild(el);
+    // trigger entering animation
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => el.classList.remove('entering'));
+    });
+    updateCounts();
+    return card;
+  }
+
+  function moveCard(card, toStage) {
+    if (card.stage === toStage) return;
+    const el = card.el;
+    el.classList.add('leaving');
+    setTimeout(() => {
+      card.stage = toStage;
+      el.classList.remove('leaving');
+      el.classList.add('entering');
+      if (toStage === 'done') {
+        tracks[toStage].prepend(el);
+        updateDoneAges();
+      } else {
+        tracks[toStage].appendChild(el);
+      }
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => el.classList.remove('entering'));
+      });
+      updateCounts();
+    }, 260);
+  }
+
+  function updateDoneAges() {
+    const kids = Array.from(tracks.done.children);
+    kids.forEach((el, i) => {
+      if (i === 0) el.removeAttribute('data-age');
+      else if (i < 5) el.setAttribute('data-age', String(Math.min(i, 4)));
+      else {
+        // remove very old ones to keep bounded
+        el.remove();
+        const id = el.dataset.id;
+        if (state.cards.has(id)) state.cards.delete(id);
+      }
+    });
+  }
+
+  function updateCounts() {
+    STAGES.forEach(s => {
+      const n = Array.from(state.cards.values()).filter(c => c.stage === s).length;
+      const el = document.querySelector(`[data-count-for="${s}"]`);
+      if (el) el.textContent = n;
+    });
+  }
+
+  // ---------- Dispatch ----------
+  const form = document.getElementById('dispatchForm');
+  const input = document.getElementById('dispatchInput');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = input.value.trim();
+    if (!val) return;
+    const priorities = ['p0', 'p1', 'p2', 'p2'];
+    const assignees = ['C', 'M', 'J', 'A', 'R', 'S'];
+    addCard({
+      title: val.toLowerCase(),
+      priority: priorities[Math.floor(Math.random() * priorities.length)],
+      assignee: assignees[Math.floor(Math.random() * assignees.length)],
+      stage: 'queue',
+    });
+    input.value = '';
+  });
+
+  // ---------- Throughput / completion ----------
+  function bumpDone() {
+    state.doneCount += 1;
+    document.getElementById('doneCount').textContent = state.doneCount;
+    const pct = Math.min(100, (state.doneCount / state.doneGoal) * 100);
+    document.getElementById('meterFill').style.width = pct + '%';
+    if (state.doneCount > 0 && state.doneCount % state.doneGoal === 0) {
+      confettiPop();
+    }
+  }
+
+  function confettiPop() {
+    const layer = document.getElementById('confetti');
+    const meter = document.getElementById('meterFill').getBoundingClientRect();
+    const cx = meter.left + meter.width / 2;
+    const cy = meter.top + meter.height / 2;
+    for (let i = 0; i < 22; i++) {
+      const bit = document.createElement('div');
+      bit.className = 'confetti-bit';
+      bit.style.left = cx + 'px';
+      bit.style.top = cy + 'px';
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 40 + Math.random() * 80;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 20;
+      bit.style.transition = 'transform 800ms cubic-bezier(.2,.7,.2,1), opacity 800ms ease';
+      layer.appendChild(bit);
+      requestAnimationFrame(() => {
+        bit.style.transform = `translate(${dx}px, ${dy}px) rotate(${Math.random()*360}deg)`;
+        bit.style.opacity = '0';
+      });
+      setTimeout(() => bit.remove(), 900);
+    }
+  }
+
+  // ---------- Simulation ----------
+
+  // Queue → Dispatched (every ~2.5s pick oldest queue card)
+  setInterval(() => {
+    const q = Array.from(state.cards.values()).filter(c => c.stage === 'queue');
+    if (q.length) moveCard(q[0], 'dispatched');
+  }, 2600);
+
+  // Dispatched → Running (short delay, pick oldest)
+  setInterval(() => {
+    const d = Array.from(state.cards.values()).filter(c => c.stage === 'dispatched');
+    if (d.length) {
+      d[0].progress = 0;
+      moveCard(d[0], 'running');
+    }
+  }, 2000);
+
+  // Running inch progress every 700ms
+  setInterval(() => {
+    const running = Array.from(state.cards.values()).filter(c => c.stage === 'running');
+    running.forEach(c => {
+      if (c.needsInput || c.blocked) return;
+      const inc = 2 + Math.random() * 5;
+      c.progress = Math.min(100, (c.progress || 0) + inc);
+      const fill = c.el.querySelector('.progress-fill');
+      if (fill) fill.style.width = c.progress + '%';
+      if (c.progress >= 100) {
+        moveCard(c, 'review');
+      }
+    });
+  }, 700);
+
+  // Occasional needs-input on a running card
+  setInterval(() => {
+    const running = Array.from(state.cards.values())
+      .filter(c => c.stage === 'running' && !c.needsInput && !c.blocked);
+    if (running.length && Math.random() < 0.35) {
+      const pick = running[Math.floor(Math.random() * running.length)];
+      pick.needsInput = true;
+      pick.el.classList.add('needs-input');
+    }
+  }, 7000);
+
+  // Review → Done (steady drain)
+  setInterval(() => {
+    const r = Array.from(state.cards.values()).filter(c => c.stage === 'review');
+    if (r.length) {
+      const pick = r[0];
+      pick.el.classList.add('completing');
+      setTimeout(() => {
+        pick.el.classList.remove('completing');
+        moveCard(pick, 'done');
+        bumpDone();
+      }, 450);
+    }
+  }, 3400);
+
+  // ---------- Initialize ----------
+  seed.forEach(s => addCard(s));
+  // Render initial progress for running cards
+  state.cards.forEach(c => {
+    if (c.stage === 'running' && c.progress) {
+      const fill = c.el.querySelector('.progress-fill');
+      if (fill) fill.style.width = c.progress + '%';
+    }
+  });
+  updateDoneAges();
+  updateCounts();
+})();
+</script>
+
+</body>
+</html>
