@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<!--
+  Synthesis (16). Concept: "Desk" — a single dispatch bar up top, four horizontal lanes
+  for the four life areas (LoveNotes / HG / Content / Life), and a continuous right-to-left
+  time flow. Drew from: Squad's decisive commit gesture, Command's real named life-areas,
+  Timeline's moving playhead, Bases' growth (completed work accretes as small nodes on the
+  right of each lane), Hangar's arc-in-flight (dispatched agent arcs into its lane).
+  Rejected: sidebars, gamified flavor, dense dashboards, dark techy greys. Palette is warm
+  off-white ink editorial — light mode, one accent (amber), one alert (muted rust).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --paper:      #f5f1ea;   /* warm off-white */
+  --paper-2:    #efeae0;
+  --paper-3:    #e8e2d4;
+  --ink-0:      #1d1a15;
+  --ink-1:      #3c372e;
+  --ink-2:      #736c5e;
+  --ink-3:      #a69e8e;
+  --ink-4:      #c9c1b0;
+  --rule:       #d9d1bd;
+  --rule-soft:  #e4dcc8;
+  --accent:     #b8651a;   /* burnt amber */
+  --accent-soft:#e6c79a;
+  --alert:      #a14333;   /* muted rust, only for attention */
+
+  --ln-tint:    #eae2d4;   /* each lane gets a barely-there tint */
+  --hg-tint:    #e8e4d2;
+  --content-tint:#ebe0d0;
+  --life-tint:  #e5e4d3;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink-0);
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 400;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+}
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 64px 1fr 28px;
+  position: relative;
+}
+
+/* ============ TOP BAR ============ */
+.top {
+  display: grid;
+  grid-template-columns: 200px 1fr 260px;
+  align-items: center;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  position: relative;
+  z-index: 20;
+}
+.brand {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  color: var(--ink-0);
+}
+.brand .dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); margin-right: 10px; vertical-align: middle;
+  transform: translateY(-2px);
+}
+.brand .date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  margin-left: 14px;
+  text-transform: uppercase;
+}
+
+.dispatch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 8px 14px;
+  transition: border-color .18s ease, background .18s ease;
+}
+.dispatch:focus-within {
+  border-color: var(--ink-2);
+  background: #fff;
+}
+.dispatch .prompt {
+  color: var(--ink-3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dispatch input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--ink-0);
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+.dispatch input::placeholder { color: var(--ink-3); font-style: italic; }
+.dispatch .lane-pick {
+  display: flex;
+  gap: 4px;
+  padding-left: 10px;
+  border-left: 1px solid var(--rule);
+  margin-left: 4px;
+}
+.dispatch .lane-pick button {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-2);
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.dispatch .lane-pick button:hover { color: var(--ink-0); background: var(--paper-3); }
+.dispatch .lane-pick button.on {
+  background: var(--ink-0);
+  color: var(--paper);
+  border-color: var(--ink-0);
+}
+.dispatch .enter-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-left: 6px;
+}
+
+/* resource meters — quiet, top-right */
+.meters {
+  display: flex;
+  gap: 18px;
+  justify-content: flex-end;
+  align-items: center;
+}
+.meter {
+  display: flex; flex-direction: column; gap: 4px;
+  align-items: flex-start;
+  min-width: 48px;
+}
+.meter .lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.meter .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+.meter .bar {
+  width: 48px; height: 2px; background: var(--rule-soft);
+  border-radius: 1px; overflow: hidden; margin-top: 2px;
+}
+.meter .bar > span {
+  display: block; height: 100%;
+  background: var(--ink-2);
+  transition: width .6s ease;
+}
+.meter.hot .bar > span { background: var(--accent); }
+
+/* ============ STAGE ============ */
+.stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* playhead (the "now" line) */
+.playhead {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--ink-0);
+  opacity: 0.5;
+  z-index: 8;
+  pointer-events: none;
+}
+.playhead::before {
+  content: "NOW";
+  position: absolute;
+  top: 6px;
+  left: -22px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--ink-2);
+  background: var(--paper);
+  padding: 1px 4px;
+}
+.playhead::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -3px;
+  width: 7px; height: 7px;
+  background: var(--ink-0);
+  border-radius: 50%;
+}
+
+/* the four lanes */
+.lanes {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+}
+.lane {
+  position: relative;
+  border-bottom: 1px solid var(--rule-soft);
+  overflow: hidden;
+}
+.lane:last-child { border-bottom: none; }
+.lane[data-id="lovenotes"] { background: linear-gradient(180deg, var(--ln-tint) 0%, var(--paper) 100%); }
+.lane[data-id="hg"]        { background: linear-gradient(180deg, var(--hg-tint) 0%, var(--paper) 100%); }
+.lane[data-id="content"]   { background: linear-gradient(180deg, var(--content-tint) 0%, var(--paper) 100%); }
+.lane[data-id="life"]      { background: linear-gradient(180deg, var(--life-tint) 0%, var(--paper) 100%); }
+
+.lane-head {
+  position: absolute;
+  top: 14px; left: 20px;
+  z-index: 4;
+  display: flex; align-items: baseline; gap: 12px;
+}
+.lane-head .name {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--ink-0);
+}
+.lane-head .meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Ghost grid of time ticks */
+.lane .ticks {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 100%;
+  pointer-events: none;
+}
+.lane .tick {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--rule-soft);
+  opacity: 0.5;
+}
+
+/* Task blocks — pill-shaped, drifting left */
+.task {
+  position: absolute;
+  height: 34px;
+  background: #fff;
+  border: 1px solid var(--ink-4);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px 0 12px;
+  font-family: 'Fraunces', serif;
+  font-size: 13.5px;
+  color: var(--ink-0);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  overflow: hidden;
+  z-index: 5;
+  cursor: pointer;
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.task:hover {
+  box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+  z-index: 6;
+}
+.task .glyph {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 9px;
+  color: #fff;
+  margin-right: 9px;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+.task .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+.task .fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: rgba(184,101,26,0.07);
+  z-index: 0;
+  transition: width .6s linear;
+}
+.task > * { position: relative; z-index: 1; }
+
+.task.needs-input {
+  border-color: var(--alert);
+  box-shadow: 0 0 0 3px rgba(161,67,51,0.12);
+  animation: pulseNeeds 2.2s ease-in-out infinite;
+}
+.task.needs-input .glyph { background: var(--alert); }
+.task.needs-input::after {
+  content: "needs you";
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--alert);
+  background: #fff;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--alert);
+  z-index: 2;
+}
+@keyframes pulseNeeds {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(161,67,51,0.10); }
+  50% { box-shadow: 0 0 0 6px rgba(161,67,51,0.06); }
+}
+
+.task.done {
+  background: var(--paper-2);
+  border-color: var(--rule);
+  color: var(--ink-2);
+}
+.task.done .label { text-decoration: line-through; text-decoration-color: var(--ink-4); }
+.task.done .glyph { background: var(--ink-3); }
+
+/* Graph: the "growth" region, pinned to the right edge of each lane */
+.growth {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 220px;
+  pointer-events: none;
+  z-index: 2;
+}
+.growth svg { width: 100%; height: 100%; display: block; }
+.growth .node {
+  fill: var(--ink-1);
+  opacity: 0;
+  transform-origin: center;
+  transition: opacity .6s ease;
+}
+.growth .node.show { opacity: 0.85; }
+.growth .edge {
+  stroke: var(--ink-3);
+  stroke-width: 0.6;
+  opacity: 0;
+  transition: opacity .8s ease;
+}
+.growth .edge.show { opacity: 0.28; }
+
+/* Agent roster — along the very bottom */
+.bench {
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+  display: flex; align-items: center;
+  padding: 0 28px;
+  gap: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  z-index: 15;
+  position: relative;
+}
+.bench .bench-label { color: var(--ink-3); }
+.bench .agents { display: flex; gap: 8px; }
+.bench .agent {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--paper-3);
+  border: 1px solid var(--ink-4);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--ink-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  cursor: default;
+  transition: transform .18s ease;
+}
+.bench .agent.busy {
+  opacity: 0.35;
+  background: var(--paper-2);
+}
+.bench .agent.free {
+  background: #fff;
+  border-color: var(--ink-2);
+  color: var(--ink-0);
+}
+.bench .agent:hover { transform: translateY(-2px); }
+
+.bench .right {
+  margin-left: auto;
+  color: var(--ink-3);
+}
+
+/* Agent-in-flight overlay */
+.flight-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.flight-dot {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink-0);
+  color: var(--paper);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(29,26,21,0.35);
+  transform: translate(-50%, -50%);
+  transition: left .9s cubic-bezier(0.4,0,0.2,1), top .9s cubic-bezier(0.4,0,0.2,1), opacity .3s ease, width .3s ease, height .3s ease, font-size .3s ease;
+}
+
+/* Completion burst */
+.burst {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: burst .9s ease-out forwards;
+  z-index: 9;
+}
+@keyframes burst {
+  0%   { opacity: 0.9; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(6); }
+}
+
+/* Footer status bar */
+.footer {
+  border-top: 1px solid var(--rule);
+  background: var(--paper-2);
+  display: flex; align-items: center;
+  padding: 0 28px;
+  gap: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.footer .sep { width: 1px; height: 12px; background: var(--rule); }
+.footer .tip { color: var(--ink-3); margin-left: auto; }
+
+/* task entry animation */
+@keyframes taskIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.task.fresh { animation: taskIn .35s ease-out; }
+
+/* focus helper */
+.kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-1);
+  margin: 0 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="top">
+    <div class="brand">
+      <span class="dot"></span>Desk
+      <span class="date mono" id="dateLabel">THU · APR 23</span>
+    </div>
+
+    <div class="dispatch" id="dispatch">
+      <span class="prompt">Dispatch</span>
+      <input id="taskInput" type="text"
+             placeholder="Type an idea — then Enter…"
+             autocomplete="off" spellcheck="false" />
+      <div class="lane-pick" id="lanePick">
+        <button data-lane="lovenotes">LoveNotes</button>
+        <button data-lane="hg">HG</button>
+        <button data-lane="content">Content</button>
+        <button data-lane="life">Life</button>
+      </div>
+      <span class="enter-hint mono"><span class="kbd">↵</span></span>
+    </div>
+
+    <div class="meters">
+      <div class="meter" id="m-context">
+        <span class="lbl">Context</span>
+        <span class="val mono"><span id="mv-context">62</span>%</span>
+        <span class="bar"><span style="width:62%"></span></span>
+      </div>
+      <div class="meter" id="m-tokens">
+        <span class="lbl">Tokens</span>
+        <span class="val mono" id="mv-tokens">4.1k/m</span>
+        <span class="bar"><span style="width:34%"></span></span>
+      </div>
+      <div class="meter" id="m-money">
+        <span class="lbl">Spend</span>
+        <span class="val mono">$<span id="mv-money">2.84</span></span>
+        <span class="bar"><span style="width:18%"></span></span>
+      </div>
+      <div class="meter" id="m-memory">
+        <span class="lbl">Memory</span>
+        <span class="val mono"><span id="mv-memory">81</span>%</span>
+        <span class="bar"><span style="width:81%"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage" id="stage">
+    <div class="lanes" id="lanes">
+      <div class="lane" data-id="lovenotes">
+        <div class="lane-head">
+          <span class="name">LoveNotes</span>
+          <span class="meta mono" data-count-for="lovenotes">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth"><svg viewBox="0 0 220 200" preserveAspectRatio="none"><g class="edges"></g><g class="nodes"></g></svg></div>
+      </div>
+      <div class="lane" data-id="hg">
+        <div class="lane-head">
+          <span class="name">HG</span>
+          <span class="meta mono" data-count-for="hg">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth"><svg viewBox="0 0 220 200" preserveAspectRatio="none"><g class="edges"></g><g class="nodes"></g></svg></div>
+      </div>
+      <div class="lane" data-id="content">
+        <div class="lane-head">
+          <span class="name">Content</span>
+          <span class="meta mono" data-count-for="content">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth"><svg viewBox="0 0 220 200" preserveAspectRatio="none"><g class="edges"></g><g class="nodes"></g></svg></div>
+      </div>
+      <div class="lane" data-id="life">
+        <div class="lane-head">
+          <span class="name">Life</span>
+          <span class="meta mono" data-count-for="life">0 active</span>
+        </div>
+        <div class="ticks"></div>
+        <div class="growth"><svg viewBox="0 0 220 200" preserveAspectRatio="none"><g class="edges"></g><g class="nodes"></g></svg></div>
+      </div>
+    </div>
+
+    <div class="playhead" id="playhead"></div>
+    <div class="flight-layer" id="flightLayer"></div>
+  </div>
+
+  <!-- BENCH -->
+  <div class="bench">
+    <span class="bench-label mono">Bench</span>
+    <div class="agents" id="bench"></div>
+    <span class="right mono"><span id="freeCount">0</span> free · <span id="busyCount">0</span> busy</span>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer" style="grid-row: auto; display:none;"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   DESK — synthesis prototype
+   ============================================================ */
+
+const LANES = [
+  { id: 'lovenotes', name: 'LoveNotes' },
+  { id: 'hg',        name: 'HG' },
+  { id: 'content',   name: 'Content' },
+  { id: 'life',      name: 'Life' },
+];
+
+// Agents — small pool, each has initials + optional specialty (informs default lane)
+const AGENTS = [
+  { id: 'A1', name: 'AR', spec: 'lovenotes' },
+  { id: 'A2', name: 'BK', spec: 'hg' },
+  { id: 'A3', name: 'CV', spec: 'content' },
+  { id: 'A4', name: 'DL', spec: 'life' },
+  { id: 'A5', name: 'EM', spec: 'lovenotes' },
+  { id: 'A6', name: 'FP', spec: 'content' },
+  { id: 'A7', name: 'GN', spec: null },
+  { id: 'A8', name: 'HS', spec: null },
+];
+
+// Simulation state
+const state = {
+  tasks: [],         // active tasks
+  selectedLane: 'lovenotes',
+  now: Date.now(),
+  // horizontal scaling: each second = PX_PER_SEC; tasks drift leftward from playhead
+  // visible window: LOOKBACK_MS old (behind playhead) + LOOKAHEAD_MS upcoming (ahead, to right)
+};
+
+const LOOKBACK_MS  = 90 * 1000;   // 90s of history visible
+const LOOKAHEAD_MS = 40 * 1000;   // a bit of planned runway
+
+// Seed tasks — realistic, per lane. Some already running, some queued (future), some done (past).
+const SEED_TASKS = [
+  // LoveNotes
+  { lane:'lovenotes', label:'Review PR #482 — reminder scheduler refactor', agent:'A1', startOffset:-22000, dur: 55000, progress: 0.40 },
+  { lane:'lovenotes', label:'Draft reply to Sarah re: contract redlines',    agent:'A5', startOffset:-8000,  dur: 28000, progress: 0.28, needsInput:true },
+  { lane:'lovenotes', label:'Triage Supabase auth errors (last 24h)',        agent:null, startOffset:12000,  dur: 35000, progress: 0 },
+  // HG
+  { lane:'hg', label:'Summarize client intake call — action items', agent:'A2', startOffset:-30000, dur: 40000, progress: 0.75 },
+  { lane:'hg', label:'Draft Q2 OKRs — coaching program',            agent:null, startOffset:8000,   dur: 50000, progress: 0 },
+  // Content
+  { lane:'content', label:'Outline essay: "Attention is the asset"',     agent:'A3', startOffset:-45000, dur: 60000, progress: 0.85 },
+  { lane:'content', label:'Edit Substack draft — "Notes on dispatch"',    agent:'A6', startOffset:-12000, dur: 30000, progress: 0.38 },
+  // Life
+  { lane:'life', label:'Book dentist appt — Dr. Keller',          agent:'A4', startOffset:-6000, dur: 18000, progress: 0.30 },
+  { lane:'life', label:'Pull receipts for April reimbursements',  agent:null, startOffset:24000, dur: 22000, progress: 0 },
+];
+
+// Completed tasks to seed the growth graph immediately
+const SEED_DONE = {
+  lovenotes: 6,
+  hg: 3,
+  content: 8,
+  life: 4,
+};
+
+let taskIdCounter = 0;
+function nextTaskId() { return 'T' + (++taskIdCounter); }
+
+/* ---------- DOM ---------- */
+const laneEls = {};
+LANES.forEach(l => laneEls[l.id] = document.querySelector(`.lane[data-id="${l.id}"]`));
+
+const stageEl = document.getElementById('stage');
+const flightLayer = document.getElementById('flightLayer');
+const playheadEl = document.getElementById('playhead');
+const taskInput = document.getElementById('taskInput');
+const lanePickEl = document.getElementById('lanePick');
+const benchEl = document.getElementById('bench');
+const freeCountEl = document.getElementById('freeCount');
+const busyCountEl = document.getElementById('busyCount');
+const dateLabel = document.getElementById('dateLabel');
+
+/* ---------- Date label ---------- */
+(function(){
+  const d = new Date();
+  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
+  const mo  = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()];
+  dateLabel.textContent = `${dow} · ${mo} ${d.getDate()}`;
+})();
+
+/* ---------- Lane picker ---------- */
+function setLane(id) {
+  state.selectedLane = id;
+  Array.from(lanePickEl.querySelectorAll('button')).forEach(b => {
+    b.classList.toggle('on', b.dataset.lane === id);
+  });
+}
+lanePickEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  setLane(btn.dataset.lane);
+  taskInput.focus();
+});
+setLane('lovenotes');
+
+/* ---------- Input: idea → dispatch ---------- */
+taskInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && taskInput.value.trim().length > 0) {
+    const label = taskInput.value.trim();
+    taskInput.value = '';
+    dispatchNewTask(label, state.selectedLane);
+  } else if (e.key === 'Tab') {
+    // cycle lanes with Tab for rapid dispatch
+    e.preventDefault();
+    const idx = LANES.findIndex(l => l.id === state.selectedLane);
+    setLane(LANES[(idx + 1) % LANES.length].id);
+  }
+});
+
+/* auto-classify light-weight: keywords → default lane suggestion */
+taskInput.addEventListener('input', () => {
+  const v = taskInput.value.toLowerCase();
+  if (/\b(pr|supabase|sms|reminder|twilio|auth|love\s*notes|lovenotes)\b/.test(v)) setLane('lovenotes');
+  else if (/\b(hg|client|coaching|intake|okr|session)\b/.test(v)) setLane('hg');
+  else if (/\b(essay|post|substack|draft|outline|article|newsletter)\b/.test(v)) setLane('content');
+  else if (/\b(dentist|appt|bill|grocery|receipt|life|household|book\s)\b/.test(v)) setLane('life');
+});
+
+// Focus input by default so user can just start typing
+window.addEventListener('load', () => taskInput.focus());
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== taskInput) {
+    e.preventDefault();
+    taskInput.focus();
+  }
+});
+
+/* ---------- Bench render ---------- */
+function renderBench() {
+  benchEl.innerHTML = '';
+  AGENTS.forEach(a => {
+    const busy = state.tasks.some(t => t.agent === a.id && !t.done);
+    const el = document.createElement('div');
+    el.className = 'agent ' + (busy ? 'busy' : 'free');
+    el.title = `${a.name}${a.spec ? ' — ' + a.spec : ''}${busy ? ' (busy)' : ' (free)'}`;
+    el.textContent = a.name;
+    el.dataset.agentId = a.id;
+    benchEl.appendChild(el);
+  });
+  const freeN = AGENTS.filter(a => !state.tasks.some(t => t.agent === a.id && !t.done)).length;
+  freeCountEl.textContent = freeN;
+  busyCountEl.textContent = AGENTS.length - freeN;
+}
+
+/* ---------- Coord helpers ---------- */
+function timeToX(ms) {
+  // ms relative to now. 0 = playhead position. negative = left of playhead (past). positive = right.
+  const rect = stageEl.getBoundingClientRect();
+  const W = rect.width;
+  // Playhead sits at PLAYHEAD_FRAC of stage width from the left
+  const PLAYHEAD_FRAC = 0.70;
+  const playX = W * PLAYHEAD_FRAC;
+  // px per ms: map LOOKBACK_MS → playX, LOOKAHEAD_MS → W-playX
+  const pxPerMsLeft  = playX / LOOKBACK_MS;
+  const pxPerMsRight = (W - playX) / LOOKAHEAD_MS;
+  if (ms <= 0) return playX + ms * pxPerMsLeft;  // ms negative → left of playhead
+  return playX + ms * pxPerMsRight;
+}
+function playheadX() {
+  const rect = stageEl.getBoundingClientRect();
+  return rect.width * 0.70;
+}
+
+function positionPlayhead() {
+  playheadEl.style.left = playheadX() + 'px';
+}
+
+/* ---------- Task helpers ---------- */
+function pickAgent(laneId) {
+  // prefer spec-match free agent, else any free, else null (queued)
+  const free = AGENTS.filter(a => !state.tasks.some(t => t.agent === a.id && !t.done));
+  const fit = free.find(a => a.spec === laneId);
+  return (fit || free[0] || null)?.id || null;
+}
+
+function agentInitials(agentId) {
+  const a = AGENTS.find(x => x.id === agentId);
+  return a ? a.name : '··';
+}
+
+/* Create element for a task */
+function buildTaskEl(t) {
+  const el = document.createElement('div');
+  el.className = 'task fresh';
+  el.dataset.id = t.id;
+  el.innerHTML = `
+    <span class="fill"></span>
+    <span class="glyph" style="background:${t.agent ? '#3c372e' : '#a69e8e'}">${t.agent ? agentInitials(t.agent) : '··'}</span>
+    <span class="label"></span>
+  `;
+  el.querySelector('.label').textContent = t.label;
+  el.addEventListener('click', () => {
+    if (t.needsInput) {
+      t.needsInput = false;
+      t.startedAt = Date.now() - t.progress * t.dur;  // keep progress where it was
+      render();
+    }
+  });
+  return el;
+}
+
+/* Dispatch a new task */
+function dispatchNewTask(label, laneId) {
+  const agent = pickAgent(laneId);
+  const now = Date.now();
+  const t = {
+    id: nextTaskId(),
+    lane: laneId,
+    label,
+    agent,
+    startedAt: now,        // work begins now
+    dur: 20000 + Math.random() * 35000,
+    progress: 0,
+    done: false,
+    needsInput: false,
+    justCreated: true,
+  };
+  state.tasks.push(t);
+
+  // Animate agent arc-in from bench if assigned
+  if (agent) {
+    arcAgentToLane(agent, laneId, () => { /* no-op; task already added */ });
+  }
+  render();
+}
+
+/* ---------- Agent arc animation ---------- */
+function arcAgentToLane(agentId, laneId, onArrive) {
+  const benchAgentEl = benchEl.querySelector(`[data-agent-id="${agentId}"]`);
+  if (!benchAgentEl) { onArrive?.(); return; }
+
+  const startRect = benchAgentEl.getBoundingClientRect();
+  const appRect   = stageEl.getBoundingClientRect();
+
+  const laneEl = laneEls[laneId];
+  const laneRect = laneEl.getBoundingClientRect();
+
+  // start / end positions relative to stage
+  const x0 = startRect.left + startRect.width/2 - appRect.left;
+  const y0 = startRect.top  + startRect.height/2 - appRect.top;
+  const x1 = playheadX();
+  const y1 = laneRect.top + laneRect.height/2 - appRect.top;
+
+  const dot = document.createElement('div');
+  dot.className = 'flight-dot';
+  dot.textContent = agentInitials(agentId);
+  dot.style.left = x0 + 'px';
+  dot.style.top  = y0 + 'px';
+  flightLayer.appendChild(dot);
+
+  // force reflow then transition to target via a midpoint (lift up then settle)
+  requestAnimationFrame(() => {
+    // midpoint: slight arc
+    const midX = (x0 + x1) / 2;
+    const midY = Math.min(y0, y1) - 60;
+    dot.style.transition = 'left .4s cubic-bezier(0.22,1,0.36,1), top .4s cubic-bezier(0.22,1,0.36,1)';
+    dot.style.left = midX + 'px';
+    dot.style.top  = midY + 'px';
+    setTimeout(() => {
+      dot.style.left = x1 + 'px';
+      dot.style.top  = y1 + 'px';
+      setTimeout(() => {
+        dot.style.opacity = '0';
+        dot.style.transform = 'translate(-50%,-50%) scale(0.5)';
+        setTimeout(() => { dot.remove(); onArrive?.(); }, 260);
+      }, 420);
+    }, 420);
+  });
+}
+
+/* ---------- Render loop ---------- */
+let taskElCache = {}; // id -> el
+
+function render() {
+  state.now = Date.now();
+  positionPlayhead();
+
+  // Update meta counts
+  LANES.forEach(l => {
+    const active = state.tasks.filter(t => t.lane === l.id && !t.done).length;
+    const el = document.querySelector(`[data-count-for="${l.id}"]`);
+    if (el) el.textContent = active + ' active';
+  });
+
+  // For each task, update / create DOM
+  const liveIds = new Set();
+  state.tasks.forEach(t => {
+    liveIds.add(t.id);
+    const elapsed = t.needsInput
+      ? (t.dur * t.progress)
+      : (state.now - t.startedAt);
+    // progress fraction (0..1). If task is "queued" (startedAt in future), progress = 0.
+    let frac;
+    if (t.needsInput) frac = t.progress;
+    else frac = Math.max(0, Math.min(1, elapsed / t.dur));
+
+    if (!t.done && frac >= 1) {
+      t.done = true;
+      t.doneAt = state.now;
+      onTaskComplete(t);
+    }
+
+    // X position: we place the task block such that its right edge represents current
+    // progress point (riding the playhead for in-progress tasks). The tail extends back
+    // by proportional duration.
+    const rect = stageEl.getBoundingClientRect();
+    const laneRect = laneEls[t.lane].getBoundingClientRect();
+    const laneTop = laneRect.top - rect.top;
+    const laneH = laneRect.height;
+
+    // Tasks visually represent time: width proportional to duration
+    // min width for readability
+    const pxPerMs = playheadX() / LOOKBACK_MS; // use left-side scale for consistency
+    let width = Math.max(180, t.dur * pxPerMs);
+
+    // Right edge x: if running, rides from playhead backward as it ages.
+    // Concept: a task STARTED at startedAt. Its left edge is at time (startedAt - now).
+    // Its right edge is at time (startedAt + dur - now). So:
+    const taskStartMs = t.startedAt - state.now;   // negative if in past
+    const taskEndMs   = t.startedAt + t.dur - state.now;
+    let leftX = timeToX(taskStartMs);
+    let rightX = timeToX(taskEndMs);
+    width = Math.max(180, rightX - leftX);
+
+    if (t.done) {
+      // Completed tasks continue drifting left with time
+      leftX = timeToX((t.doneAt - t.dur) - state.now);
+      rightX = timeToX(t.doneAt - state.now);
+      width = Math.max(180, rightX - leftX);
+    }
+
+    // Off-screen left? remove
+    if (rightX < -300) {
+      // drop it
+      if (taskElCache[t.id]) { taskElCache[t.id].remove(); delete taskElCache[t.id]; }
+      return;
+    }
+
+    // build/update element
+    let el = taskElCache[t.id];
+    if (!el) {
+      el = buildTaskEl(t);
+      laneEls[t.lane].appendChild(el);
+      taskElCache[t.id] = el;
+    }
+    el.style.left = leftX + 'px';
+    el.style.top = '50%';
+    el.style.transform = 'translateY(-50%)';
+    el.style.width = width + 'px';
+    el.classList.toggle('needs-input', !!t.needsInput);
+    el.classList.toggle('done', !!t.done);
+
+    // Fill (progress) — from left to playhead
+    const fillEl = el.querySelector('.fill');
+    if (fillEl) {
+      const fillW = Math.max(0, Math.min(width, playheadX() - leftX));
+      fillEl.style.width = (t.done ? width : fillW) + 'px';
+    }
+  });
+
+  // cleanup stray cached els
+  Object.keys(taskElCache).forEach(id => {
+    if (!liveIds.has(id)) { taskElCache[id].remove(); delete taskElCache[id]; }
+  });
+
+  renderBench();
+}
+
+/* ---------- Completion handling ---------- */
+function onTaskComplete(t) {
+  // Burst at playhead in the right lane
+  const rect = stageEl.getBoundingClientRect();
+  const laneRect = laneEls[t.lane].getBoundingClientRect();
+  const px = playheadX();
+  const py = laneRect.top + laneRect.height/2 - rect.top;
+  const b = document.createElement('div');
+  b.className = 'burst';
+  b.style.left = px + 'px';
+  b.style.top  = py + 'px';
+  flightLayer.appendChild(b);
+  setTimeout(() => b.remove(), 950);
+
+  // Grow the lane's graph by one node
+  addGrowthNode(t.lane);
+}
+
+/* ---------- Growth graph (Bases-inspired) ---------- */
+const growthState = {};
+LANES.forEach(l => growthState[l.id] = { nodes: [], edges: [] });
+
+function addGrowthNode(laneId) {
+  const g = growthState[laneId];
+  const svg = laneEls[laneId].querySelector('.growth svg');
+  const nodesLayer = svg.querySelector('.nodes');
+  const edgesLayer = svg.querySelector('.edges');
+
+  // Layout: cluster of nodes that drift slightly; place new node near an existing one
+  const vb = { w: 220, h: 200 };
+  let x, y;
+  if (g.nodes.length === 0) {
+    x = vb.w * 0.5; y = vb.h * 0.5;
+  } else {
+    const parent = g.nodes[Math.floor(Math.random() * g.nodes.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const r = 12 + Math.random() * 18;
+    x = Math.max(14, Math.min(vb.w - 14, parent.x + Math.cos(angle) * r));
+    y = Math.max(14, Math.min(vb.h - 14, parent.y + Math.sin(angle) * r));
+    // edge
+    const edgeEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    edgeEl.setAttribute('class', 'edge');
+    edgeEl.setAttribute('x1', parent.x); edgeEl.setAttribute('y1', parent.y);
+    edgeEl.setAttribute('x2', x);        edgeEl.setAttribute('y2', y);
+    edgesLayer.appendChild(edgeEl);
+    setTimeout(() => edgeEl.classList.add('show'), 30);
+    g.edges.push({ el: edgeEl });
+  }
+  const n = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  n.setAttribute('class', 'node');
+  n.setAttribute('cx', x); n.setAttribute('cy', y);
+  n.setAttribute('r', 2.2 + Math.random() * 1.4);
+  nodesLayer.appendChild(n);
+  setTimeout(() => n.classList.add('show'), 30);
+  g.nodes.push({ x, y, el: n });
+
+  // cap
+  while (g.nodes.length > 60) {
+    const d = g.nodes.shift();
+    d.el.remove();
+  }
+}
+
+/* ---------- Seed ---------- */
+function seed() {
+  const now = Date.now();
+  SEED_TASKS.forEach(s => {
+    const t = {
+      id: nextTaskId(),
+      lane: s.lane,
+      label: s.label,
+      agent: s.agent,
+      startedAt: now + s.startOffset,
+      dur: s.dur,
+      progress: s.progress,
+      done: false,
+      needsInput: !!s.needsInput,
+    };
+    state.tasks.push(t);
+  });
+
+  // Seed growth graphs with pre-existing completed nodes
+  LANES.forEach(l => {
+    const n = SEED_DONE[l.id] || 0;
+    for (let i = 0; i < n; i++) addGrowthNode(l.id);
+  });
+}
+
+/* ---------- Simulation ticks ---------- */
+function simTick() {
+  // Occasionally have an agent request input (one at a time, max)
+  if (Math.random() < 0.08) {
+    const candidates = state.tasks.filter(t =>
+      !t.done && !t.needsInput && t.agent &&
+      (Date.now() - t.startedAt) / t.dur > 0.15 &&
+      (Date.now() - t.startedAt) / t.dur < 0.85
+    );
+    const anyAlready = state.tasks.some(t => t.needsInput);
+    if (!anyAlready && candidates.length > 0 && Math.random() < 0.6) {
+      const t = candidates[Math.floor(Math.random() * candidates.length)];
+      t.needsInput = true;
+      t.progress = (Date.now() - t.startedAt) / t.dur;
+    }
+  }
+
+  // Occasionally the user "auto-dispatches" a new task (simulate activity)
+  if (Math.random() < 0.05) {
+    const lanes = ['lovenotes','hg','content','life'];
+    const laneId = lanes[Math.floor(Math.random() * lanes.length)];
+    const phr = {
+      lovenotes: ['patch Twilio rate limit bug','write release notes v0.9','reply to beta user #12','audit reminder queue'],
+      hg:        ['prep next client session','draft check-in email','review coaching recording','update client roadmap'],
+      content:   ['outline next post','pull quotes from book','schedule Substack','draft tweet thread'],
+      life:      ['renew car registration','reply to mom','pay internet bill','plan weekend']
+    };
+    const label = phr[laneId][Math.floor(Math.random() * phr[laneId].length)];
+    dispatchNewTask(label, laneId);
+  }
+
+  // Drift resource meters subtly
+  driftMeters();
+}
+
+function driftMeters() {
+  const busyN = state.tasks.filter(t => !t.done).length;
+  const ctx = Math.min(95, 40 + busyN * 6 + Math.random() * 3);
+  const tok = (2 + busyN * 0.9 + Math.random() * 0.7).toFixed(1) + 'k/m';
+  const mon = (2.0 + busyN * 0.35 + Math.random() * 0.12).toFixed(2);
+  const mem = Math.min(98, 70 + busyN * 1.2).toFixed(0);
+  document.getElementById('mv-context').textContent = Math.round(ctx);
+  document.getElementById('m-context').querySelector('.bar > span').style.width = ctx + '%';
+  document.getElementById('m-context').classList.toggle('hot', ctx > 85);
+  document.getElementById('mv-tokens').textContent = tok;
+  document.getElementById('m-tokens').querySelector('.bar > span').style.width = (parseFloat(tok) * 8) + '%';
+  document.getElementById('mv-money').textContent = mon;
+  document.getElementById('m-money').querySelector('.bar > span').style.width = (Math.min(60, parseFloat(mon) * 10)) + '%';
+  document.getElementById('mv-memory').textContent = mem;
+  document.getElementById('m-memory').querySelector('.bar > span').style.width = mem + '%';
+}
+
+/* ---------- Resize ---------- */
+window.addEventListener('resize', () => { render(); });
+
+/* ---------- Init ---------- */
+seed();
+render();
+renderBench();
+driftMeters();
+
+// Animation loop — smooth playhead / task drift
+function tick() {
+  render();
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// Simulation tick every 2s
+setInterval(simTick, 2000);
+
+// Periodic graph growth for LoveNotes/Content (show "still being thought about")
+setInterval(() => {
+  const roll = Math.random();
+  if (roll < 0.4) addGrowthNode('lovenotes');
+  else if (roll < 0.7) addGrowthNode('content');
+  else if (roll < 0.85) addGrowthNode('hg');
+  else addGrowthNode('life');
+}, 6500);
+
+</script>
+</body>
+</html>
