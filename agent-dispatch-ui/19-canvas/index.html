@@ -466,6 +466,7 @@
 // Placed in world space so they spread wide — default view sees ~2-3.
 // Units are world pixels; camera starts centered on LoveNotes.
 const ENTITIES = [
+  { id: 'sutra',      name: 'Sutra',      type: 'meta',     form: 'nexus',     status: 'active',  hue: 48,  wx:     0, wy: -1950, radius: 300 },
   { id: 'lovenotes',  name: 'LoveNotes',  type: 'product',  form: 'hub',       status: 'active',  hue: 335, wx:     0, wy:     0, radius: 220 },
   { id: 'prototypes', name: 'Prototypes', type: 'lab',      form: 'branching', status: 'active',  hue: 205, wx:  1450, wy:  -280, radius: 240 },
   { id: 'content',    name: 'Content',    type: 'creative', form: 'stream',    status: 'active',  hue: 48,  wx:  1700, wy:   950, radius: 230 },
@@ -475,6 +476,25 @@ const ENTITIES = [
 ];
 
 const SEED_NODES = {
+  sutra: [
+    ['SUTRA-IDENTITY.md', 'decision'],   // core
+    // inner ring — planning & identity
+    ['CLAUDE.md',       'doc'],
+    ['TELOS.md',        'decision'],
+    ['TASKS.md',        'decision'],
+    ['GOALS.md',        'decision'],
+    ['CONTEXT.md',      'doc'],
+    ['LEARNED.md',      'note'],
+    // outer ring — folders & payloads
+    ['Projects/',       'code'],
+    ['Knowledge/',      'note'],
+    ['.claude/',        'code'],
+    ['.context/',       'note'],
+    ['Me/',             'note'],
+    ['AGENTS.md',       'doc'],
+    ['CONTEXT-PAYLOAD.md','doc'],
+    ['BACKLOG.md',      'note'],
+  ],
   lovenotes: [
     ['core', 'core'],
     ['sms-webhook.ts', 'code'],
@@ -525,6 +545,7 @@ const SEED_NODES = {
 
 // Files that can grow into each entity as agents work
 const GROWTH_FILES = {
+  sutra:      [['ATLAS.md','doc'],['SKILLS.md','doc'],['MEMORY.md','note'],['NARRATIVES.md','doc'],['Projects/brandywine/CLAUDE.md','code'],['.claude/hooks/','code'],['ROUTINES.md','doc'],['PLANS.md','decision']],
   lovenotes:  [['billing.ts','code'],['pairs.tsx','code'],['chat-ui.tsx','code'],['match-algo.ts','code'],['nps-survey.md','doc'],['push-notif.ts','code'],['feed.tsx','code'],['icebreakers.ts','code'],['daily-prompt.ts','code'],['paywall.tsx','code']],
   prototypes: [['19-canvas','code'],['20-lanes','code'],['atlas-v2.md','doc'],['sutra-v2.md','doc'],['ctx-benchmark','code'],['dispatch-bench','code']],
   content:    [['thread-sutra.md','doc'],['video-script.md','doc'],['newsletter-015.md','doc'],['essay-draft-2.md','doc'],['podcast-notes.md','note']],
@@ -745,7 +766,61 @@ function buildStream(entity, seeds) {
   return out;
 }
 
-const BUILDERS = { hub: buildHub, branching: buildBranching, pair: buildPair, seal: buildSeal, stream: buildStream };
+// Nexus: core + inner ring + outer ring. Reserved for the Sutra meta-entity.
+function buildNexus(entity, seeds) {
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const coreSeed = seeds[0];
+  const rest = seeds.slice(1);
+  const innerCount = Math.min(6, Math.ceil(rest.length / 2));
+  const inner = rest.slice(0, innerCount);
+  const outer = rest.slice(innerCount);
+
+  const r1 = entity.radius * 0.42;
+  const r2 = entity.radius * 0.82;
+
+  out.nodes.push({ id: entity.id + ':core', entity: entity.id, label: coreSeed[0], kind: coreSeed[1], x: cx, y: cy, isCore: true });
+
+  inner.forEach((s, i) => {
+    const angle = -Math.PI / 2 + (i / inner.length) * Math.PI * 2;
+    const nid = entity.id + ':in-' + i;
+    out.nodes.push({
+      id: nid, entity: entity.id, label: s[0], kind: s[1],
+      x: cx + Math.cos(angle) * r1,
+      y: cy + Math.sin(angle) * r1,
+    });
+    out.edges.push({ a: entity.id + ':core', b: nid });
+  });
+
+  // Outer ring offset by half-slot so it interleaves visually
+  const outerAngleOffset = Math.PI / Math.max(outer.length, 1);
+  outer.forEach((s, i) => {
+    const angle = -Math.PI / 2 + (i / outer.length) * Math.PI * 2 + outerAngleOffset * 0.4;
+    const nid = entity.id + ':out-' + i;
+    out.nodes.push({
+      id: nid, entity: entity.id, label: s[0], kind: s[1],
+      x: cx + Math.cos(angle) * r2,
+      y: cy + Math.sin(angle) * r2,
+    });
+    // Connect to nearest inner node
+    if (inner.length) {
+      const nearestInnerIdx = Math.round((i / outer.length) * inner.length) % inner.length;
+      out.edges.push({ a: entity.id + ':in-' + nearestInnerIdx, b: nid });
+    } else {
+      out.edges.push({ a: entity.id + ':core', b: nid });
+    }
+  });
+
+  // Faint ring edges connecting inner siblings (the "sutra circle")
+  for (let i = 0; i < inner.length; i++) {
+    const j = (i + 1) % inner.length;
+    out.edges.push({ a: entity.id + ':in-' + i, b: entity.id + ':in-' + j, isBridge: true });
+  }
+
+  return out;
+}
+
+const BUILDERS = { hub: buildHub, branching: buildBranching, pair: buildPair, seal: buildSeal, stream: buildStream, nexus: buildNexus };
 
 // ---------- Seed constellations ----------
 function seedConstellations() {
@@ -766,13 +841,14 @@ function seedConstellations() {
 // ---------- Seed agents ----------
 function seedAgents() {
   const picks = [
-    { entity: 'lovenotes', name: 'Nova',  label: 'toll-free verify', state: 'needs-input' },
-    { entity: 'lovenotes', name: 'Kit',   label: 'tune prompt',      state: 'working' },
-    { entity: 'prototypes',name: 'Mira',  label: 'sketch 19',         state: 'working' },
-    { entity: 'prototypes',name: 'Axel',  label: 'benchmark canvas',  state: 'working' },
-    { entity: 'content',   name: 'Pax',   label: 'draft newsletter',  state: 'working' },
-    { entity: 'brandywine',name: 'Oren',  label: 'finalize comps',    state: 'working' },
-    { entity: 'biosync',   name: 'Ilo',   label: 'follow-up email',   state: 'idle' },
+    { entity: 'sutra',     name: 'Claude', label: 'iterate canvas UI',    state: 'working', primary: true },
+    { entity: 'lovenotes', name: 'Nova',  label: 'toll-free verify',    state: 'needs-input' },
+    { entity: 'lovenotes', name: 'Kit',   label: 'tune prompt',         state: 'working' },
+    { entity: 'prototypes',name: 'Mira',  label: 'sketch 19',           state: 'working' },
+    { entity: 'prototypes',name: 'Axel',  label: 'benchmark canvas',    state: 'working' },
+    { entity: 'content',   name: 'Pax',   label: 'draft newsletter',    state: 'working' },
+    { entity: 'brandywine',name: 'Oren',  label: 'finalize comps',      state: 'working' },
+    { entity: 'biosync',   name: 'Ilo',   label: 'follow-up email',     state: 'idle' },
   ];
   picks.forEach((p, i) => {
     const ent = state.entities[p.entity];
@@ -785,6 +861,7 @@ function seedAgents() {
       label: p.label,
       state: p.state,
       entity: p.entity,
+      primary: !!p.primary,
       x: tnode.x, y: tnode.y,
       targetNode: target,
       prevNode: target,
@@ -1110,10 +1187,12 @@ function drawAgent(a) {
   const pos = worldToScreen(a.x, a.y);
   const isNeedsInput = a.state === 'needs-input';
   const isHover = state.hoverAgent && state.hoverAgent.id === a.id;
-  const baseR = isHover ? 4.5 : 3.2;
-  const glowR = isNeedsInput ? 14 : 9;
-  const color = isNeedsInput ? [245, 183, 61] : [111, 225, 177];
-  const pulse = isNeedsInput ? (0.5 + 0.5 * Math.sin(state.tick * 0.08)) : 1;
+  const isPrimary = a.primary;
+  const baseR = isPrimary ? (isHover ? 6 : 4.5) : (isHover ? 4.5 : 3.2);
+  const glowR = isPrimary ? 18 : (isNeedsInput ? 14 : 9);
+  const color = isPrimary ? [245, 183, 61] : (isNeedsInput ? [245, 183, 61] : [111, 225, 177]);
+  const pulse = isNeedsInput ? (0.5 + 0.5 * Math.sin(state.tick * 0.08)) :
+                isPrimary    ? (0.7 + 0.3 * Math.sin(state.tick * 0.04)) : 1;
   const g = wctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowR);
   g.addColorStop(0, `rgba(${color.join(',')}, ${0.65 * pulse})`);
   g.addColorStop(1, `rgba(${color.join(',')}, 0)`);
@@ -1126,10 +1205,20 @@ function drawAgent(a) {
   wctx.arc(pos.x, pos.y, baseR, 0, Math.PI * 2);
   wctx.fill();
   // inner bright
-  wctx.fillStyle = 'rgba(255,255,255,0.9)';
+  wctx.fillStyle = 'rgba(255,255,255,0.95)';
   wctx.beginPath();
   wctx.arc(pos.x, pos.y, baseR * 0.4, 0, Math.PI * 2);
   wctx.fill();
+  // Primary agent ring — marks "you" / active conversation
+  if (isPrimary) {
+    wctx.strokeStyle = `rgba(245,183,61,${0.55 + 0.25 * Math.sin(state.tick * 0.06)})`;
+    wctx.lineWidth = 1.1;
+    wctx.setLineDash([3, 3]);
+    wctx.beginPath();
+    wctx.arc(pos.x, pos.y, baseR + 3, 0, Math.PI * 2);
+    wctx.stroke();
+    wctx.setLineDash([]);
+  }
 }
 
 function draw() {
