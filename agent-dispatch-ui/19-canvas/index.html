@@ -346,6 +346,205 @@
   .cmd-res-bar.warn .fill { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
   .cmd-res-bar.crit .fill { background: var(--danger); }
 
+  /* Agent chat panel — slides in from right when an agent is selected */
+  .chat-panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: 400px;
+    height: 100vh;
+    background: rgba(4,5,10,0.92);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.22,0.61,0.36,1);
+    z-index: 35;
+  }
+  .chat-panel.open { transform: translateX(0); }
+  .chat-head {
+    padding: 48px 18px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .chat-agent-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .chat-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffe39a, #f5b73d 60%, #8a5a12);
+    box-shadow: 0 0 12px var(--accent-glow);
+    flex-shrink: 0;
+  }
+  .chat-avatar.needs-input {
+    animation: pulseDot 1.6s ease-in-out infinite;
+  }
+  .chat-avatar.working {
+    background: radial-gradient(circle at 35% 35%, #c4ffd9, #6fe1b1 60%, #1e6b4c);
+    box-shadow: 0 0 10px rgba(111,225,177,0.55);
+  }
+  .chat-avatar.primary {
+    background: radial-gradient(circle at 35% 35%, #ffe39a, #f5b73d 60%, #8a5a12);
+    box-shadow: 0 0 14px var(--accent-glow);
+  }
+  .chat-name {
+    font-size: 14px; font-weight: 600;
+    color: var(--ink-0);
+    letter-spacing: 0.08em;
+  }
+  .chat-sub {
+    font-size: 10px; color: var(--ink-2);
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+  .chat-close {
+    margin-left: auto;
+    background: none; border: none;
+    color: var(--ink-2);
+    font-size: 18px; cursor: pointer;
+    font-family: inherit;
+    padding: 0; line-height: 1;
+  }
+  .chat-close:hover { color: var(--ink-0); }
+
+  /* Phase ribbon — plan → execute → review */
+  .phase-ribbon {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 6px;
+  }
+  .phase-pip {
+    flex: 1;
+    height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 5px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--ink-3);
+    background: rgba(13,16,26,0.5);
+    transition: all 0.2s;
+  }
+  .phase-pip .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--ink-3);
+  }
+  .phase-pip.done {
+    color: var(--ink-2);
+    border-color: var(--ink-3);
+  }
+  .phase-pip.done .dot { background: var(--ok); box-shadow: 0 0 4px var(--ok); }
+  .phase-pip.active {
+    color: var(--ink-0);
+    border-color: var(--accent);
+    background: rgba(245,183,61,0.08);
+    box-shadow: 0 0 10px rgba(245,183,61,0.15);
+  }
+  .phase-pip.active .dot {
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+    animation: pulseDot 1.6s ease-in-out infinite;
+  }
+
+  /* Activity log */
+  .chat-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 18px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .log-entry {
+    display: flex; flex-direction: column;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .log-meta {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    margin-bottom: 3px;
+  }
+  .log-meta .phase-tag {
+    color: var(--accent);
+    margin-right: 8px;
+    font-weight: 600;
+  }
+  .log-body {
+    color: var(--ink-1);
+    padding: 8px 10px;
+    background: rgba(13,16,26,0.6);
+    border-left: 2px solid var(--line);
+    border-radius: 0 3px 3px 0;
+  }
+  .log-entry.user .log-meta .phase-tag { color: var(--ok); }
+  .log-entry.user .log-body {
+    border-left-color: var(--ok);
+    background: rgba(111,225,177,0.05);
+  }
+  .log-entry.agent .log-body {
+    border-left-color: var(--accent);
+  }
+  .log-entry.system .log-body {
+    color: var(--ink-2);
+    font-style: italic;
+    border-left-color: var(--ink-3);
+    background: transparent;
+    padding: 4px 10px;
+  }
+  .chat-log::-webkit-scrollbar { width: 6px; }
+  .chat-log::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+  /* Chat input */
+  .chat-input-row {
+    border-top: 1px solid var(--line);
+    padding: 12px 14px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .chat-input {
+    width: 100%;
+    min-height: 52px;
+    background: rgba(13,16,26,0.9);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--ink-0);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 8px 10px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--ink-3); }
+  .chat-actions {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .chat-btn {
+    background: rgba(13,16,26,0.9);
+    border: 1px solid var(--line);
+    color: var(--ink-1);
+    font-family: inherit;
+    font-size: 10px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.15s;
+  }
+  .chat-btn:hover { border-color: var(--ink-3); color: var(--ink-0); }
+  .chat-btn.danger { color: #ef8a8a; }
+  .chat-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .chat-send {
+    margin-left: auto;
+    background: var(--accent);
+    color: #1a1306;
+    border: 1px solid var(--accent);
+    font-weight: 600;
+  }
+  .chat-send:hover { background: #ffd672; box-shadow: 0 0 10px var(--accent-glow); }
+
   /* Dispatch modal — centered, slides down from top */
   .dispatch-modal {
     position: fixed;
@@ -580,6 +779,33 @@
   <div class="kind-item"><div class="kind-dot" style="background:#c8b87e"></div>doc</div>
   <div class="kind-item"><div class="kind-dot" style="background:#f5b73d"></div>decision</div>
   <div class="kind-item"><div class="kind-dot" style="background:#7a7e9a"></div>note</div>
+</div>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <div class="chat-agent-row">
+      <div class="chat-avatar" id="chatAvatar"></div>
+      <div style="flex:1; min-width:0;">
+        <div class="chat-name" id="chatName">—</div>
+        <div class="chat-sub" id="chatSub">—</div>
+      </div>
+      <button class="chat-close" id="chatClose" title="Close">&times;</button>
+    </div>
+    <div class="phase-ribbon">
+      <div class="phase-pip" data-phase="plan"><span class="dot"></span>PLAN</div>
+      <div class="phase-pip" data-phase="execute"><span class="dot"></span>EXECUTE</div>
+      <div class="phase-pip" data-phase="review"><span class="dot"></span>REVIEW</div>
+    </div>
+  </div>
+  <div class="chat-log" id="chatLog"></div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chatInput" placeholder="Talk to this agent. Redirect, clarify, or hand it new context."></textarea>
+    <div class="chat-actions">
+      <button class="chat-btn danger" id="chatInterrupt">INTERRUPT</button>
+      <button class="chat-btn" id="chatFresh">FRESH</button>
+      <button class="chat-btn chat-send" id="chatSend">SEND &rarr;</button>
+    </div>
+  </div>
 </div>
 
 <div class="dispatch-scrim" id="dispatchScrim"></div>
@@ -1520,6 +1746,7 @@ world.addEventListener('pointerup', (ev) => {
   const eid = pickEntityAt(w.x, w.y);
   selectEntity(eid);
   state.selectedAgent = null;
+  if (!eid) closeChat();
 });
 
 world.addEventListener('pointercancel', () => {
@@ -1561,6 +1788,7 @@ window.addEventListener('keydown', (ev) => {
     else if (ev.key === 'ArrowDown')  { state.cam.targetY += panStep; ev.preventDefault(); }
     else if (ev.key === 'Escape')     {
       if (document.getElementById('dispatchModal').classList.contains('open')) { closeDispatch(); }
+      else if (document.getElementById('chatPanel').classList.contains('open')) { closeChat(); }
       else { selectEntity(null); state.selectedAgent = null; }
     }
 });
@@ -1602,39 +1830,13 @@ world.addEventListener('touchend', () => { touchPinch = null; }, { passive: true
 function selectAgent(agent) {
   state.selectedAgent = agent;
   state.selected = null;
-  const strip = document.getElementById('cmdStrip');
-  const zm = document.getElementById('zoomMeta');
-  const kl = document.getElementById('kindLegend');
+  // Close entity command strip
+  document.getElementById('cmdStrip').classList.remove('open');
+  document.getElementById('zoomMeta').classList.remove('strip-open');
+  document.getElementById('kindLegend').classList.remove('strip-open');
 
-  // Determine the file node the agent is on
-  const targetNode = state.nodes[agent.targetNode];
-  const nodeName = targetNode ? targetNode.label : '—';
-  const nodeKind = targetNode ? (targetNode.kind || 'note') : 'note';
-  const ent = state.entities[agent.entity];
-
-  document.getElementById('cmdName').textContent = agent.name;
-  document.getElementById('cmdType').textContent = agent.entity + ' · ' + (agent.state === 'needs-input' ? '⚡ needs-input' : agent.state);
-
-  // Repurpose the 4 resource rows for agent info
-  document.getElementById('resLabelA').textContent = 'file';
-  document.getElementById('resLabelB').textContent = 'task';
-  document.getElementById('resLabelC').textContent = 'kind';
-  document.getElementById('resLabelD').textContent = 'status';
-  document.getElementById('resFocus').textContent = nodeName;
-  document.getElementById('resFocusFill').style.width = '100%';
-  document.getElementById('resHeat').textContent = agent.label;
-  document.getElementById('resHeatFill').style.width = agent.state === 'needs-input' ? '100%' : '60%';
-  document.getElementById('resQueue').textContent = nodeKind;
-  document.getElementById('resQueueFill').style.width = { code:85, doc:65, decision:95, note:45 }[nodeKind] + '%';
-  document.getElementById('resUpdated').textContent = agent.state === 'needs-input' ? 'blocked' : 'active';
-  document.getElementById('resUpdatedFill').style.width = agent.state === 'needs-input' ? '20%' : '92%';
-
-  // Ease camera toward the agent's entity
+  openChat(agent);
   focusEntity(agent.entity, Math.max(state.cam.targetScale, 1.1));
-
-  strip.classList.add('open');
-  zm.classList.add('strip-open');
-  kl.classList.add('strip-open');
 }
 
 function selectEntity(eid) {
@@ -1692,6 +1894,162 @@ document.querySelectorAll('.cmd-btn').forEach(btn => {
   });
 });
 
+// ---------- Agent chat panel ----------
+// Each agent gets a log (user/agent/system entries) and a phase (plan/execute/review).
+state.agentLogs = {};    // agentId → [{role, phase, text, t}]
+state.agentPhase = {};   // agentId → 'plan' | 'execute' | 'review'
+
+function ensureAgentLog(agent) {
+  if (state.agentLogs[agent.id]) return;
+  // Seed initial log based on agent state
+  const logs = [];
+  const phase = agent.phase || (agent.state === 'needs-input' ? 'execute' : 'execute');
+  state.agentPhase[agent.id] = phase;
+
+  if (agent.primary) {
+    logs.push({ role: 'system', phase: 'plan', text: 'Session opened · ' + agent.entity });
+    logs.push({ role: 'agent', phase: 'plan', text: 'Reviewed 18-constellation and the Sutra build timeline. Goal: strip chrome, pure canvas with pinch/zoom/pan.' });
+    logs.push({ role: 'user',  phase: 'plan', text: 'Go off of this sutra build and strip the excess UI above and below.' });
+    logs.push({ role: 'agent', phase: 'execute', text: 'Built 19-canvas. Full-viewport canvas, 40px glass top bar, constellations in world space. Deployed to ckelimarks.github.io.' });
+    logs.push({ role: 'user',  phase: 'execute', text: 'Develop interactions. When you click entities and agents? Files as nodes. Growth as you work.' });
+    logs.push({ role: 'agent', phase: 'execute', text: 'Done: kind coloring, node labels on zoom, activity glow, growth mechanic every ~8s, agent click → file info.' });
+    logs.push({ role: 'user',  phase: 'execute', text: 'Create something called Sutra on this mockup and mimic the folder structure.' });
+    logs.push({ role: 'agent', phase: 'execute', text: 'Added Sutra entity with nexus form mirroring Personal OS root. Added dispatch modal. Building chat panel now.' });
+  } else if (agent.state === 'needs-input') {
+    logs.push({ role: 'system', phase: 'plan', text: 'Dispatched to ' + agent.entity });
+    logs.push({ role: 'agent',  phase: 'plan', text: 'Plan: profile the toll-free verification flow. Check rate-audit.json for last ping.' });
+    logs.push({ role: 'agent',  phase: 'execute', text: 'Started ping audit. Found 3 unverified numbers. Need your decision: retry automatically or flag for manual review?' });
+    logs.push({ role: 'system', phase: 'execute', text: '⚡ Blocked — awaiting input' });
+  } else {
+    const ent = state.entities[agent.entity];
+    logs.push({ role: 'system', phase: 'plan', text: 'Dispatched to ' + (ent ? ent.name : agent.entity) });
+    logs.push({ role: 'agent',  phase: 'plan', text: 'Task: ' + agent.label + '. Scanning files & planning approach.' });
+    logs.push({ role: 'agent',  phase: 'execute', text: 'Running. Touching relevant files in the constellation.' });
+  }
+
+  state.agentLogs[agent.id] = logs;
+}
+
+function openChat(agent) {
+  ensureAgentLog(agent);
+  const panel = document.getElementById('chatPanel');
+  const avatar = document.getElementById('chatAvatar');
+  const name = document.getElementById('chatName');
+  const sub = document.getElementById('chatSub');
+
+  avatar.className = 'chat-avatar ' +
+    (agent.primary ? 'primary' : agent.state === 'needs-input' ? 'needs-input' : 'working');
+  name.textContent = agent.name + (agent.primary ? ' · you' : '');
+  const ent = state.entities[agent.entity];
+  sub.textContent = (ent ? ent.name.toUpperCase() : '—') + '  ·  ' + agent.label;
+
+  renderPhaseRibbon(agent);
+  renderLog(agent);
+
+  panel.classList.add('open');
+}
+
+function closeChat() {
+  document.getElementById('chatPanel').classList.remove('open');
+  state.selectedAgent = null;
+}
+
+function renderPhaseRibbon(agent) {
+  const phase = state.agentPhase[agent.id] || 'execute';
+  const order = ['plan', 'execute', 'review'];
+  const activeIdx = order.indexOf(phase);
+  document.querySelectorAll('#chatPanel .phase-pip').forEach(pip => {
+    const p = pip.dataset.phase;
+    const pi = order.indexOf(p);
+    pip.classList.remove('active', 'done');
+    if (pi < activeIdx) pip.classList.add('done');
+    else if (pi === activeIdx) pip.classList.add('active');
+  });
+}
+
+function renderLog(agent) {
+  const log = state.agentLogs[agent.id] || [];
+  const container = document.getElementById('chatLog');
+  container.innerHTML = '';
+  log.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'log-entry ' + entry.role;
+    if (entry.role === 'system') {
+      el.innerHTML = `<div class="log-body">${escapeHtml(entry.text)}</div>`;
+    } else {
+      const who = entry.role === 'user' ? 'YOU' : agent.name.toUpperCase();
+      el.innerHTML = `
+        <div class="log-meta"><span class="phase-tag">${entry.phase.toUpperCase()}</span>${who}</div>
+        <div class="log-body">${escapeHtml(entry.text)}</div>
+      `;
+    }
+    container.appendChild(el);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function appendLog(agent, entry) {
+  state.agentLogs[agent.id].push(entry);
+  renderLog(agent);
+}
+
+document.getElementById('chatClose').addEventListener('click', () => {
+  closeChat();
+  state.selectedAgent = null;
+});
+
+document.getElementById('chatSend').addEventListener('click', () => sendChatMessage());
+document.getElementById('chatInput').addEventListener('keydown', (ev) => {
+  if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') sendChatMessage();
+});
+
+function sendChatMessage() {
+  const agent = state.selectedAgent;
+  if (!agent) return;
+  const text = document.getElementById('chatInput').value.trim();
+  if (!text) return;
+  const phase = state.agentPhase[agent.id] || 'execute';
+  appendLog(agent, { role: 'user', phase, text });
+  document.getElementById('chatInput').value = '';
+
+  // Mocked agent response
+  setTimeout(() => {
+    if (state.selectedAgent !== agent) return;
+    const replies = [
+      'Got it. Adjusting approach.',
+      'Understood. Re-planning with that constraint.',
+      'Noted — continuing with that focus.',
+      'Re-running with the change in scope.',
+      'Clear. Will check and report back.',
+    ];
+    const reply = replies[Math.floor(Math.random() * replies.length)];
+    appendLog(agent, { role: 'agent', phase, text: reply });
+  }, 800);
+}
+
+document.getElementById('chatInterrupt').addEventListener('click', () => {
+  const agent = state.selectedAgent;
+  if (!agent) return;
+  agent.state = 'idle';
+  appendLog(agent, { role: 'system', phase: state.agentPhase[agent.id] || 'execute', text: 'Interrupted by you. Agent paused.' });
+});
+
+document.getElementById('chatFresh').addEventListener('click', () => {
+  const agent = state.selectedAgent;
+  if (!agent) return;
+  state.agentLogs[agent.id] = [
+    { role: 'system', phase: 'plan', text: 'Context cleared · fresh session' },
+    { role: 'agent', phase: 'plan', text: 'Fresh start. Task: ' + agent.label + '. Re-planning.' },
+  ];
+  state.agentPhase[agent.id] = 'plan';
+  renderPhaseRibbon(agent);
+  renderLog(agent);
+});
+
 // ---------- Dispatch modal ----------
 const PHASE_HINTS = {
   plan:    'sketch the approach, stop for your review',
@@ -1747,7 +2105,7 @@ function submitDispatch() {
   const name = freeNames.length ? freeNames[Math.floor(Math.random() * freeNames.length)] : 'Agent' + state.agents.length;
   const target = ent.nodeIds[Math.floor(Math.random() * ent.nodeIds.length)];
   const tn = state.nodes[target];
-  state.agents.push({
+  const newAgent = {
     id: 'ag-' + Date.now(),
     name,
     label,
@@ -1760,7 +2118,20 @@ function submitDispatch() {
     prevNode: target,
     t: 0,
     speed: 0.004 + Math.random() * 0.003,
-  });
+  };
+  state.agents.push(newAgent);
+  // Seed a chat log with the actual instruction
+  const startPhase = dispatchPhase === 'ralph' ? 'plan' : dispatchPhase;
+  state.agentPhase[newAgent.id] = startPhase;
+  state.agentLogs[newAgent.id] = [
+    { role: 'system', phase: startPhase, text: 'Dispatched to ' + ent.name + ' · mode: ' + dispatchPhase.toUpperCase() },
+    { role: 'user',   phase: startPhase, text: input },
+    { role: 'agent',  phase: startPhase, text: dispatchPhase === 'plan'
+        ? 'Received. Sketching the approach before touching anything.'
+        : dispatchPhase === 'ralph'
+        ? 'Received. Ralph loop: planning, then iterating execute → review until done.'
+        : 'Received. Going to execute.' },
+  ];
   closeDispatch();
   flashToast('dispatched ' + name + ' · ' + ent.name + ' · ' + dispatchPhase);
   focusEntity(eid, Math.max(state.cam.targetScale, 1.1));
