@@ -106,32 +106,25 @@
     50% { opacity: 1; box-shadow: 0 0 12px var(--accent-glow); }
   }
 
-  .mode-toggle {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center;
+  /* Node kind legend pill (bottom-left) */
+  .kind-legend {
+    position: fixed; bottom: 14px; left: 14px;
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(4,5,10,0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--line);
-    border-radius: 999px;
-    overflow: hidden;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-  }
-  .mode-toggle button {
-    background: none; border: none;
-    font: inherit;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 9px;
     color: var(--ink-2);
-    padding: 5px 14px;
-    cursor: pointer;
-    transition: color 0.2s, background 0.2s;
-    font-family: inherit;
+    letter-spacing: 0.08em;
+    z-index: 20;
+    transition: bottom 0.4s cubic-bezier(0.22,0.61,0.36,1);
   }
-  .mode-toggle button:hover { color: var(--ink-1); }
-  .mode-toggle button.on {
-    color: var(--bg-0); background: var(--ink-1);
-  }
-  .mode-toggle .sep {
-    width: 1px; background: var(--line);
-    align-self: stretch;
-  }
+  .kind-legend.strip-open { bottom: 100px; }
+  .kind-item { display: flex; align-items: center; gap: 5px; }
+  .kind-dot { width: 5px; height: 5px; border-radius: 50%; }
 
   .right-cluster {
     margin-left: auto;
@@ -386,12 +379,6 @@
     <span>sutra</span>
   </div>
 
-  <div class="mode-toggle" id="modeToggle">
-    <button class="on" data-mode="map">map</button>
-    <span class="sep"></span>
-    <button data-mode="timeline">timeline</button>
-  </div>
-
   <div class="right-cluster">
     <div class="alert-badge" id="alertBadge" title="1 blocker: toll-free verify">
       <span class="bolt">&#9889;</span><span id="alertCount">1</span>
@@ -438,26 +425,33 @@
   </div>
   <div class="cmd-res">
     <div class="cmd-res-item">
-      <div class="cmd-res-label">Focus</div>
+      <div class="cmd-res-label" id="resLabelA">Focus</div>
       <div class="cmd-res-value" id="resFocus">62%</div>
       <div class="cmd-res-bar"><div class="fill" id="resFocusFill" style="width:62%"></div></div>
     </div>
     <div class="cmd-res-item">
-      <div class="cmd-res-label">Heat</div>
+      <div class="cmd-res-label" id="resLabelB">Task</div>
       <div class="cmd-res-value" id="resHeat">warm</div>
       <div class="cmd-res-bar warn"><div class="fill" id="resHeatFill" style="width:74%"></div></div>
     </div>
     <div class="cmd-res-item">
-      <div class="cmd-res-label">Queue</div>
+      <div class="cmd-res-label" id="resLabelC">Queue</div>
       <div class="cmd-res-value" id="resQueue">3 tasks</div>
       <div class="cmd-res-bar"><div class="fill" id="resQueueFill" style="width:40%"></div></div>
     </div>
     <div class="cmd-res-item">
-      <div class="cmd-res-label">Updated</div>
+      <div class="cmd-res-label" id="resLabelD">Updated</div>
       <div class="cmd-res-value" id="resUpdated">just now</div>
       <div class="cmd-res-bar"><div class="fill" id="resUpdatedFill" style="width:92%"></div></div>
     </div>
   </div>
+</div>
+
+<div class="kind-legend" id="kindLegend">
+  <div class="kind-item"><div class="kind-dot" style="background:#7ec8b8"></div>code</div>
+  <div class="kind-item"><div class="kind-dot" style="background:#c8b87e"></div>doc</div>
+  <div class="kind-item"><div class="kind-dot" style="background:#f5b73d"></div>decision</div>
+  <div class="kind-item"><div class="kind-dot" style="background:#7a7e9a"></div>note</div>
 </div>
 
 <div class="toast" id="toast"><span class="acc">&rarr;</span> dispatched</div>
@@ -529,6 +523,16 @@ const SEED_NODES = {
   ],
 };
 
+// Files that can grow into each entity as agents work
+const GROWTH_FILES = {
+  lovenotes:  [['billing.ts','code'],['pairs.tsx','code'],['chat-ui.tsx','code'],['match-algo.ts','code'],['nps-survey.md','doc'],['push-notif.ts','code'],['feed.tsx','code'],['icebreakers.ts','code'],['daily-prompt.ts','code'],['paywall.tsx','code']],
+  prototypes: [['19-canvas','code'],['20-lanes','code'],['atlas-v2.md','doc'],['sutra-v2.md','doc'],['ctx-benchmark','code'],['dispatch-bench','code']],
+  content:    [['thread-sutra.md','doc'],['video-script.md','doc'],['newsletter-015.md','doc'],['essay-draft-2.md','doc'],['podcast-notes.md','note']],
+  brandywine: [['market-report.md','doc'],['timeline.md','doc'],['counter-offer.md','decision'],['client-brief.md','doc']],
+  biosync:    [['proposal-v2.md','doc'],['scope-final.md','decision'],['invoice-draft.md','doc']],
+  contrarian: [],
+};
+
 const AGENT_NAMES = ['Kit','Nova','Axel','Pax','Mira','Oren','Vex','Ilo'];
 const AGENT_LABELS = {
   lovenotes: ['tune prompt', 'audit rate-limit', 'retention draft', 'webhook profile'],
@@ -552,6 +556,11 @@ const state = {
   hoverEntity: null,
   hoverAgent: null,
   mode: 'map',
+  selectedAgent: null,   // agent object
+  nodeActivity: {},      // nid → count of agents currently on that node
+  spawnAnim: {},         // nid → { startTick } — new node pop-in animation
+  growthTimer: 0,        // ticks since last growth
+  growthInterval: 480,   // ~8s at 60fps
   // Camera
   cam: { x: 0, y: 0, scale: 1, targetX: 0, targetY: 0, targetScale: 1 },
   // Interaction
@@ -785,6 +794,33 @@ function seedAgents() {
   });
 }
 
+// ---------- Node growth ----------
+function accreteNode(ent, label, kind) {
+  // Find the agent currently on this entity to determine spawn position
+  const activeAgent = state.agents.find(a => a.entity === ent.id && a.state !== 'needs-input');
+  // Attach to: agent's current node, or random existing node
+  const anchorId = (activeAgent && activeAgent.targetNode) || ent.nodeIds[Math.floor(Math.random() * ent.nodeIds.length)];
+  const anchor = state.nodes[anchorId];
+  if (!anchor) return;
+
+  // Place new node near the anchor, slightly outward from entity center
+  const dx = anchor.x - ent.cx, dy = anchor.y - ent.cy;
+  const dist = Math.hypot(dx, dy) || 1;
+  const spread = 60 + Math.random() * 60;
+  const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.2;
+  const nx = anchor.x + Math.cos(angle) * spread;
+  const ny = anchor.y + Math.sin(angle) * spread;
+
+  const nid = ent.id + ':grown-' + Date.now();
+  const node = { id: nid, entity: ent.id, label, kind, x: nx, y: ny };
+  state.nodes[nid] = node;
+  ent.nodeIds.push(nid);
+  ent.edges.push({ a: anchorId, b: nid });
+
+  // Trigger pop-in animation
+  state.spawnAnim[nid] = { startTick: state.tick };
+}
+
 // ---------- Camera transform helpers ----------
 function screenToWorld(sx, sy) {
   const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
@@ -918,31 +954,85 @@ function drawEdges(e) {
   });
 }
 
+// Per-kind visual properties
+const KIND_HUE_SHIFT = { code: 0, doc: 22, decision: 0, note: -18, core: 0 };
+const KIND_SAT       = { code: 82, doc: 52, decision: 90, note: 38, core: 88 };
+const KIND_LIT       = { code: 72, doc: 65, decision: 76, note: 60, core: 80 };
+const KIND_ALPHA     = { code: 1.0, doc: 0.78, decision: 1.0, note: 0.58, core: 1.0 };
+
 function drawNodes(e) {
   const bright = STATUS_BRIGHT[e.status];
-  const alpha = STATUS_ALPHA[e.status];
+  const alpha  = STATUS_ALPHA[e.status];
   e.nodeIds.forEach(nid => {
     const n = state.nodes[nid];
     if (!n) return;
     const pos = worldToScreen(n.x, n.y);
     const isCore = n.isCore;
+    const kind   = isCore ? 'core' : (n.kind || 'note');
+    const actCnt = state.nodeActivity[nid] || 0;
+    const isActive = actCnt > 0;
+    const isAgSel   = state.selectedAgent && state.selectedAgent.targetNode === nid;
     const rPx = isCore ? 4.5 : 2.8;
-    const glow = isCore ? 16 : 6;
-    // glow
-    const g = wctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glow);
-    g.addColorStop(0, `hsla(${e.hue}, 70%, 70%, ${0.6 * bright})`);
+
+    // Decision nodes borrow the accent hue rather than entity hue
+    const nodeHue = kind === 'decision' ? 48 : e.hue + (KIND_HUE_SHIFT[kind] || 0);
+    const nodeSat = KIND_SAT[kind] || 70;
+    const nodeLit = KIND_LIT[kind] || 72;
+    const nodeAlp = (KIND_ALPHA[kind] || 0.9) * alpha;
+
+    // Extra glow ring for agent-selected node
+    if (isAgSel) {
+      const pulse = 0.55 + 0.45 * Math.sin(state.tick * 0.09);
+      const gr = 30;
+      const ag = wctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, gr);
+      ag.addColorStop(0, `hsla(${nodeHue}, 85%, 75%, ${0.55 * bright * pulse})`);
+      ag.addColorStop(1, 'hsla(0,0%,0%,0)');
+      wctx.fillStyle = ag;
+      wctx.beginPath();
+      wctx.arc(pos.x, pos.y, gr, 0, Math.PI * 2);
+      wctx.fill();
+    }
+
+    // Activity glow (agent nearby but not selected)
+    if (isActive && !isAgSel) {
+      const ag2 = wctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 18);
+      ag2.addColorStop(0, `hsla(${nodeHue}, 78%, 72%, ${0.32 * bright})`);
+      ag2.addColorStop(1, 'hsla(0,0%,0%,0)');
+      wctx.fillStyle = ag2;
+      wctx.beginPath();
+      wctx.arc(pos.x, pos.y, 18, 0, Math.PI * 2);
+      wctx.fill();
+    }
+
+    // Base glow halo
+    const glowR = isCore ? 16 : (isActive ? 10 : 6);
+    const g = wctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowR);
+    g.addColorStop(0, `hsla(${nodeHue}, ${nodeSat}%, ${nodeLit}%, ${0.6 * bright * (isActive ? 1.5 : 1)})`);
     g.addColorStop(1, 'hsla(0,0%,0%,0)');
     wctx.fillStyle = g;
     wctx.beginPath();
-    wctx.arc(pos.x, pos.y, glow, 0, Math.PI * 2);
+    wctx.arc(pos.x, pos.y, glowR, 0, Math.PI * 2);
     wctx.fill();
-    // core dot
-    wctx.fillStyle = isCore
-      ? `hsla(${e.hue}, 85%, 78%, ${alpha})`
-      : `hsla(${e.hue}, 55%, 72%, ${alpha * 0.9})`;
+
+    // Core dot
+    wctx.fillStyle = `hsla(${nodeHue}, ${nodeSat}%, ${nodeLit}%, ${nodeAlp * (isActive ? 1.0 : 1)})`;
     wctx.beginPath();
-    wctx.arc(pos.x, pos.y, rPx, 0, Math.PI * 2);
+    wctx.arc(pos.x, pos.y, rPx * (isActive ? 1.18 : 1), 0, Math.PI * 2);
     wctx.fill();
+
+    // Spawn pop-in ring (new node animation)
+    const spawn = state.spawnAnim[nid];
+    if (spawn) {
+      const t = Math.min(1, (state.tick - spawn.startTick) / 50);
+      const ringR = rPx * (1 + (1 - t) * 9);
+      const ringA = (1 - t) * 0.8;
+      wctx.strokeStyle = `hsla(${nodeHue}, 80%, 80%, ${ringA})`;
+      wctx.lineWidth = 1.2;
+      wctx.beginPath();
+      wctx.arc(pos.x, pos.y, ringR, 0, Math.PI * 2);
+      wctx.stroke();
+      if (t >= 1) delete state.spawnAnim[nid];
+    }
   });
 }
 
@@ -970,6 +1060,50 @@ function drawEntityLabel(e) {
 
 function spaced(str) {
   return str.split('').join(' ');
+}
+
+// Show individual node labels as you zoom in
+function drawNodeLabels(e) {
+  const s = state.cam.scale;
+  if (s < 0.65) return; // too far out
+  const isSel = state.selected === e.id;
+  const zoomAlpha = Math.min(1, (s - 0.65) / 0.55); // fade in 0.65→1.2
+  if (!isSel && s < 1.0) return; // non-selected entities only show labels close-up
+  const bright = STATUS_BRIGHT[e.status];
+
+  e.nodeIds.forEach(nid => {
+    const n = state.nodes[nid];
+    if (!n || n.isCore) return; // core uses entity name label
+    const pos = worldToScreen(n.x, n.y);
+    const kind = n.kind || 'note';
+    const actCnt = state.nodeActivity[nid] || 0;
+    const isAgSel = state.selectedAgent && state.selectedAgent.targetNode === nid;
+    const isActive = actCnt > 0 || isAgSel;
+
+    const KIND_COLOR = { code: [126,200,184], doc: [200,184,126], decision: [245,183,61], note: [122,126,154] };
+    const [r,g,b] = KIND_COLOR[kind] || [138,143,165];
+
+    const baseAlpha = zoomAlpha * bright * (isActive ? 1.0 : 0.55);
+
+    wctx.save();
+    wctx.textAlign = 'center';
+    wctx.textBaseline = 'top';
+    wctx.font = `${isActive ? '500' : '400'} 9px "JetBrains Mono", monospace`;
+    wctx.fillStyle = isActive
+      ? `rgba(231,233,242,${baseAlpha})`
+      : `rgba(${r},${g},${b},${baseAlpha * 0.85})`;
+
+    const label = n.label.length > 22 ? n.label.slice(0, 20) + '…' : n.label;
+    wctx.fillText(label, pos.x, pos.y + 7);
+
+    // kind tag — only show at high zoom
+    if (s > 1.5) {
+      wctx.font = '400 8px "JetBrains Mono", monospace';
+      wctx.fillStyle = `rgba(${r},${g},${b},${baseAlpha * 0.45})`;
+      wctx.fillText(kind, pos.x, pos.y + 18);
+    }
+    wctx.restore();
+  });
 }
 
 function drawAgent(a) {
@@ -1017,8 +1151,10 @@ function draw() {
   if (state.selected) drawSelectionRing(state.entities[state.selected]);
   // agents
   state.agents.forEach(drawAgent);
-  // entity labels last
+  // entity labels
   entList.forEach(drawEntityLabel);
+  // node-level file labels (zoom-dependent)
+  entList.forEach(drawNodeLabels);
 }
 
 // ---------- Animation loop ----------
@@ -1032,12 +1168,19 @@ function tick() {
   // Update zoom label
   updateZoomLabel();
 
+  // Recompute nodeActivity from current agent positions
+  state.nodeActivity = {};
+  state.agents.forEach(a => {
+    if (a.targetNode) {
+      state.nodeActivity[a.targetNode] = (state.nodeActivity[a.targetNode] || 0) + 1;
+    }
+  });
+
   // Agents drift between nodes within their entity
   state.agents.forEach(a => {
     if (a.state === 'needs-input') return; // stays on node
     a.t += a.speed;
     if (a.t >= 1) {
-      // pick next target
       const ent = state.entities[a.entity];
       const opts = ent.nodeIds.filter(n => n !== a.targetNode);
       const nextId = opts[Math.floor(Math.random() * opts.length)] || a.targetNode;
@@ -1047,12 +1190,28 @@ function tick() {
     }
     const pn = state.nodes[a.prevNode];
     const tn = state.nodes[a.targetNode];
-    // smooth ease
-    const e = a.t;
-    const et = e * e * (3 - 2 * e);
+    const et = a.t * a.t * (3 - 2 * a.t);
     a.x = pn.x + (tn.x - pn.x) * et;
     a.y = pn.y + (tn.y - pn.y) * et;
   });
+
+  // Growth: active entities accrete new file nodes over time
+  state.growthTimer++;
+  if (state.growthTimer >= state.growthInterval) {
+    state.growthTimer = 0;
+    // pick a random active entity that has growth files remaining
+    const growable = Object.values(state.entities).filter(e => {
+      const pool = GROWTH_FILES[e.id];
+      return e.status === 'active' && pool && pool.length > 0;
+    });
+    if (growable.length > 0) {
+      const ent = growable[Math.floor(Math.random() * growable.length)];
+      const pool = GROWTH_FILES[ent.id];
+      const idx = Math.floor(Math.random() * pool.length);
+      const [label, kind] = pool.splice(idx, 1)[0]; // consume from pool
+      accreteNode(ent, label, kind);
+    }
+  }
 
   draw();
   requestAnimationFrame(tick);
@@ -1118,12 +1277,12 @@ world.addEventListener('pointerup', (ev) => {
   const w = screenToWorld(ev.clientX, ev.clientY);
   const agent = pickAgentAt(w.x, w.y);
   if (agent) {
-    // lock agent tip (pulse it)
-    flashToast('agent · ' + agent.name + ' · ' + agent.label);
+    selectAgent(agent);
     return;
   }
   const eid = pickEntityAt(w.x, w.y);
   selectEntity(eid);
+  state.selectedAgent = null;
 });
 
 world.addEventListener('pointercancel', () => {
@@ -1163,7 +1322,7 @@ window.addEventListener('keydown', (ev) => {
     else if (ev.key === 'ArrowRight') { state.cam.targetX += panStep; ev.preventDefault(); }
     else if (ev.key === 'ArrowUp')    { state.cam.targetY -= panStep; ev.preventDefault(); }
     else if (ev.key === 'ArrowDown')  { state.cam.targetY += panStep; ev.preventDefault(); }
-    else if (ev.key === 'Escape')     { selectEntity(null); }
+    else if (ev.key === 'Escape')     { selectEntity(null); state.selectedAgent = null; }
 });
 
 // Zoom buttons
@@ -1200,12 +1359,56 @@ world.addEventListener('touchmove', (ev) => {
 world.addEventListener('touchend', () => { touchPinch = null; }, { passive: true });
 
 // ---------- Selection / command strip ----------
-function selectEntity(eid) {
-  state.selected = eid;
+function selectAgent(agent) {
+  state.selectedAgent = agent;
+  state.selected = null;
   const strip = document.getElementById('cmdStrip');
   const zm = document.getElementById('zoomMeta');
+  const kl = document.getElementById('kindLegend');
+
+  // Determine the file node the agent is on
+  const targetNode = state.nodes[agent.targetNode];
+  const nodeName = targetNode ? targetNode.label : '—';
+  const nodeKind = targetNode ? (targetNode.kind || 'note') : 'note';
+  const ent = state.entities[agent.entity];
+
+  document.getElementById('cmdName').textContent = agent.name;
+  document.getElementById('cmdType').textContent = agent.entity + ' · ' + (agent.state === 'needs-input' ? '⚡ needs-input' : agent.state);
+
+  // Repurpose the 4 resource rows for agent info
+  document.getElementById('resLabelA').textContent = 'file';
+  document.getElementById('resLabelB').textContent = 'task';
+  document.getElementById('resLabelC').textContent = 'kind';
+  document.getElementById('resLabelD').textContent = 'status';
+  document.getElementById('resFocus').textContent = nodeName;
+  document.getElementById('resFocusFill').style.width = '100%';
+  document.getElementById('resHeat').textContent = agent.label;
+  document.getElementById('resHeatFill').style.width = agent.state === 'needs-input' ? '100%' : '60%';
+  document.getElementById('resQueue').textContent = nodeKind;
+  document.getElementById('resQueueFill').style.width = { code:85, doc:65, decision:95, note:45 }[nodeKind] + '%';
+  document.getElementById('resUpdated').textContent = agent.state === 'needs-input' ? 'blocked' : 'active';
+  document.getElementById('resUpdatedFill').style.width = agent.state === 'needs-input' ? '20%' : '92%';
+
+  // Ease camera toward the agent's entity
+  focusEntity(agent.entity, Math.max(state.cam.targetScale, 1.1));
+
+  strip.classList.add('open');
+  zm.classList.add('strip-open');
+  kl.classList.add('strip-open');
+}
+
+function selectEntity(eid) {
+  state.selected = eid;
+  state.selectedAgent = null;
+  const strip = document.getElementById('cmdStrip');
+  const zm = document.getElementById('zoomMeta');
+  const kl = document.getElementById('kindLegend');
   if (eid) {
     const e = state.entities[eid];
+    document.getElementById('resLabelA').textContent = 'Focus';
+    document.getElementById('resLabelB').textContent = 'Heat';
+    document.getElementById('resLabelC').textContent = 'Queue';
+    document.getElementById('resLabelD').textContent = 'Updated';
     document.getElementById('cmdName').textContent = e.name;
     document.getElementById('cmdType').textContent = e.type + ' · ' + e.form;
     // stubbed per-entity resources
@@ -1219,9 +1422,11 @@ function selectEntity(eid) {
     document.getElementById('resUpdated').textContent = snap.updated;
     strip.classList.add('open');
     zm.classList.add('strip-open');
+    kl.classList.add('strip-open');
   } else {
     strip.classList.remove('open');
     zm.classList.remove('strip-open');
+    kl.classList.remove('strip-open');
   }
 }
 
@@ -1241,16 +1446,6 @@ document.querySelectorAll('.cmd-btn').forEach(btn => {
     if (!eid) return;
     flashToast(cmd + ' · ' + state.entities[eid].name);
   });
-});
-
-// Mode toggle
-document.getElementById('modeToggle').addEventListener('click', (ev) => {
-  const btn = ev.target.closest('button');
-  if (!btn) return;
-  document.querySelectorAll('#modeToggle button').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  state.mode = btn.dataset.mode;
-  if (state.mode === 'timeline') flashToast('timeline · wip');
 });
 
 // Alert badge -> jump to LoveNotes
