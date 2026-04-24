@@ -346,6 +346,134 @@
   .cmd-res-bar.warn .fill { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
   .cmd-res-bar.crit .fill { background: var(--danger); }
 
+  /* Dispatch modal — centered, slides down from top */
+  .dispatch-modal {
+    position: fixed;
+    top: 56px; left: 50%;
+    transform: translate(-50%, -20px);
+    width: 520px;
+    background: rgba(4,5,10,0.96);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--ink-3);
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 30px rgba(245,183,61,0.08);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.22,0.61,0.36,1);
+    overflow: hidden;
+  }
+  .dispatch-modal.open {
+    opacity: 1; pointer-events: auto;
+    transform: translate(-50%, 0);
+  }
+  .dispatch-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .dispatch-head .target {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .dispatch-head .close {
+    background: none; border: none;
+    color: var(--ink-2);
+    font-size: 14px; cursor: pointer;
+    font-family: inherit;
+    padding: 0; line-height: 1;
+  }
+  .dispatch-head .close:hover { color: var(--ink-0); }
+
+  .dispatch-body { padding: 14px 16px; }
+  .dispatch-input {
+    width: 100%;
+    min-height: 72px;
+    background: rgba(13,16,26,0.9);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--ink-0);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .dispatch-input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft); }
+  .dispatch-input::placeholder { color: var(--ink-3); }
+
+  .dispatch-foot {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px 14px;
+    border-top: 1px solid var(--line);
+  }
+  .phase-group {
+    display: flex; align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .phase-group button {
+    background: none; border: none;
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    transition: all 0.15s;
+  }
+  .phase-group button + button { border-left: 1px solid var(--line); }
+  .phase-group button:hover { color: var(--ink-1); }
+  .phase-group button.on {
+    background: var(--ink-1);
+    color: var(--bg-0);
+  }
+  .phase-hint {
+    font-size: 10px;
+    color: var(--ink-3);
+    margin-left: 4px;
+    letter-spacing: 0.04em;
+  }
+  .dispatch-submit {
+    margin-left: auto;
+    background: var(--accent);
+    color: #1a1306;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 7px 14px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.15s;
+  }
+  .dispatch-submit:hover {
+    background: #ffd672;
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .dispatch-submit:disabled {
+    opacity: 0.4; cursor: not-allowed;
+    box-shadow: none;
+  }
+  .dispatch-scrim {
+    position: fixed; inset: 0;
+    background: rgba(4,5,10,0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 49;
+  }
+  .dispatch-scrim.open { opacity: 1; pointer-events: auto; }
+
   /* Toast */
   .toast {
     position: fixed;
@@ -452,6 +580,26 @@
   <div class="kind-item"><div class="kind-dot" style="background:#c8b87e"></div>doc</div>
   <div class="kind-item"><div class="kind-dot" style="background:#f5b73d"></div>decision</div>
   <div class="kind-item"><div class="kind-dot" style="background:#7a7e9a"></div>note</div>
+</div>
+
+<div class="dispatch-scrim" id="dispatchScrim"></div>
+<div class="dispatch-modal" id="dispatchModal">
+  <div class="dispatch-head">
+    <div>Dispatch &rarr; <span class="target" id="dispatchTarget">—</span></div>
+    <button class="close" id="dispatchClose" title="Close">&times;</button>
+  </div>
+  <div class="dispatch-body">
+    <textarea class="dispatch-input" id="dispatchInput" placeholder="What should this agent do? Be specific — include constraints, success criteria, and what to touch."></textarea>
+  </div>
+  <div class="dispatch-foot">
+    <div class="phase-group" id="phaseGroup">
+      <button data-phase="plan">PLAN</button>
+      <button data-phase="execute" class="on">EXECUTE</button>
+      <button data-phase="ralph">RALPH</button>
+    </div>
+    <span class="phase-hint" id="phaseHint">run once, stop when done</span>
+    <button class="dispatch-submit" id="dispatchSubmit">DISPATCH &#x2197;</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"><span class="acc">&rarr;</span> dispatched</div>
@@ -1411,7 +1559,10 @@ window.addEventListener('keydown', (ev) => {
     else if (ev.key === 'ArrowRight') { state.cam.targetX += panStep; ev.preventDefault(); }
     else if (ev.key === 'ArrowUp')    { state.cam.targetY -= panStep; ev.preventDefault(); }
     else if (ev.key === 'ArrowDown')  { state.cam.targetY += panStep; ev.preventDefault(); }
-    else if (ev.key === 'Escape')     { selectEntity(null); state.selectedAgent = null; }
+    else if (ev.key === 'Escape')     {
+      if (document.getElementById('dispatchModal').classList.contains('open')) { closeDispatch(); }
+      else { selectEntity(null); state.selectedAgent = null; }
+    }
 });
 
 // Zoom buttons
@@ -1533,9 +1684,87 @@ document.querySelectorAll('.cmd-btn').forEach(btn => {
     const cmd = btn.dataset.cmd;
     const eid = state.selected;
     if (!eid) return;
-    flashToast(cmd + ' · ' + state.entities[eid].name);
+    if (cmd === 'dispatch') {
+      openDispatch(eid);
+    } else {
+      flashToast(cmd + ' · ' + state.entities[eid].name);
+    }
   });
 });
+
+// ---------- Dispatch modal ----------
+const PHASE_HINTS = {
+  plan:    'sketch the approach, stop for your review',
+  execute: 'run once, stop when done',
+  ralph:   'iterate in a loop until done — self-corrects',
+};
+let dispatchEntity = null;
+let dispatchPhase = 'execute';
+
+function openDispatch(eid) {
+  dispatchEntity = eid;
+  const ent = state.entities[eid];
+  document.getElementById('dispatchTarget').textContent = ent.name;
+  document.getElementById('dispatchInput').value = '';
+  document.getElementById('dispatchModal').classList.add('open');
+  document.getElementById('dispatchScrim').classList.add('open');
+  setTimeout(() => document.getElementById('dispatchInput').focus(), 100);
+}
+
+function closeDispatch() {
+  document.getElementById('dispatchModal').classList.remove('open');
+  document.getElementById('dispatchScrim').classList.remove('open');
+  dispatchEntity = null;
+}
+
+document.getElementById('dispatchClose').addEventListener('click', closeDispatch);
+document.getElementById('dispatchScrim').addEventListener('click', closeDispatch);
+
+document.getElementById('phaseGroup').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('button');
+  if (!btn) return;
+  document.querySelectorAll('#phaseGroup button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  dispatchPhase = btn.dataset.phase;
+  document.getElementById('phaseHint').textContent = PHASE_HINTS[dispatchPhase];
+});
+
+document.getElementById('dispatchInput').addEventListener('keydown', (ev) => {
+  if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') submitDispatch();
+  if (ev.key === 'Escape') closeDispatch();
+});
+
+document.getElementById('dispatchSubmit').addEventListener('click', submitDispatch);
+
+function submitDispatch() {
+  const input = document.getElementById('dispatchInput').value.trim();
+  if (!input || !dispatchEntity) return;
+  const eid = dispatchEntity;
+  const ent = state.entities[eid];
+  const label = input.length > 32 ? input.slice(0, 30) + '…' : input;
+  const usedNames = new Set(state.agents.map(a => a.name));
+  const freeNames = AGENT_NAMES.filter(n => !usedNames.has(n));
+  const name = freeNames.length ? freeNames[Math.floor(Math.random() * freeNames.length)] : 'Agent' + state.agents.length;
+  const target = ent.nodeIds[Math.floor(Math.random() * ent.nodeIds.length)];
+  const tn = state.nodes[target];
+  state.agents.push({
+    id: 'ag-' + Date.now(),
+    name,
+    label,
+    state: 'working',
+    entity: eid,
+    phase: dispatchPhase,
+    primary: false,
+    x: tn.x, y: tn.y,
+    targetNode: target,
+    prevNode: target,
+    t: 0,
+    speed: 0.004 + Math.random() * 0.003,
+  });
+  closeDispatch();
+  flashToast('dispatched ' + name + ' · ' + ent.name + ' · ' + dispatchPhase);
+  focusEntity(eid, Math.max(state.cam.targetScale, 1.1));
+}
 
 // Alert badge -> jump to LoveNotes
 document.getElementById('alertBadge').addEventListener('click', () => {
