@@ -1,0 +1,2300 @@
+<!doctype html>
+<!--
+  Constellation — iteration of prototype 15. Where 15 rendered each project as a
+  generic force-directed blob, 18 gives every entity a signature geometric form
+  (Hub, Branching, Pair, Seal, Stream) tied to its taxonomy type, so Christopher
+  reads each project at a glance by silhouette. New nodes accrete according to
+  each constellation's growth rules, and status drives brightness — the night
+  sky of work, legible without labels.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Constellation — Agent Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #04050a;
+    --bg-1: #07090f;
+    --bg-2: #0d101a;
+    --ink-0: #e7e9f2;
+    --ink-1: #b8bccf;
+    --ink-2: #6a6f85;
+    --ink-3: #353849;
+    --line: #181b25;
+    --line-2: #23273433;
+    --accent: #f5b73d;
+    --accent-soft: rgba(245,183,61,0.14);
+    --accent-glow: rgba(245,183,61,0.55);
+    --danger: #ef5a5a;
+    --ok: #6fe1b1;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-0);
+    color: var(--ink-0);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-weight: 400;
+    overflow: hidden;
+    height: 100vh; width: 100vw;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  /* Night sky background — very dark, faint diagonal gradient */
+  .stage {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(30,40,80,0.08), transparent 60%),
+      radial-gradient(ellipse at 85% 80%, rgba(20,30,60,0.06), transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(10,12,22,0.7), transparent 75%),
+      var(--bg-0);
+  }
+  .stars {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0.45;
+  }
+
+  /* Top bar */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 60px;
+    display: flex; align-items: center;
+    padding: 0 22px;
+    gap: 24px;
+    background: linear-gradient(to bottom, rgba(4,5,10,0.94), rgba(4,5,10,0.6));
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    z-index: 30;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding-right: 18px; border-right: 1px solid var(--line);
+    margin-right: 4px;
+  }
+  .brand-mark {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+  }
+  .brand-name {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .brand-sub {
+    font-size: 10px; color: var(--ink-2); letter-spacing: 0.14em; text-transform: uppercase;
+    margin-top: -1px;
+  }
+
+  .resources {
+    display: flex; align-items: center; gap: 22px; flex: 1;
+  }
+  .res {
+    display: flex; flex-direction: column; gap: 4px;
+    min-width: 140px;
+  }
+  .res-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px;
+  }
+  .res-label {
+    font-size: 10px; color: var(--ink-2);
+    text-transform: uppercase; letter-spacing: 0.15em;
+    font-weight: 500;
+  }
+  .res-value {
+    font-size: 13px; font-weight: 500; color: var(--ink-0);
+  }
+  .res-value .sub { color: var(--ink-2); font-weight: 400; }
+  .meter {
+    height: 3px; width: 100%;
+    background: #1a1d27;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ink-2), var(--ink-1));
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .meter.warn .meter-fill {
+    background: linear-gradient(90deg, var(--accent), #ffd672);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .meter.crit .meter-fill {
+    background: linear-gradient(90deg, #c9423f, var(--danger));
+    animation: pulseRed 1.6s ease-in-out infinite;
+  }
+  @keyframes pulseRed {
+    0%, 100% { box-shadow: 0 0 4px rgba(239,90,90,0.3); }
+    50% { box-shadow: 0 0 14px rgba(239,90,90,0.8); }
+  }
+
+  .tempo {
+    display: flex; flex-direction: column; gap: 4px;
+    padding-left: 22px;
+    border-left: 1px solid var(--line);
+    min-width: 140px;
+  }
+  .tempo-bar {
+    display: flex; gap: 2px; height: 12px; align-items: flex-end;
+  }
+  .tempo-bar span {
+    flex: 1; background: #1a1d27;
+    border-radius: 1px; transition: all 0.4s ease;
+  }
+  .tempo-bar span.on { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+  .session-clock {
+    font-size: 11px; color: var(--ink-2);
+  }
+  .session-clock strong { color: var(--ink-1); font-weight: 500; }
+
+  /* Main canvas */
+  .canvas-wrap {
+    position: fixed;
+    top: 60px; bottom: 148px; left: 0; right: 0;
+    overflow: hidden;
+  }
+  #graph {
+    position: absolute; inset: 0;
+    transition: transform 0.9s cubic-bezier(0.7, 0.1, 0.25, 1);
+    transform-origin: 50% 50%;
+  }
+  .entity-title {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    text-align: center;
+    z-index: 5;
+    transition: opacity 0.4s ease;
+  }
+  .entity-title .name {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--ink-1);
+  }
+  .entity-title .meta {
+    font-size: 9px; color: var(--ink-2);
+    margin-top: 4px; letter-spacing: 0.14em;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .entity-title .type-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-2);
+    padding: 1px 6px;
+    border: 1px solid var(--ink-3);
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+  }
+  .entity-title.status-dormant .name { color: var(--ink-2); }
+  .entity-title.status-dormant .type-tag { opacity: 0.55; }
+  .entity-title.status-warm .name { color: var(--ink-1); opacity: 0.85; }
+  .entity-title.active .name { color: var(--ink-0); }
+
+  .entity-hit {
+    position: absolute;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 4;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    background: radial-gradient(circle, rgba(255,255,255,0.010), transparent 70%);
+  }
+  .entity-hit:hover {
+    background: radial-gradient(circle, rgba(255,255,255,0.03), transparent 70%);
+  }
+  .entity-hit.alert {
+    animation: alertAura 2.2s ease-in-out infinite;
+  }
+  @keyframes alertAura {
+    0%, 100% { box-shadow: inset 0 0 50px rgba(239,90,90,0.02); }
+    50% { box-shadow: inset 0 0 100px rgba(239,90,90,0.12); }
+  }
+
+  /* Observe bar */
+  .observe-bar {
+    position: fixed; top: 72px; left: 22px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 14px;
+    background: rgba(7,9,15,0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 12px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 20;
+  }
+  .observe-bar.show { opacity: 1; pointer-events: auto; }
+  .back-btn {
+    background: none; border: none; color: var(--ink-1);
+    cursor: pointer; font-family: inherit; font-size: 12px;
+    display: flex; align-items: center; gap: 6px;
+    padding: 2px 0;
+  }
+  .back-btn:hover { color: var(--ink-0); }
+  .observe-bar .sep { color: var(--ink-3); }
+  .observe-bar .focus-name { font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+  .observe-bar .focus-form {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-2);
+    padding: 1px 6px;
+    border: 1px solid var(--ink-3);
+    border-radius: 3px;
+  }
+  .observe-bar .task-now {
+    color: var(--ink-2); font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* Bottom rail */
+  .bottom-rail {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 148px;
+    background: linear-gradient(to top, rgba(4,5,10,0.96), rgba(4,5,10,0.7));
+    backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 14px 22px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 30;
+  }
+  .rail-row {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .rail-label {
+    font-size: 10px; color: var(--ink-2); text-transform: uppercase;
+    letter-spacing: 0.15em; min-width: 90px;
+    font-weight: 500;
+  }
+
+  .dispatch {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px 6px 14px;
+    transition: border-color 0.2s ease;
+  }
+  .dispatch:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-soft);
+  }
+  .dispatch-prefix {
+    color: var(--accent); font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 600;
+  }
+  .dispatch input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--ink-0); font-family: inherit; font-size: 13px;
+    padding: 6px 0;
+  }
+  .dispatch input::placeholder { color: var(--ink-3); }
+  .dispatch select {
+    background: var(--bg-1); color: var(--ink-1);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    cursor: pointer;
+  }
+  .dispatch button {
+    background: var(--accent); color: #1a1306;
+    border: none; border-radius: 5px;
+    padding: 6px 14px;
+    font-family: inherit; font-weight: 600; font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: all 0.15s ease;
+  }
+  .dispatch button:hover {
+    background: #ffd672;
+    box-shadow: 0 0 14px var(--accent-glow);
+  }
+  .dispatch kbd {
+    color: var(--ink-3); font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid var(--line);
+    padding: 1px 5px; border-radius: 3px;
+  }
+
+  .agents-strip {
+    display: flex; gap: 6px; flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .agents-strip::-webkit-scrollbar { height: 0; }
+  .agent-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 10px 4px 7px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 11px; color: var(--ink-1);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .agent-chip:hover { border-color: var(--ink-3); color: var(--ink-0); }
+  .agent-chip .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ink-2);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.03);
+  }
+  .agent-chip.working .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+  .agent-chip.idle .dot { background: var(--ink-3); }
+  .agent-chip.alert .dot {
+    background: var(--danger);
+    animation: chipAlert 1.4s ease-in-out infinite;
+  }
+  @keyframes chipAlert {
+    0%, 100% { box-shadow: 0 0 0 rgba(239,90,90,0.2); }
+    50% { box-shadow: 0 0 10px rgba(239,90,90,0.9); }
+  }
+  .agent-chip .base-tag {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-2); font-size: 10px;
+  }
+
+  .queue-row {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .queue-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-2);
+  }
+  .queue-item strong {
+    color: var(--ink-1); font-weight: 500;
+  }
+  .queue-count {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--ink-1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+  }
+  .queue-count.hot {
+    color: var(--accent); border-color: rgba(245,183,61,0.4);
+  }
+
+  /* Popovers / command panel */
+  .popover {
+    position: fixed;
+    background: rgba(9,11,18,0.98);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--ink-1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02);
+    z-index: 40;
+    min-width: 220px;
+    max-width: 280px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .popover.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .popover .pop-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-0);
+    font-weight: 500;
+    margin-bottom: 6px;
+    word-break: break-all;
+  }
+  .popover .pop-meta {
+    font-size: 10px; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+  .popover .pop-body {
+    font-size: 12px; color: var(--ink-1);
+    line-height: 1.5;
+  }
+  .popover .pop-author {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 10px; color: var(--ink-2);
+    display: flex; justify-content: space-between;
+  }
+
+  .command-panel {
+    position: fixed;
+    background: rgba(9,11,18,0.98);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    z-index: 45;
+    min-width: 240px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.7);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .command-panel.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .cmd-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .cmd-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent);
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700; color: #1a1306;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .cmd-name {
+    font-size: 13px; font-weight: 500;
+  }
+  .cmd-status {
+    font-size: 10px; color: var(--ink-2);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cmd-status.alert { color: var(--danger); }
+  .cmd-task {
+    font-size: 11px; color: var(--ink-1);
+    padding: 8px 10px;
+    background: var(--bg-1);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    margin-bottom: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.4;
+  }
+  .cmd-actions {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+  }
+  .cmd-btn {
+    background: var(--bg-2); color: var(--ink-1);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 7px 10px;
+    font-family: inherit; font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  .cmd-btn:hover {
+    border-color: var(--ink-3); color: var(--ink-0);
+    background: var(--bg-1);
+  }
+  .cmd-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+  .toast {
+    position: fixed;
+    bottom: 168px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-2);
+    border: 1px solid var(--accent);
+    color: var(--ink-0);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    box-shadow: 0 10px 30px rgba(245,183,61,0.2);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .node-label {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-2);
+    pointer-events: none;
+    transform: translate(-50%, 0);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 8;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  }
+  .node-label.show { opacity: 1; }
+  .node-label.highlight { color: var(--accent); }
+
+  /* subtle twinkle on active nodes */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <canvas class="stars" id="stars"></canvas>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+        <circle cx="12" cy="12" r="2.3" fill="#f5b73d"/>
+        <circle cx="5" cy="6" r="1" fill="#b8bccf"/>
+        <circle cx="19" cy="7" r="1.2" fill="#b8bccf"/>
+        <circle cx="6" cy="18" r="1.1" fill="#b8bccf"/>
+        <circle cx="20" cy="17" r="1" fill="#b8bccf"/>
+        <path d="M12 12 L5 6 M12 12 L19 7 M12 12 L6 18 M12 12 L20 17" stroke="#353849" stroke-width="0.6"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Constellation</div>
+      <div class="brand-sub mono">Ops Console</div>
+    </div>
+  </div>
+
+  <div class="resources">
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Context</span>
+        <span class="res-value mono"><span id="ctxCur">70.0k</span><span class="sub"> / 200k</span></span>
+      </div>
+      <div class="meter" id="ctxMeter"><div class="meter-fill" id="ctxFill" style="width:35%"></div></div>
+    </div>
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Tokens Today</span>
+        <span class="res-value mono" id="tokTotal">318.6k</span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="tokFill" style="width:32%;background:linear-gradient(90deg,#4b5577,#8b92a8)"></div></div>
+    </div>
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Spend</span>
+        <span class="res-value mono">$<span id="spendTotal">1.84</span></span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="spendFill" style="width:18%;background:linear-gradient(90deg,#3a6e54,#6fe1b1)"></div></div>
+    </div>
+    <div class="res">
+      <div class="res-head">
+        <span class="res-label">Memory</span>
+        <span class="res-value mono"><span id="memCount">54</span><span class="sub"> entries</span></span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="memFill" style="width:54%;background:linear-gradient(90deg,#4a4e82,#9ba0e0)"></div></div>
+    </div>
+  </div>
+
+  <div class="tempo">
+    <div class="res-head">
+      <span class="res-label">Session Tempo</span>
+      <span class="res-value mono" id="builtCount">0 built</span>
+    </div>
+    <div class="tempo-bar" id="tempoBar">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="session-clock">session <strong class="mono" id="runtime">0:00</strong></div>
+  </div>
+</div>
+
+<!-- OBSERVE BAR -->
+<div class="observe-bar" id="observeBar">
+  <button class="back-btn" id="backBtn">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2 L4 6 L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Sky View
+  </button>
+  <span class="sep">·</span>
+  <span class="focus-name mono" id="focusName">LOVENOTES</span>
+  <span class="focus-form mono" id="focusForm">product · hub</span>
+  <span class="sep">·</span>
+  <span class="task-now" id="focusTask">awaiting dispatch</span>
+</div>
+
+<!-- CANVAS -->
+<div class="canvas-wrap" id="canvasWrap">
+  <svg id="graph" width="100%" height="100%" style="display:block;">
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2.4" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="strongGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.2" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <g id="auraLayer"></g>
+    <g id="edgeLayer"></g>
+    <g id="nodeLayer"></g>
+    <g id="agentLayer"></g>
+  </svg>
+  <div id="labelLayer" style="position:absolute;inset:0;pointer-events:none;"></div>
+  <div id="titleLayer" style="position:absolute;inset:0;pointer-events:none;"></div>
+  <div id="hitLayer" style="position:absolute;inset:0;"></div>
+</div>
+
+<!-- BOTTOM RAIL -->
+<div class="bottom-rail">
+  <div class="rail-row">
+    <div class="rail-label">Dispatch</div>
+    <form class="dispatch" id="dispatchForm">
+      <span class="dispatch-prefix">&gt;</span>
+      <input id="dispatchInput" type="text" placeholder="draft campaign brief for toll-free verification retry…" autocomplete="off" />
+      <select id="dispatchEntity">
+        <option value="lovenotes">LoveNotes · product</option>
+        <option value="prototypes">Prototypes · lab</option>
+        <option value="brandywine">Brandywine · client</option>
+        <option value="biosync">BioSync · client</option>
+        <option value="content">Content · creative</option>
+        <option value="contrarian">Contrarian · brand</option>
+      </select>
+      <button type="submit">Dispatch</button>
+      <kbd>⏎</kbd>
+    </form>
+  </div>
+  <div class="rail-row">
+    <div class="rail-label">Agents</div>
+    <div class="agents-strip" id="agentsStrip"></div>
+  </div>
+  <div class="rail-row">
+    <div class="rail-label">Queue</div>
+    <div class="queue-row" id="queueRow"></div>
+  </div>
+</div>
+
+<!-- POPOVERS -->
+<div class="popover" id="nodePopover">
+  <div class="pop-title mono" id="popTitle">—</div>
+  <div class="pop-meta mono" id="popMeta">—</div>
+  <div class="pop-body" id="popBody">—</div>
+  <div class="pop-author">
+    <span id="popAuthor">—</span>
+    <span class="mono" id="popTime">—</span>
+  </div>
+</div>
+
+<div class="command-panel" id="cmdPanel">
+  <div class="cmd-head">
+    <div class="cmd-avatar" id="cmdAvatar">A</div>
+    <div class="cmd-name" id="cmdName">Agent</div>
+    <div class="cmd-status" id="cmdStatus">WORKING</div>
+  </div>
+  <div class="cmd-task mono" id="cmdTask">—</div>
+  <div class="cmd-actions">
+    <button class="cmd-btn" data-cmd="pause">Pause</button>
+    <button class="cmd-btn" data-cmd="refocus">Refocus</button>
+    <button class="cmd-btn" data-cmd="recall">Recall</button>
+    <button class="cmd-btn danger" data-cmd="cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">dispatched</div>
+
+<script>
+/* ================================================================
+   Constellation — each entity is a geometric pattern tied to its
+   taxonomy type. Nodes accrete according to the pattern's rules.
+   ================================================================ */
+
+// ---------------- ENTITIES ----------------
+// form: 'hub' (product) · 'branching' (lab) · 'pair' (client) · 'seal' (brand) · 'stream' (creative)
+const ENTITIES = [
+  { id: 'lovenotes',  name: 'LoveNotes',  type: 'product',  form: 'hub',       status: 'active',  hue: 335, x: 0.22, y: 0.32, radius: 150 },
+  { id: 'prototypes', name: 'Prototypes', type: 'lab',      form: 'branching', status: 'active',  hue: 205, x: 0.58, y: 0.28, radius: 170 },
+  { id: 'content',    name: 'Content',    type: 'creative', form: 'stream',    status: 'active',  hue: 48,  x: 0.84, y: 0.42, radius: 160 },
+  { id: 'brandywine', name: 'Brandywine', type: 'client',   form: 'pair',      status: 'warm',    hue: 148, x: 0.22, y: 0.75, radius: 140 },
+  { id: 'biosync',    name: 'BioSync',    type: 'client',   form: 'pair',      status: 'warm',    hue: 178, x: 0.55, y: 0.78, radius: 140 },
+  { id: 'contrarian', name: 'Contrarian', type: 'brand',    form: 'seal',      status: 'dormant', hue: 265, x: 0.86, y: 0.78, radius: 100 },
+];
+
+const FORM_LABEL = {
+  hub: 'hub',
+  branching: 'branching',
+  pair: 'pair',
+  seal: 'seal',
+  stream: 'stream',
+};
+
+// Seed nodes per entity — each seeds the initial shape of its form
+const SEED_NODES = {
+  lovenotes: [
+    ['core', 'core', 'LoveNotes core · product hub'],
+    ['sms-webhook.ts', 'code', 'Twilio inbound handler'],
+    ['schema.sql', 'code', 'Supabase pairs & messages'],
+    ['prompts.md', 'doc', 'System prompts for tone'],
+    ['toll-free-verif', 'decision', 'BLOCKED: verification resubmit'],
+    ['pricing.md', 'doc', 'Tier structure & pricing'],
+    ['onboarding.tsx', 'code', 'Landing + signup funnel'],
+  ],
+  prototypes: [
+    ['scratch', 'core', 'Scratch workspace root'],
+    ['sutra-spec.md', 'doc', 'Sutra architecture'],
+    ['dispatch-ui-15', 'code', 'Bases prototype'],
+    ['dispatch-ui-17', 'code', 'Dark prototype'],
+    ['dispatch-ui-18', 'note', 'Constellation build'],
+    ['bases-notes.md', 'note', 'Field notes on force layout'],
+  ],
+  content: [
+    ['essay-personal-os.md', 'doc', 'Essay: building a personal OS'],
+    ['prototype-hour-03.md', 'note', 'Episode 3 outline'],
+    ['thread-agents-at-home', 'note', 'Twitter thread draft'],
+    ['newsletter-014.md', 'doc', 'Weekly issue draft'],
+    ['voice-guide.md', 'doc', 'Writing constraints'],
+  ],
+  brandywine: [
+    ['client-anchor', 'core', 'Brandywine relationship'],
+    ['delivery-anchor', 'core', 'Appraisal delivery'],
+    ['intake-notes.md', 'doc', 'Scope & constraints'],
+    ['appraisal-draft.md', 'note', 'Draft pending review'],
+    ['comps-worksheet', 'code', 'Comparables spreadsheet'],
+  ],
+  biosync: [
+    ['client-anchor', 'core', 'BioSync engagement'],
+    ['delivery-anchor', 'core', 'Research deliverable'],
+    ['kickoff-notes.md', 'doc', 'Awaiting follow-up'],
+    ['scope-draft.md', 'note', 'Proposed scope v1'],
+  ],
+  contrarian: [
+    ['core', 'core', 'Contrarian brand signet'],
+    ['voice.md', 'doc', 'Brand voice reference'],
+    ['palette.md', 'doc', 'Visual language'],
+    ['positioning.md', 'doc', 'Market stance'],
+    ['archive.md', 'note', 'Prior campaigns'],
+  ],
+};
+
+const TASK_TEMPLATES = {
+  lovenotes: [
+    'resubmit toll-free verification', 'tune prompt for conflict mode',
+    'audit rate-limit middleware', 'draft Q2 retention experiment',
+    'profile slow webhook', 'write outage post-mortem',
+  ],
+  prototypes: [
+    'sketch dispatch variant 19', 'extract reusable force layout',
+    'benchmark SVG vs canvas', 'prototype constellation growth',
+    'iterate sutra onboarding', 'draft scratchpad taxonomy',
+  ],
+  content: [
+    'draft essay on agent dispatch', 'outline newsletter issue 14',
+    'write thread on personal OS', 'compile top posts of Q1',
+    'record prototype hour 04',
+  ],
+  brandywine: [
+    'finalize comps worksheet', 'draft appraisal narrative',
+    'schedule walkthrough', 'review scope addendum',
+  ],
+  biosync: [
+    'send follow-up email', 'draft scope v2', 'prep discovery call',
+  ],
+  contrarian: [
+    'archive prior campaign', 'refine positioning statement',
+  ],
+};
+
+const NODE_LABEL_TEMPLATES = {
+  lovenotes: ['verif-retry.md', 'prompt-conflict.md', 'rate-audit.md', 'retention-v2.md', 'webhook-profile.json', 'outage-2024-q2.md', 'pricing-ab.md'],
+  prototypes: ['dispatch-19.html', 'force-layout.ts', 'bench-svg.md', 'growth-rules.md', 'onboarding-v3.tsx', 'taxonomy-v2.md'],
+  content: ['essay-dispatch.md', 'newsletter-014.md', 'thread-personal-os.md', 'q1-top.md', 'prototype-hour-04.md'],
+  brandywine: ['comps-v3.xlsx', 'appraisal-narrative.md', 'walkthrough-notes.md', 'addendum.md'],
+  biosync: ['follow-up-draft.md', 'scope-v2.md', 'discovery-prep.md'],
+  contrarian: ['archive-2023.md', 'positioning-v2.md'],
+};
+
+const AGENT_NAMES = ['Kit','Nova','Axel','Pax','Mira','Oren','Vex','Ilo','Juno','Ren','Sol','Tala'];
+
+// ---------------- STATE ----------------
+const state = {
+  nodes: {},
+  edges: [],
+  agents: [],
+  entities: {},
+  queues: {},
+  mode: 'sky',  // 'sky' | 'observe'
+  focusEntity: null,
+  resources: {
+    context: 70000, contextMax: 200000,
+    tokens: 318600,
+    spend: 1.84,
+    memory: 54,
+    builtThisSession: 0,
+  },
+  selectedAgent: null,
+  selectedNode: null,
+  tempoPulses: 4,
+  startedAt: Date.now(),
+};
+
+// Initialize queues from entities
+ENTITIES.forEach(e => { state.queues[e.id] = []; });
+
+// ---------------- LAYOUT HELPERS ----------------
+const graphEl = document.getElementById('graph');
+const edgeLayer = document.getElementById('edgeLayer');
+const nodeLayer = document.getElementById('nodeLayer');
+const agentLayer = document.getElementById('agentLayer');
+const auraLayer  = document.getElementById('auraLayer');
+const labelLayer = document.getElementById('labelLayer');
+const titleLayer = document.getElementById('titleLayer');
+const hitLayer   = document.getElementById('hitLayer');
+const canvasWrap = document.getElementById('canvasWrap');
+
+let W = 0, H = 0;
+
+function sizeToViewport() {
+  const r = canvasWrap.getBoundingClientRect();
+  W = r.width; H = r.height;
+}
+
+function prng(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+// Status visual multipliers
+function statusBrightness(status) {
+  return { active: 1.0, warm: 0.7, dormant: 0.4, archived: 0.2 }[status] || 1;
+}
+function statusAlpha(status) {
+  return { active: 0.9, warm: 0.7, dormant: 0.45, archived: 0.2 }[status] || 1;
+}
+
+// ---------------- CONSTELLATION BUILDERS ----------------
+// Each builder returns an array of { id, label, kind, desc, x, y, isAnchor, parent }
+// and an array of edges { a, b }.
+
+function buildHub(entity, seeds) {
+  // Central bright node + 4-6 spokes radiating outward
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const spokes = 6;
+  const ringR = entity.radius * 0.62;
+
+  // core
+  const coreSeed = seeds[0] || ['core', 'core', 'hub core'];
+  out.nodes.push({
+    localId: 'core',
+    label: coreSeed[0], kind: coreSeed[1], desc: coreSeed[2],
+    x: cx, y: cy, isCore: true, spokeIdx: -1, depth: 0,
+  });
+
+  // initial spoke nodes (from remaining seeds)
+  for (let i = 0; i < spokes; i++) {
+    const angle = -Math.PI / 2 + (i / spokes) * Math.PI * 2;
+    const seed = seeds[1 + i];
+    if (!seed) continue;
+    out.nodes.push({
+      localId: `spoke-${i}`,
+      label: seed[0], kind: seed[1], desc: seed[2],
+      x: cx + Math.cos(angle) * ringR,
+      y: cy + Math.sin(angle) * ringR,
+      spokeIdx: i, depth: 1, angle,
+    });
+    out.edges.push({ aLocal: 'core', bLocal: `spoke-${i}` });
+  }
+  return out;
+}
+
+function buildBranching(entity, seeds) {
+  // Root node, then forking branches at small angles
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const rootY = cy + entity.radius * 0.55;
+  const root = seeds[0] || ['root', 'core', 'branching root'];
+  out.nodes.push({
+    localId: 'root',
+    label: root[0], kind: root[1], desc: root[2],
+    x: cx, y: rootY, isCore: true, depth: 0, angle: -Math.PI / 2,
+  });
+
+  // Two initial main branches up-left and up-right
+  const branchSeeds = seeds.slice(1);
+  const layout = [
+    { parent: 'root', ang: -Math.PI / 2 - 0.4, len: 0.34 },
+    { parent: 'root', ang: -Math.PI / 2 + 0.4, len: 0.34 },
+    { parent: 0, ang: -Math.PI / 2 - 0.75, len: 0.28 },
+    { parent: 0, ang: -Math.PI / 2 - 0.15, len: 0.28 },
+    { parent: 1, ang: -Math.PI / 2 + 0.15, len: 0.26 },
+    { parent: 1, ang: -Math.PI / 2 + 0.75, len: 0.26 },
+  ];
+  const byIdx = { root: { x: cx, y: rootY, ang: -Math.PI / 2 } };
+  layout.forEach((l, i) => {
+    const seed = branchSeeds[i];
+    if (!seed) return;
+    const parentKey = l.parent === 'root' ? 'root' : `b${l.parent}`;
+    const parent = byIdx[parentKey];
+    if (!parent) return;
+    const len = entity.radius * l.len;
+    const x = parent.x + Math.cos(l.ang) * len;
+    const y = parent.y + Math.sin(l.ang) * len;
+    const lid = `b${i}`;
+    byIdx[lid] = { x, y, ang: l.ang };
+    out.nodes.push({
+      localId: lid,
+      label: seed[0], kind: seed[1], desc: seed[2],
+      x, y, depth: l.parent === 'root' ? 1 : 2, angle: l.ang, parent: parentKey,
+    });
+    out.edges.push({ aLocal: parentKey, bLocal: lid });
+  });
+  return out;
+}
+
+function buildPair(entity, seeds) {
+  // Two anchor nodes connected by a bridge, with satellites orbiting each
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const span = entity.radius * 0.55;
+
+  const a = seeds[0] || ['anchor-a', 'core', 'anchor A'];
+  const b = seeds[1] || ['anchor-b', 'core', 'anchor B'];
+  out.nodes.push({
+    localId: 'anchor-a',
+    label: a[0], kind: a[1], desc: a[2],
+    x: cx - span, y: cy, isCore: true, side: 'a',
+  });
+  out.nodes.push({
+    localId: 'anchor-b',
+    label: b[0], kind: b[1], desc: b[2],
+    x: cx + span, y: cy, isCore: true, side: 'b',
+  });
+  out.edges.push({ aLocal: 'anchor-a', bLocal: 'anchor-b', isBridge: true });
+
+  // satellites
+  const sats = seeds.slice(2);
+  sats.forEach((s, i) => {
+    const side = i % 2 === 0 ? 'a' : 'b';
+    const idxInSide = Math.floor(i / 2);
+    const anchorX = side === 'a' ? cx - span : cx + span;
+    const baseAngle = side === 'a' ? Math.PI : 0;
+    const spread = 0.7;
+    const ang = baseAngle + (idxInSide - 0.5) * spread + (i * 0.13);
+    const r = entity.radius * 0.38;
+    const lid = `sat-${i}`;
+    out.nodes.push({
+      localId: lid,
+      label: s[0], kind: s[1], desc: s[2],
+      x: anchorX + Math.cos(ang) * r,
+      y: cy + Math.sin(ang) * r,
+      side,
+    });
+    out.edges.push({ aLocal: side === 'a' ? 'anchor-a' : 'anchor-b', bLocal: lid });
+  });
+  return out;
+}
+
+function buildSeal(entity, seeds) {
+  // Tight cluster — central dominant node + ~4 companions in a near-regular polygon
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const r = entity.radius * 0.42;
+
+  const core = seeds[0] || ['core', 'core', 'seal core'];
+  out.nodes.push({
+    localId: 'core',
+    label: core[0], kind: core[1], desc: core[2],
+    x: cx, y: cy, isCore: true,
+  });
+
+  const companions = seeds.slice(1, 6);
+  const n = Math.max(4, companions.length);
+  companions.forEach((s, i) => {
+    const angle = -Math.PI / 2 + (i / n) * Math.PI * 2;
+    const lid = `comp-${i}`;
+    out.nodes.push({
+      localId: lid,
+      label: s[0], kind: s[1], desc: s[2],
+      x: cx + Math.cos(angle) * r,
+      y: cy + Math.sin(angle) * r,
+      polyIdx: i, totalPoly: n,
+    });
+    out.edges.push({ aLocal: 'core', bLocal: lid });
+    // polygon perimeter edge
+    if (i > 0) {
+      out.edges.push({ aLocal: `comp-${i - 1}`, bLocal: lid });
+    }
+  });
+  // close polygon
+  if (companions.length >= 3) {
+    out.edges.push({ aLocal: `comp-0`, bLocal: `comp-${companions.length - 1}` });
+  }
+  return out;
+}
+
+function buildStream(entity, seeds) {
+  // Linear diagonal chain of connected nodes
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  // chain runs top-left to bottom-right across the entity region
+  const n = seeds.length;
+  const startX = cx - entity.radius * 0.7;
+  const startY = cy - entity.radius * 0.5;
+  const endX   = cx + entity.radius * 0.7;
+  const endY   = cy + entity.radius * 0.5;
+
+  seeds.forEach((s, i) => {
+    const t = n <= 1 ? 0.5 : i / (n - 1);
+    // add subtle wave perpendicular to chain
+    const wave = Math.sin(i * 1.3) * entity.radius * 0.08;
+    const dx = endX - startX, dy = endY - startY;
+    const len = Math.hypot(dx, dy) || 1;
+    const px = -dy / len, py = dx / len;
+    const x = startX + dx * t + px * wave;
+    const y = startY + dy * t + py * wave;
+    const lid = `link-${i}`;
+    out.nodes.push({
+      localId: lid,
+      label: s[0], kind: s[1], desc: s[2],
+      x, y, chainIdx: i, isCore: i === 0,
+    });
+    if (i > 0) out.edges.push({ aLocal: `link-${i - 1}`, bLocal: lid });
+  });
+  return out;
+}
+
+const BUILDERS = {
+  hub: buildHub,
+  branching: buildBranching,
+  pair: buildPair,
+  seal: buildSeal,
+  stream: buildStream,
+};
+
+// ---------------- SEED CONSTELLATIONS ----------------
+function buildSeedConstellations() {
+  ENTITIES.forEach(e => {
+    state.entities[e.id] = {
+      ...e,
+      cx: e.x * W, cy: e.y * H,
+      nodeIds: [],
+      // Form-specific growth bookkeeping
+      spokeGrowth: [0, 0, 0, 0, 0, 0],  // hub: branches per spoke
+      streamTailId: null,                // stream: id of current tail
+      pairBalance: { a: 0, b: 0 },       // pair: count per side
+      sealFilled: 0,                     // seal: internal fill count
+      branchingLeafIds: [],              // branching: leaves to extend from
+    };
+  });
+
+  Object.entries(SEED_NODES).forEach(([eid, seeds]) => {
+    const entity = state.entities[eid];
+    const builder = BUILDERS[entity.form];
+    const built = builder(entity, seeds);
+
+    // Add nodes
+    const localToGlobal = {};
+    built.nodes.forEach(n => {
+      const gid = `${eid}-${n.localId}`;
+      localToGlobal[n.localId] = gid;
+      state.nodes[gid] = {
+        id: gid, entity: eid,
+        x: n.x, y: n.y,
+        label: n.label, kind: n.kind, desc: n.desc,
+        author: 'seed', bornAt: Date.now() - (120 + Math.random() * 3600) * 1000,
+        createdBy: null,
+        isCore: !!n.isCore,
+        radius: n.isCore ? 5.5 : (n.kind === 'decision' ? 4.5 : 4),
+        // Form metadata
+        spokeIdx: n.spokeIdx, depth: n.depth, side: n.side,
+        polyIdx: n.polyIdx, totalPoly: n.totalPoly,
+        chainIdx: n.chainIdx, angle: n.angle, parent: n.parent,
+      };
+      entity.nodeIds.push(gid);
+    });
+
+    // Add edges
+    built.edges.forEach(e => {
+      state.edges.push({
+        a: localToGlobal[e.aLocal],
+        b: localToGlobal[e.bLocal],
+        active: false,
+        isBridge: !!e.isBridge,
+      });
+    });
+
+    // Update form bookkeeping
+    if (entity.form === 'stream') {
+      entity.streamTailId = localToGlobal[`link-${SEED_NODES[eid].length - 1}`];
+    }
+    if (entity.form === 'branching') {
+      entity.branchingLeafIds = built.nodes.filter(n => n.depth >= 1).map(n => localToGlobal[n.localId]);
+    }
+    if (entity.form === 'pair') {
+      entity.pairBalance.a = built.nodes.filter(n => n.side === 'a' && !n.isCore).length;
+      entity.pairBalance.b = built.nodes.filter(n => n.side === 'b' && !n.isCore).length;
+    }
+    if (entity.form === 'seal') {
+      entity.sealFilled = built.nodes.filter(n => n.polyIdx !== undefined).length;
+    }
+    if (entity.form === 'hub') {
+      built.nodes.forEach(n => {
+        if (n.spokeIdx !== undefined && n.spokeIdx >= 0) {
+          entity.spokeGrowth[n.spokeIdx] = (entity.spokeGrowth[n.spokeIdx] || 0) + 1;
+        }
+      });
+    }
+  });
+}
+
+// ---------------- GROWTH RULES ----------------
+// Given an entity and a completing agent, produce { x, y, parentId, angle? }
+// that positions a new node in the constellation's pattern.
+function placeNewNode(entity, parentNodeId) {
+  const cx = entity.cx, cy = entity.cy;
+  const form = entity.form;
+
+  if (form === 'hub') {
+    // Pick the shortest spoke, extend outward
+    const minGrowth = Math.min(...entity.spokeGrowth);
+    const candidates = entity.spokeGrowth
+      .map((g, i) => ({ g, i }))
+      .filter(x => x.g === minGrowth);
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    const spokeIdx = pick.i;
+    entity.spokeGrowth[spokeIdx] = (entity.spokeGrowth[spokeIdx] || 0) + 1;
+    const depth = entity.spokeGrowth[spokeIdx];
+    const baseAngle = -Math.PI / 2 + (spokeIdx / 6) * Math.PI * 2;
+    // jitter angle slightly by depth
+    const jitter = (depth > 1 ? ((depth % 2 === 0 ? 1 : -1) * 0.25) : 0);
+    const angle = baseAngle + jitter;
+    const r = entity.radius * (0.55 + depth * 0.15);
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    // Find parent: either core (depth 1) or deepest node on that spoke
+    let parent = state.nodes[entity.nodeIds[0]]; // core
+    const spokeChain = entity.nodeIds
+      .map(id => state.nodes[id])
+      .filter(n => n.spokeIdx === spokeIdx)
+      .sort((a, b) => (b.depth || 0) - (a.depth || 0));
+    if (spokeChain[0]) parent = spokeChain[0];
+    return { x, y, parentId: parent.id, spokeIdx, depth };
+  }
+
+  if (form === 'branching') {
+    // Pick a random leaf and extend at small angle
+    const leaves = entity.branchingLeafIds.filter(id => state.nodes[id]);
+    if (leaves.length === 0) {
+      // fallback to core
+      const core = state.nodes[entity.nodeIds[0]];
+      return { x: core.x, y: core.y - 40, parentId: core.id };
+    }
+    const parentId = leaves[Math.floor(Math.random() * leaves.length)];
+    const parent = state.nodes[parentId];
+    const baseAng = parent.angle || -Math.PI / 2;
+    const newAng = baseAng + (Math.random() - 0.5) * 0.7;
+    const len = entity.radius * (0.22 + Math.random() * 0.08);
+    const x = parent.x + Math.cos(newAng) * len;
+    const y = parent.y + Math.sin(newAng) * len;
+    return { x, y, parentId, angle: newAng };
+  }
+
+  if (form === 'pair') {
+    // Join the side with fewer satellites
+    const side = entity.pairBalance.a <= entity.pairBalance.b ? 'a' : 'b';
+    const anchorId = entity.nodeIds.find(id => {
+      const n = state.nodes[id];
+      return n.isCore && n.side === side;
+    });
+    const anchor = state.nodes[anchorId];
+    const baseAngle = side === 'a' ? Math.PI : 0;
+    const count = entity.pairBalance[side];
+    entity.pairBalance[side] = count + 1;
+    const ang = baseAngle + ((count % 2 === 0 ? 1 : -1) * (0.5 + count * 0.25));
+    const r = entity.radius * (0.35 + (count * 0.05));
+    const x = anchor.x + Math.cos(ang) * r;
+    const y = anchor.y + Math.sin(ang) * r;
+    return { x, y, parentId: anchorId, side };
+  }
+
+  if (form === 'seal') {
+    // Fill inside the polygon — pick an inner point between core and a companion
+    const core = state.nodes[entity.nodeIds[0]];
+    const companions = entity.nodeIds.slice(1).map(id => state.nodes[id]).filter(Boolean);
+    if (companions.length === 0) {
+      return { x: core.x + 10, y: core.y + 10, parentId: core.id };
+    }
+    const comp = companions[Math.floor(Math.random() * companions.length)];
+    const t = 0.35 + Math.random() * 0.3;
+    const x = core.x + (comp.x - core.x) * t + (Math.random() - 0.5) * 10;
+    const y = core.y + (comp.y - core.y) * t + (Math.random() - 0.5) * 10;
+    entity.sealFilled++;
+    return { x, y, parentId: comp.id };
+  }
+
+  if (form === 'stream') {
+    // Extend the chain — either off the tail or a small branch that rejoins
+    const branch = Math.random() < 0.25 && entity.nodeIds.length > 2;
+    let parentId = entity.streamTailId;
+    if (!parentId) parentId = entity.nodeIds[entity.nodeIds.length - 1];
+    const parent = state.nodes[parentId];
+    // chain direction: from start to end — use nearest 2 nodes to estimate direction
+    const startNode = state.nodes[entity.nodeIds[0]];
+    const tailNode = parent;
+    const dx = tailNode.x - startNode.x, dy = tailNode.y - startNode.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const dirX = dx / len, dirY = dy / len;
+    let nx, ny;
+    if (branch) {
+      // small perpendicular branch
+      const px = -dirY, py = dirX;
+      const sign = Math.random() < 0.5 ? 1 : -1;
+      const randomChainNode = state.nodes[entity.nodeIds[Math.floor(Math.random() * entity.nodeIds.length)]];
+      nx = randomChainNode.x + (px * sign + dirX * 0.4) * 22;
+      ny = randomChainNode.y + (py * sign + dirY * 0.4) * 22;
+      parentId = randomChainNode.id;
+    } else {
+      const step = entity.radius * 0.18;
+      nx = tailNode.x + dirX * step + (Math.random() - 0.5) * 6;
+      ny = tailNode.y + dirY * step + (Math.random() - 0.5) * 6;
+      // update tail
+      // (will be set after node id is known)
+    }
+    return { x: nx, y: ny, parentId, isBranch: branch };
+  }
+
+  return { x: cx, y: cy, parentId: entity.nodeIds[0] };
+}
+
+// ---------------- AGENT SEEDING ----------------
+function seedAgents() {
+  const initial = [
+    { entity: 'lovenotes', status: 'alert',   task: 'toll-free verification blocked' }, // needs input
+    { entity: 'lovenotes', status: 'working', task: 'tune prompt for conflict mode' },
+    { entity: 'prototypes', status: 'working', task: 'prototype constellation growth' },
+    { entity: 'prototypes', status: 'working', task: 'iterate sutra onboarding' },
+    { entity: 'content',   status: 'working', task: 'draft essay on agent dispatch' },
+  ];
+  initial.forEach((cfg, i) => {
+    const entity = state.entities[cfg.entity];
+    const startNode = state.nodes[entity.nodeIds[Math.floor(Math.random() * entity.nodeIds.length)]];
+    state.agents.push({
+      id: `a${i}`,
+      name: AGENT_NAMES[i],
+      entity: cfg.entity,
+      x: startNode.x, y: startNode.y,
+      prevNode: startNode.id,
+      targetNode: pickDifferentNode(entity, startNode.id),
+      phase: 'walk',
+      phaseT: 0,
+      phaseDur: 1800 + Math.random() * 900,
+      workDur: 7000 + Math.random() * 4000,
+      task: cfg.task,
+      status: cfg.status,
+      selected: false,
+    });
+  });
+
+  state.queues.lovenotes = [
+    { task: 'draft verification retry letter', priority: 'P0' },
+    { task: 'write outage post-mortem', priority: 'P2' },
+  ];
+  state.queues.prototypes = [
+    { task: 'sketch dispatch variant 19', priority: 'P1' },
+  ];
+  state.queues.content = [
+    { task: 'record prototype hour 04', priority: 'P2' },
+  ];
+  state.queues.brandywine = [
+    { task: 'finalize comps worksheet', priority: 'P1' },
+  ];
+  state.queues.biosync = [];
+  state.queues.contrarian = [];
+}
+
+function pickDifferentNode(entity, excludeId) {
+  const pool = entity.nodeIds.filter(id => id !== excludeId);
+  if (!pool.length) return excludeId;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ---------------- RENDERING ----------------
+function renderAuras() {
+  auraLayer.innerHTML = '';
+  Object.values(state.entities).forEach(e => {
+    const aura = ns('circle');
+    aura.setAttribute('cx', e.cx);
+    aura.setAttribute('cy', e.cy);
+    aura.setAttribute('r', e.radius * 1.45);
+    const alpha = statusAlpha(e.status) * 0.14;
+    const innerAlpha = statusAlpha(e.status) * 0.06;
+    aura.setAttribute('fill', `url(#entityAura-${e.id})`);
+    aura.setAttribute('data-entity', e.id);
+    aura.setAttribute('class', 'entity-aura');
+    auraLayer.appendChild(aura);
+  });
+}
+
+// Inject radial gradients per entity
+function ensureAuraDefs() {
+  const defs = graphEl.querySelector('defs');
+  // remove existing entity auras
+  [...defs.querySelectorAll('[id^="entityAura-"]')].forEach(el => el.remove());
+  Object.values(state.entities).forEach(e => {
+    const grad = ns('radialGradient');
+    grad.setAttribute('id', `entityAura-${e.id}`);
+    grad.setAttribute('cx', '50%');
+    grad.setAttribute('cy', '50%');
+    grad.setAttribute('r', '50%');
+    const a = statusAlpha(e.status);
+    const stops = [
+      { off: '0%', c: `hsla(${e.hue}, 60%, 55%, ${a * 0.14})` },
+      { off: '55%', c: `hsla(${e.hue}, 45%, 40%, ${a * 0.04})` },
+      { off: '100%', c: `hsla(${e.hue}, 30%, 20%, 0)` },
+    ];
+    stops.forEach(s => {
+      const st = ns('stop');
+      st.setAttribute('offset', s.off);
+      st.setAttribute('stop-color', s.c);
+      grad.appendChild(st);
+    });
+    defs.appendChild(grad);
+  });
+}
+
+function renderTitles() {
+  titleLayer.innerHTML = '';
+  Object.values(state.entities).forEach(e => {
+    const d = document.createElement('div');
+    d.className = `entity-title status-${e.status}`;
+    d.dataset.entity = e.id;
+    d.style.left = e.cx + 'px';
+    d.style.top = (e.cy - e.radius - 18) + 'px';
+    const nodeCount = e.nodeIds.length;
+    const agentCount = state.agents.filter(a => a.entity === e.id).length;
+    d.innerHTML = `
+      <div class="name">${e.name}</div>
+      <div class="meta mono">
+        <span class="type-tag">${e.type}</span>
+        <span>${nodeCount}n · ${agentCount}a · ${e.status}</span>
+      </div>
+    `;
+    titleLayer.appendChild(d);
+  });
+}
+
+function renderHitZones() {
+  hitLayer.innerHTML = '';
+  Object.values(state.entities).forEach(e => {
+    const d = document.createElement('div');
+    d.className = 'entity-hit';
+    d.dataset.entity = e.id;
+    d.style.left = (e.cx - e.radius) + 'px';
+    d.style.top = (e.cy - e.radius) + 'px';
+    d.style.width = (e.radius * 2) + 'px';
+    d.style.height = (e.radius * 2) + 'px';
+    if (state.agents.some(a => a.entity === e.id && a.status === 'alert')) {
+      d.classList.add('alert');
+    }
+    d.addEventListener('click', () => {
+      if (state.mode === 'observe') return;
+      zoomInto(e.id);
+    });
+    hitLayer.appendChild(d);
+  });
+}
+
+function renderEdges() {
+  edgeLayer.innerHTML = '';
+  state.edges.forEach(e => {
+    const a = state.nodes[e.a], b = state.nodes[e.b];
+    if (!a || !b) return;
+    const entity = state.entities[a.entity];
+    const statusA = statusAlpha(entity.status);
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nxp = -dy / len, nyp = dx / len;
+
+    // Form-specific edge style
+    const form = entity.form;
+    let curve;
+    if (form === 'stream') curve = Math.min(6, len * 0.04);
+    else if (form === 'branching') curve = Math.min(10, len * 0.06);
+    else if (form === 'pair' && e.isBridge) curve = Math.min(20, len * 0.1);
+    else if (form === 'seal') curve = 0; // straight for signet
+    else curve = Math.min(8, len * 0.05);
+
+    const mx = (a.x + b.x) / 2 + nxp * curve;
+    const my = (a.y + b.y) / 2 + nyp * curve;
+    const p = ns('path');
+    p.setAttribute('d', curve > 0 ? `M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}` : `M ${a.x} ${a.y} L ${b.x} ${b.y}`);
+    p.setAttribute('fill', 'none');
+
+    const born = e.bornAt && (Date.now() - e.bornAt < 2000);
+    const strokeColor = born
+      ? `hsla(${entity.hue}, 75%, 70%, ${statusA})`
+      : e.active
+        ? `hsla(${entity.hue}, 55%, 60%, ${statusA * 0.85})`
+        : `hsla(${entity.hue}, 30%, 50%, ${statusA * 0.28})`;
+    p.setAttribute('stroke', strokeColor);
+    p.setAttribute('stroke-width', born ? 1.4 : (e.active ? 1.1 : 0.7));
+    if (e.isBridge) {
+      p.setAttribute('stroke-dasharray', '3 3');
+      p.setAttribute('stroke-width', '0.9');
+    }
+    if (born || e.active) {
+      p.setAttribute('filter', 'url(#glow)');
+    }
+    edgeLayer.appendChild(p);
+  });
+}
+
+function renderNodes() {
+  nodeLayer.innerHTML = '';
+  Object.values(state.nodes).forEach(n => {
+    const entity = state.entities[n.entity];
+    const brightness = statusBrightness(entity.status);
+    const sAlpha = statusAlpha(entity.status);
+    const age = Date.now() - n.bornAt;
+    const isNew = age < 2600;
+
+    const g = ns('g');
+    g.setAttribute('transform', `translate(${n.x}, ${n.y})`);
+    g.setAttribute('data-node', n.id);
+    g.style.cursor = 'pointer';
+
+    const occupied = state.agents.some(a => a.phase === 'work' && a.targetNode === n.id);
+
+    // New node halo
+    if (isNew) {
+      const t = age / 2600;
+      const halo = ns('circle');
+      halo.setAttribute('r', (n.radius + 12) * (1 - t * 0.25));
+      halo.setAttribute('fill', 'none');
+      halo.setAttribute('stroke', `hsla(${entity.hue}, 85%, 72%, ${0.7 - t * 0.7})`);
+      halo.setAttribute('stroke-width', 1.4);
+      g.appendChild(halo);
+
+      const halo2 = ns('circle');
+      halo2.setAttribute('r', n.radius + 1);
+      halo2.setAttribute('fill', `hsla(${entity.hue}, 85%, 70%, ${0.35 - t * 0.35})`);
+      halo2.setAttribute('filter', 'url(#strongGlow)');
+      g.appendChild(halo2);
+    } else if (occupied) {
+      const halo = ns('circle');
+      halo.setAttribute('r', n.radius + 4);
+      halo.setAttribute('fill', 'none');
+      halo.setAttribute('stroke', 'var(--accent)');
+      halo.setAttribute('stroke-width', 0.8);
+      halo.setAttribute('opacity', 0.6);
+      halo.setAttribute('filter', 'url(#glow)');
+      g.appendChild(halo);
+    } else if (entity.status === 'active' && n.isCore) {
+      // subtle twinkle on active core nodes
+      const halo = ns('circle');
+      halo.setAttribute('r', n.radius + 3);
+      halo.setAttribute('fill', 'none');
+      halo.setAttribute('stroke', `hsla(${entity.hue}, 70%, 65%, ${0.35 * brightness})`);
+      halo.setAttribute('stroke-width', 0.8);
+      halo.setAttribute('filter', 'url(#softGlow)');
+      halo.style.animation = 'twinkle 3.4s ease-in-out infinite';
+      g.appendChild(halo);
+    }
+
+    // Core node rendered brighter
+    const isCore = n.isCore;
+    const nodeRadius = isCore ? n.radius + 0.5 : n.radius;
+    const fillL = isCore ? (30 * brightness + 10) : (22 * brightness + 4);
+    const strokeL = isCore ? 72 : 62;
+
+    if (n.kind === 'decision') {
+      const r = ns('rect');
+      const sz = n.radius;
+      r.setAttribute('x', -sz);
+      r.setAttribute('y', -sz);
+      r.setAttribute('width', sz * 2);
+      r.setAttribute('height', sz * 2);
+      r.setAttribute('fill', `hsla(${entity.hue}, 35%, ${fillL}%, ${sAlpha})`);
+      r.setAttribute('stroke', `hsla(${entity.hue}, ${strokeL - 10}%, 65%, ${sAlpha})`);
+      r.setAttribute('stroke-width', 0.8);
+      r.setAttribute('transform', 'rotate(45)');
+      r.setAttribute('filter', 'url(#softGlow)');
+      g.appendChild(r);
+    } else {
+      const c = ns('circle');
+      c.setAttribute('r', nodeRadius);
+      c.setAttribute('fill', `hsla(${entity.hue}, ${isCore ? 45 : 32}%, ${fillL}%, ${sAlpha})`);
+      c.setAttribute('stroke', `hsla(${entity.hue}, ${strokeL}%, 70%, ${sAlpha * (isCore ? 1 : 0.85)})`);
+      c.setAttribute('stroke-width', isCore ? 1.0 : 0.7);
+      if (isCore || isNew) c.setAttribute('filter', 'url(#softGlow)');
+      g.appendChild(c);
+    }
+
+    if (state.selectedNode === n.id) {
+      const ring = ns('circle');
+      ring.setAttribute('r', n.radius + 5);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', 'var(--accent)');
+      ring.setAttribute('stroke-width', 1);
+      ring.setAttribute('stroke-dasharray', '2 2');
+      g.appendChild(ring);
+    }
+
+    g.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      openNodePopover(n, ev);
+    });
+    nodeLayer.appendChild(g);
+  });
+}
+
+function renderAgents() {
+  agentLayer.innerHTML = '';
+  state.agents.forEach(a => {
+    const entity = state.entities[a.entity];
+    const g = ns('g');
+    g.setAttribute('transform', `translate(${a.x}, ${a.y})`);
+    g.setAttribute('data-agent', a.id);
+    g.style.cursor = 'pointer';
+
+    if (a.selected) {
+      const ring = ns('circle');
+      ring.setAttribute('r', 14);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', 'var(--accent)');
+      ring.setAttribute('stroke-width', 1.2);
+      ring.setAttribute('stroke-dasharray', '3 3');
+      ring.setAttribute('filter', 'url(#glow)');
+      const anim = ns('animateTransform');
+      anim.setAttribute('attributeName', 'transform');
+      anim.setAttribute('type', 'rotate');
+      anim.setAttribute('from', '0');
+      anim.setAttribute('to', '360');
+      anim.setAttribute('dur', '8s');
+      anim.setAttribute('repeatCount', 'indefinite');
+      ring.appendChild(anim);
+      g.appendChild(ring);
+    }
+
+    if (a.phase === 'work' && a.status === 'working') {
+      const pct = Math.min(1, a.phaseT / a.workDur);
+      const r = 10;
+      const circumference = 2 * Math.PI * r;
+      const ring = ns('circle');
+      ring.setAttribute('r', r);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', 'var(--accent)');
+      ring.setAttribute('stroke-width', 1.1);
+      ring.setAttribute('stroke-dasharray', `${pct * circumference} ${circumference}`);
+      ring.setAttribute('stroke-dashoffset', circumference * 0.25);
+      ring.setAttribute('transform', 'rotate(-90)');
+      ring.setAttribute('opacity', '0.8');
+      g.appendChild(ring);
+    }
+
+    const fillColor = a.status === 'idle'
+      ? `hsl(${entity.hue}, 20%, 45%)`
+      : a.status === 'alert'
+        ? '#ef5a5a'
+        : `hsl(${entity.hue}, 60%, 68%)`;
+    const c = ns('circle');
+    c.setAttribute('r', 5);
+    c.setAttribute('fill', fillColor);
+    c.setAttribute('stroke', 'rgba(255,255,255,0.6)');
+    c.setAttribute('stroke-width', 0.8);
+    c.setAttribute('filter', 'url(#glow)');
+    g.appendChild(c);
+
+    const txt = ns('text');
+    txt.textContent = a.name[0];
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('dy', '0.32em');
+    txt.setAttribute('font-family', 'JetBrains Mono, monospace');
+    txt.setAttribute('font-size', '6');
+    txt.setAttribute('font-weight', '700');
+    txt.setAttribute('fill', 'rgba(0,0,0,0.7)');
+    g.appendChild(txt);
+
+    if (a.status === 'alert') {
+      const alertG = ns('g');
+      alertG.setAttribute('transform', 'translate(6, -8)');
+      const ac = ns('circle');
+      ac.setAttribute('r', 4);
+      ac.setAttribute('fill', '#ef5a5a');
+      ac.setAttribute('filter', 'url(#strongGlow)');
+      const anim = ns('animate');
+      anim.setAttribute('attributeName', 'r');
+      anim.setAttribute('values', '3.5;4.5;3.5');
+      anim.setAttribute('dur', '1.2s');
+      anim.setAttribute('repeatCount', 'indefinite');
+      ac.appendChild(anim);
+      alertG.appendChild(ac);
+      const at = ns('text');
+      at.textContent = '!';
+      at.setAttribute('text-anchor', 'middle');
+      at.setAttribute('dy', '0.35em');
+      at.setAttribute('font-family', 'Inter, sans-serif');
+      at.setAttribute('font-size', '6');
+      at.setAttribute('font-weight', '700');
+      at.setAttribute('fill', '#fff');
+      alertG.appendChild(at);
+      g.appendChild(alertG);
+    }
+
+    g.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectAgent(a.id);
+    });
+    agentLayer.appendChild(g);
+  });
+}
+
+function renderLabels() {
+  labelLayer.innerHTML = '';
+  if (state.mode !== 'observe') return;
+  const entity = state.entities[state.focusEntity];
+  if (!entity) return;
+  entity.nodeIds.forEach(nid => {
+    const n = state.nodes[nid];
+    const d = document.createElement('div');
+    d.className = 'node-label show';
+    if (state.selectedNode === n.id) d.classList.add('highlight');
+    d.style.left = n.x + 'px';
+    d.style.top = (n.y + n.radius + 8) + 'px';
+    d.textContent = n.label;
+    labelLayer.appendChild(d);
+  });
+}
+
+// ---------------- SIMULATION ----------------
+let lastTick = performance.now();
+function tick(now) {
+  const dt = Math.min(60, now - lastTick);
+  lastTick = now;
+
+  state.agents.forEach(a => {
+    if (a.phase === 'paused') return;
+    if (a.status === 'alert') return;  // frozen while alert
+    if (a.phase === 'idle') {
+      const e = state.entities[a.entity];
+      a.x += (e.cx - a.x) * 0.0008 * dt;
+      a.y += (e.cy - a.y) * 0.0008 * dt;
+      return;
+    }
+    a.phaseT += dt;
+    if (a.phase === 'walk') {
+      const target = state.nodes[a.targetNode];
+      if (!target) {
+        a.targetNode = pickDifferentNode(state.entities[a.entity], a.prevNode);
+        return;
+      }
+      const t = Math.min(1, a.phaseT / a.phaseDur);
+      const prev = state.nodes[a.prevNode] || target;
+      const easedT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      a.x = prev.x + (target.x - prev.x) * easedT;
+      a.y = prev.y + (target.y - prev.y) * easedT;
+      if (t >= 1) {
+        a.phase = 'work';
+        a.phaseT = 0;
+        a.x = target.x; a.y = target.y;
+      }
+    } else if (a.phase === 'work') {
+      if (a.phaseT >= a.workDur) {
+        completeWork(a);
+        a.prevNode = a.targetNode;
+        a.targetNode = pickDifferentNode(state.entities[a.entity], a.prevNode);
+        a.phase = 'walk';
+        a.phaseT = 0;
+        a.phaseDur = 1700 + Math.random() * 1200;
+        a.workDur = 7000 + Math.random() * 5000;
+      }
+    }
+  });
+
+  renderEdges();
+  renderNodes();
+  renderAgents();
+  if (state.mode === 'observe') renderLabels();
+
+  requestAnimationFrame(tick);
+}
+
+function completeWork(agent) {
+  const entity = state.entities[agent.entity];
+  // Dormant entities don't grow
+  if (entity.status === 'dormant' || entity.status === 'archived') {
+    // tiny resource bump but no node growth
+    state.resources.context += 400;
+    state.resources.tokens += 1200;
+    state.resources.spend += 0.015;
+    updateResourceUI();
+    return;
+  }
+
+  // Pick label
+  const labels = NODE_LABEL_TEMPLATES[agent.entity] || ['note.md'];
+  let finalLabel = labels[Math.floor(Math.random() * labels.length)];
+  let n = 2;
+  while (Object.values(state.nodes).some(nd => nd.label === finalLabel)) {
+    finalLabel = finalLabel.replace(/(\.\w+)?$/, (m) => `-v${n}${m || ''}`);
+    n++;
+  }
+
+  // Place according to form
+  const placement = placeNewNode(entity, agent.targetNode);
+  const nid = `${agent.entity}-n-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+  // spawn at parent, animate to target
+  const parent = state.nodes[placement.parentId] || state.nodes[agent.targetNode];
+  const newNode = {
+    id: nid, entity: agent.entity,
+    x: parent.x, y: parent.y,
+    label: finalLabel,
+    kind: Math.random() < 0.22 ? 'decision' : (Math.random() < 0.4 ? 'doc' : 'note'),
+    desc: agent.task ? `Result of: ${agent.task}` : 'Knowledge captured by agent',
+    author: agent.name,
+    bornAt: Date.now(),
+    createdBy: agent.id,
+    radius: 4,
+    // form metadata
+    spokeIdx: placement.spokeIdx,
+    depth: placement.depth,
+    side: placement.side,
+    angle: placement.angle,
+    parent: placement.parentId,
+  };
+  state.nodes[nid] = newNode;
+  entity.nodeIds.push(nid);
+
+  // Update form bookkeeping
+  if (entity.form === 'branching') {
+    entity.branchingLeafIds.push(nid);
+    // keep list bounded so growth stays tree-like
+    if (entity.branchingLeafIds.length > 10) {
+      entity.branchingLeafIds.splice(0, entity.branchingLeafIds.length - 10);
+    }
+  }
+  if (entity.form === 'stream' && !placement.isBranch) {
+    entity.streamTailId = nid;
+  }
+
+  // animate to final position
+  const startX = parent.x, startY = parent.y;
+  const finalX = placement.x, finalY = placement.y;
+  const startTime = performance.now();
+  const duration = 1100;
+  function animateNode(t) {
+    const p = Math.min(1, (t - startTime) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    newNode.x = startX + (finalX - startX) * eased;
+    newNode.y = startY + (finalY - startY) * eased;
+    if (p < 1) requestAnimationFrame(animateNode);
+  }
+  requestAnimationFrame(animateNode);
+
+  // add edge(s)
+  state.edges.push({ a: placement.parentId, b: nid, active: false, bornAt: Date.now() });
+  // For seal form, sometimes add polygon-perimeter edge
+  if (entity.form === 'seal' && Math.random() < 0.4) {
+    const siblings = entity.nodeIds.filter(id => id !== nid && id !== placement.parentId);
+    if (siblings.length) {
+      const other = siblings[Math.floor(Math.random() * siblings.length)];
+      state.edges.push({ a: nid, b: other, active: false, bornAt: Date.now() });
+    }
+  }
+
+  // Resources
+  state.resources.context += 1800 + Math.floor(Math.random() * 2200);
+  state.resources.tokens += 3400 + Math.floor(Math.random() * 2600);
+  state.resources.spend += 0.04 + Math.random() * 0.04;
+  state.resources.memory += 1;
+  state.resources.builtThisSession += 1;
+  state.tempoPulses = Math.min(12, state.tempoPulses + 1);
+  updateResourceUI();
+  updateTitles();
+
+  // Rotate queue task
+  if (state.queues[agent.entity] && state.queues[agent.entity].length && agent.status === 'working' && Math.random() < 0.4) {
+    const next = state.queues[agent.entity].shift();
+    agent.task = next.task;
+    renderQueues();
+    renderAgentChips();
+    updateObserveTask();
+  }
+}
+
+// ---------------- UI UPDATERS ----------------
+function updateResourceUI() {
+  const r = state.resources;
+  document.getElementById('ctxCur').textContent = (r.context / 1000).toFixed(1) + 'k';
+  const ctxPct = r.context / r.contextMax;
+  document.getElementById('ctxFill').style.width = Math.min(100, ctxPct * 100) + '%';
+  const ctxMeter = document.getElementById('ctxMeter');
+  ctxMeter.classList.remove('warn', 'crit');
+  if (ctxPct > 0.9) ctxMeter.classList.add('crit');
+  else if (ctxPct > 0.7) ctxMeter.classList.add('warn');
+
+  document.getElementById('tokTotal').textContent = (r.tokens / 1000).toFixed(1) + 'k';
+  document.getElementById('tokFill').style.width = Math.min(100, (r.tokens / 1000000) * 100) + '%';
+
+  document.getElementById('spendTotal').textContent = r.spend.toFixed(2);
+  document.getElementById('spendFill').style.width = Math.min(100, (r.spend / 10) * 100) + '%';
+
+  document.getElementById('memCount').textContent = r.memory;
+  document.getElementById('memFill').style.width = Math.min(100, (r.memory / 100) * 100) + '%';
+
+  document.getElementById('builtCount').textContent = r.builtThisSession + ' built';
+  document.querySelectorAll('#tempoBar span').forEach((b, i) => b.classList.toggle('on', i < state.tempoPulses));
+
+  const mins = Math.floor((Date.now() - state.startedAt) / 60000);
+  const secs = Math.floor(((Date.now() - state.startedAt) % 60000) / 1000);
+  document.getElementById('runtime').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateTitles() {
+  titleLayer.querySelectorAll('.entity-title').forEach(el => {
+    const eid = el.dataset.entity;
+    const entity = state.entities[eid];
+    const agentCount = state.agents.filter(a => a.entity === eid).length;
+    el.querySelector('.meta').innerHTML = `
+      <span class="type-tag">${entity.type}</span>
+      <span>${entity.nodeIds.length}n · ${agentCount}a · ${entity.status}</span>
+    `;
+  });
+}
+
+function renderAgentChips() {
+  const strip = document.getElementById('agentsStrip');
+  strip.innerHTML = '';
+  state.agents.forEach(a => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'agent-chip ' + a.status;
+    const entity = state.entities[a.entity];
+    chip.innerHTML = `
+      <span class="dot"></span>
+      <span>${a.name}</span>
+      <span class="base-tag">${entity.name.slice(0, 5).toLowerCase()}</span>
+    `;
+    chip.title = a.task || 'idle';
+    chip.addEventListener('click', () => {
+      if (state.mode === 'sky') zoomInto(a.entity, () => selectAgent(a.id));
+      else selectAgent(a.id);
+    });
+    strip.appendChild(chip);
+  });
+}
+
+function renderQueues() {
+  const row = document.getElementById('queueRow');
+  row.innerHTML = '';
+  Object.entries(state.queues).forEach(([eid, q]) => {
+    const entity = state.entities[eid];
+    const item = document.createElement('div');
+    item.className = 'queue-item';
+    const hotness = q.length > 1 ? 'hot' : '';
+    item.innerHTML = `
+      <strong>${entity.name}</strong>
+      <span class="queue-count ${hotness}">${q.length}</span>
+      <span style="color:var(--ink-3)">${q[0] ? '· ' + q[0].task.slice(0, 30) + (q[0].task.length > 30 ? '…' : '') : ''}</span>
+    `;
+    row.appendChild(item);
+  });
+}
+
+function updateObserveTask() {
+  if (state.mode !== 'observe') return;
+  const eid = state.focusEntity;
+  const entity = state.entities[eid];
+  const alertAgent = state.agents.find(a => a.entity === eid && a.status === 'alert');
+  const active = state.agents.find(a => a.entity === eid && a.status === 'working');
+  const agent = alertAgent || active;
+  document.getElementById('focusName').textContent = entity.name.toUpperCase();
+  document.getElementById('focusForm').textContent = `${entity.type} · ${FORM_LABEL[entity.form]}`;
+  document.getElementById('focusTask').textContent = agent
+    ? `${agent.name} · ${agent.task || 'idle'}${alertAgent ? ' — needs input' : ''}`
+    : 'no active agents';
+}
+
+// ---------------- ZOOM ----------------
+function zoomInto(entityId, afterCb) {
+  state.mode = 'observe';
+  state.focusEntity = entityId;
+  const entity = state.entities[entityId];
+  const targetScale = Math.min(W, H) / (entity.radius * 3.3);
+  const vx = W / 2 - entity.cx * targetScale;
+  const vy = H / 2 - entity.cy * targetScale;
+  const tf = `translate(${vx}px, ${vy}px) scale(${targetScale})`;
+  graphEl.style.transform = tf;
+  labelLayer.style.transform = tf;
+  titleLayer.style.transform = tf;
+  hitLayer.style.transform = tf;
+  titleLayer.querySelectorAll('.entity-title').forEach(el => {
+    el.style.opacity = el.dataset.entity === entityId ? '1' : '0';
+    el.classList.toggle('active', el.dataset.entity === entityId);
+  });
+  hitLayer.querySelectorAll('.entity-hit').forEach(el => {
+    el.style.pointerEvents = 'none';
+  });
+  document.getElementById('observeBar').classList.add('show');
+  updateObserveTask();
+  if (afterCb) setTimeout(afterCb, 450);
+}
+
+function zoomOut() {
+  state.mode = 'sky';
+  state.focusEntity = null;
+  graphEl.style.transform = '';
+  labelLayer.style.transform = '';
+  labelLayer.innerHTML = '';
+  titleLayer.style.transform = '';
+  hitLayer.style.transform = '';
+  titleLayer.querySelectorAll('.entity-title').forEach(el => {
+    el.style.opacity = '1';
+    el.classList.remove('active');
+  });
+  hitLayer.querySelectorAll('.entity-hit').forEach(el => {
+    el.style.pointerEvents = 'auto';
+  });
+  document.getElementById('observeBar').classList.remove('show');
+  closeCmdPanel();
+  closePopover();
+}
+
+// ---------------- SELECTION ----------------
+function selectAgent(id) {
+  state.agents.forEach(a => a.selected = (a.id === id));
+  state.selectedAgent = id;
+  const a = state.agents.find(x => x.id === id);
+  if (!a) return;
+  const panel = document.getElementById('cmdPanel');
+  document.getElementById('cmdAvatar').textContent = a.name[0];
+  document.getElementById('cmdName').textContent = a.name;
+  const statusEl = document.getElementById('cmdStatus');
+  statusEl.textContent = a.status.toUpperCase();
+  statusEl.classList.toggle('alert', a.status === 'alert');
+  document.getElementById('cmdTask').textContent = a.task || 'idle — awaiting dispatch';
+  const pt = graphToScreen(a.x, a.y);
+  const px = Math.min(W - 260, Math.max(20, pt.x + 20));
+  const py = Math.min(H + 60 - 180, Math.max(76, pt.y - 20));
+  panel.style.left = px + 'px';
+  panel.style.top = py + 'px';
+  panel.classList.add('show');
+}
+
+function closeCmdPanel() {
+  document.getElementById('cmdPanel').classList.remove('show');
+  state.agents.forEach(a => a.selected = false);
+  state.selectedAgent = null;
+}
+
+function graphToScreen(x, y) {
+  const rect = canvasWrap.getBoundingClientRect();
+  const m = new DOMMatrix(window.getComputedStyle(graphEl).transform);
+  const sx = m.a * x + m.c * y + m.e + rect.left;
+  const sy = m.b * x + m.d * y + m.f + rect.top;
+  return { x: sx, y: sy };
+}
+
+function openNodePopover(node) {
+  state.selectedNode = node.id;
+  const pop = document.getElementById('nodePopover');
+  document.getElementById('popTitle').textContent = node.label;
+  const entity = state.entities[node.entity];
+  document.getElementById('popMeta').textContent = `${node.kind.toUpperCase()} · ${entity.name} · ${entity.form}`;
+  document.getElementById('popBody').textContent = node.desc;
+  document.getElementById('popAuthor').textContent = node.createdBy ? `by ${node.author}` : 'seed node';
+  document.getElementById('popTime').textContent = formatAge(Date.now() - node.bornAt);
+  const pt = graphToScreen(node.x, node.y);
+  const px = Math.min(W - 300, Math.max(20, pt.x + 14));
+  const py = Math.min(H + 60 - 160, Math.max(76, pt.y + 14));
+  pop.style.left = px + 'px';
+  pop.style.top = py + 'px';
+  pop.classList.add('show');
+}
+
+function closePopover() {
+  document.getElementById('nodePopover').classList.remove('show');
+  state.selectedNode = null;
+}
+
+function formatAge(ms) {
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return `${Math.floor(ms / 1000)}s ago`;
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+// ---------------- COMMANDS ----------------
+document.querySelectorAll('[data-cmd]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cmd = btn.dataset.cmd;
+    const a = state.agents.find(x => x.id === state.selectedAgent);
+    if (!a) return;
+    if (cmd === 'pause') {
+      a.phase = a.phase === 'paused' ? 'walk' : 'paused';
+      a.status = a.phase === 'paused' ? 'idle' : 'working';
+      showToast(`${a.name} ${a.phase === 'paused' ? 'paused' : 'resumed'}`);
+    } else if (cmd === 'refocus') {
+      a.status = 'working';
+      a.phase = 'walk';
+      a.phaseT = 0;
+      const templates = TASK_TEMPLATES[a.entity] || ['work'];
+      const newTask = templates[Math.floor(Math.random() * templates.length)];
+      a.task = newTask;
+      showToast(`${a.name} refocused → ${newTask}`);
+    } else if (cmd === 'recall') {
+      a.status = 'idle';
+      a.phase = 'idle';
+      a.task = null;
+      showToast(`${a.name} recalled`);
+    } else if (cmd === 'cancel') {
+      const idx = state.agents.findIndex(x => x.id === a.id);
+      if (idx >= 0) state.agents.splice(idx, 1);
+      showToast(`${a.name} dismissed`);
+      closeCmdPanel();
+      renderAgentChips();
+      renderHitZones();
+      return;
+    }
+    closeCmdPanel();
+    renderAgentChips();
+    renderHitZones();
+    updateObserveTask();
+  });
+});
+
+// ---------------- DISPATCH ----------------
+const dispatchForm = document.getElementById('dispatchForm');
+const dispatchInput = document.getElementById('dispatchInput');
+const dispatchEntity = document.getElementById('dispatchEntity');
+dispatchForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const task = dispatchInput.value.trim();
+  if (!task) return;
+  dispatchAgent(dispatchEntity.value, task);
+  dispatchInput.value = '';
+});
+
+function dispatchAgent(entityId, task) {
+  const entity = state.entities[entityId];
+  const startNode = state.nodes[entity.nodeIds[Math.floor(Math.random() * entity.nodeIds.length)]];
+  const name = AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)] + (Math.random() < 0.4 ? Math.floor(Math.random() * 9) : '');
+  const agent = {
+    id: 'a-' + Date.now(),
+    name,
+    entity: entityId,
+    x: startNode.x, y: startNode.y,
+    prevNode: startNode.id,
+    targetNode: pickDifferentNode(entity, startNode.id),
+    phase: 'walk',
+    phaseT: 0,
+    phaseDur: 1600 + Math.random() * 1000,
+    workDur: 7000 + Math.random() * 4000,
+    task,
+    status: 'working',
+    selected: false,
+  };
+  state.agents.push(agent);
+  renderAgentChips();
+  renderHitZones();
+  updateTitles();
+  updateObserveTask();
+  showToast(`dispatched ${name} → ${entity.name}`);
+}
+
+// Auto queue management
+function queueTick() {
+  const eids = Object.keys(state.queues).filter(eid => state.queues[eid].length);
+  if (eids.length) {
+    const eid = eids[Math.floor(Math.random() * eids.length)];
+    const entity = state.entities[eid];
+    if (entity.status === 'dormant' || entity.status === 'archived') return;
+    const existing = state.agents.filter(a => a.entity === eid && a.status === 'working').length;
+    if (existing < 3 && Math.random() < 0.5) {
+      const next = state.queues[eid].shift();
+      dispatchAgent(eid, next.task);
+      renderQueues();
+    }
+  }
+  if (Math.random() < 0.45) {
+    // only enqueue for active/warm entities
+    const liveIds = Object.keys(state.entities).filter(id => {
+      const e = state.entities[id];
+      return e.status === 'active' || e.status === 'warm';
+    });
+    const eid = liveIds[Math.floor(Math.random() * liveIds.length)];
+    const tasks = TASK_TEMPLATES[eid];
+    const task = tasks[Math.floor(Math.random() * tasks.length)];
+    if (!state.queues[eid].find(x => x.task === task)) {
+      state.queues[eid].push({ task, priority: Math.random() < 0.3 ? 'P1' : 'P2' });
+      renderQueues();
+    }
+  }
+}
+
+function alertTick() {
+  if (Math.random() < 0.3) {
+    // LoveNotes is the only entity likely to alert (reflecting real blocked state)
+    const working = state.agents.filter(a => a.status === 'working' && a.entity !== 'contrarian');
+    if (working.length > 2) {
+      const target = working[Math.floor(Math.random() * working.length)];
+      target.status = 'alert';
+      target.phase = 'work';
+      renderAgentChips();
+      renderHitZones();
+      updateObserveTask();
+      setTimeout(() => {
+        if (target.status === 'alert' && state.selectedAgent !== target.id) {
+          target.status = 'working';
+          target.phase = 'walk';
+          target.phaseT = 0;
+          renderAgentChips();
+          renderHitZones();
+        }
+      }, 18000 + Math.random() * 7000);
+    }
+  }
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ---------------- LISTENERS ----------------
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('cmdPanel').classList.contains('show')) closeCmdPanel();
+    else if (document.getElementById('nodePopover').classList.contains('show')) closePopover();
+    else if (state.mode === 'observe') zoomOut();
+  }
+  if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && document.activeElement !== dispatchInput) {
+    e.preventDefault();
+    dispatchInput.focus();
+  }
+});
+
+document.getElementById('backBtn').addEventListener('click', zoomOut);
+canvasWrap.addEventListener('click', (e) => {
+  if (e.target === canvasWrap || e.target === graphEl || e.target.tagName === 'svg') {
+    closeCmdPanel();
+    closePopover();
+  }
+});
+
+// Stars background
+function drawStars() {
+  const c = document.getElementById('stars');
+  const dpr = window.devicePixelRatio || 1;
+  c.width = window.innerWidth * dpr;
+  c.height = window.innerHeight * dpr;
+  c.style.width = window.innerWidth + 'px';
+  c.style.height = window.innerHeight + 'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, c.width, c.height);
+  const rand = prng(11);
+  for (let i = 0; i < 260; i++) {
+    const x = rand() * window.innerWidth;
+    const y = rand() * window.innerHeight;
+    const r = rand() * 0.85 + 0.2;
+    const a = rand() * 0.32 + 0.04;
+    ctx.fillStyle = `rgba(200,210,240,${a})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ---------------- RESIZE ----------------
+function handleResize() {
+  sizeToViewport();
+  // Recompute entity centers and reflow constellations proportionally
+  ENTITIES.forEach(e => {
+    const entity = state.entities[e.id];
+    if (!entity) return;
+    const oldCx = entity.cx, oldCy = entity.cy;
+    entity.cx = e.x * W; entity.cy = e.y * H;
+    const shiftX = entity.cx - oldCx;
+    const shiftY = entity.cy - oldCy;
+    entity.nodeIds.forEach(nid => {
+      const n = state.nodes[nid];
+      if (!n) return;
+      n.x += shiftX;
+      n.y += shiftY;
+    });
+  });
+  state.agents.forEach(a => {
+    const target = state.nodes[a.targetNode];
+    if (target) { a.x = target.x; a.y = target.y; }
+  });
+  ensureAuraDefs();
+  renderAuras();
+  renderTitles();
+  renderHitZones();
+  drawStars();
+}
+window.addEventListener('resize', handleResize);
+
+// ---------------- INIT ----------------
+function init() {
+  sizeToViewport();
+  drawStars();
+  // Initialize entity objects with sized centers
+  ENTITIES.forEach(e => {
+    state.entities[e.id] = {
+      ...e,
+      cx: e.x * W, cy: e.y * H,
+      nodeIds: [],
+      spokeGrowth: [0, 0, 0, 0, 0, 0],
+      streamTailId: null,
+      pairBalance: { a: 0, b: 0 },
+      sealFilled: 0,
+      branchingLeafIds: [],
+    };
+  });
+  buildSeedConstellations();
+  seedAgents();
+  ensureAuraDefs();
+  renderAuras();
+  renderTitles();
+  renderHitZones();
+  renderAgentChips();
+  renderQueues();
+  updateResourceUI();
+
+  // Background resource drift
+  setInterval(() => {
+    const workingCount = state.agents.filter(a => a.status === 'working').length;
+    if (workingCount > 0) {
+      state.resources.context += workingCount * 40;
+      state.resources.tokens += workingCount * 80;
+      state.resources.spend += workingCount * 0.002;
+    }
+    if (state.tempoPulses > 0 && Math.random() < 0.22) state.tempoPulses--;
+    updateResourceUI();
+  }, 1500);
+
+  setInterval(queueTick, 16000);
+  setInterval(alertTick, 24000);
+
+  requestAnimationFrame(tick);
+}
+
+init();
+</script>
+</body>
+</html>
