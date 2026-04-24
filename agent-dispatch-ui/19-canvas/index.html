@@ -1,0 +1,1337 @@
+<!doctype html>
+<!--
+  19-canvas — the canvas IS the app. Iteration of 18-constellation that
+  strips every panel, sidebar, and toolbar. One slim glass top bar, one
+  full-bleed HTML5 canvas with pinch/zoom/pan. A command strip only
+  slides up when something is selected.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<title>Canvas — Agent Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #04050a;
+    --bg-1: #07090f;
+    --bg-2: #0d101a;
+    --ink-0: #e7e9f2;
+    --ink-1: #b8bccf;
+    --ink-2: #6a6f85;
+    --ink-3: #353849;
+    --line: #181b25;
+    --line-2: #23273433;
+    --accent: #f5b73d;
+    --accent-soft: rgba(245,183,61,0.14);
+    --accent-glow: rgba(245,183,61,0.55);
+    --danger: #ef5a5a;
+    --ok: #6fe1b1;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-0);
+    color: var(--ink-0);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 400;
+    overflow: hidden;
+    height: 100vh; width: 100vw;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Stage: dark base + faint radial wash */
+  .stage {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(30,40,80,0.08), transparent 60%),
+      radial-gradient(ellipse at 85% 80%, rgba(20,30,60,0.06), transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(10,12,22,0.7), transparent 75%),
+      var(--bg-0);
+    z-index: 0;
+  }
+
+  /* Fixed CSS star field behind canvas */
+  .stars {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 1;
+  }
+
+  /* Main canvas — full viewport */
+  #world {
+    position: fixed; inset: 0;
+    z-index: 2;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+  }
+  #world.grabbing { cursor: grabbing; }
+
+  /* Slim top bar */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 40px;
+    display: flex; align-items: center;
+    padding: 0 14px;
+    background: rgba(4,5,10,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    z-index: 30;
+    font-size: 11px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--ink-0);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .pulse-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+    animation: pulseDot 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 0.6; box-shadow: 0 0 4px var(--accent-glow); }
+    50% { opacity: 1; box-shadow: 0 0 12px var(--accent-glow); }
+  }
+
+  .mode-toggle {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+  .mode-toggle button {
+    background: none; border: none;
+    font: inherit;
+    color: var(--ink-2);
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+    font-family: inherit;
+  }
+  .mode-toggle button:hover { color: var(--ink-1); }
+  .mode-toggle button.on {
+    color: var(--bg-0); background: var(--ink-1);
+  }
+  .mode-toggle .sep {
+    width: 1px; background: var(--line);
+    align-self: stretch;
+  }
+
+  .right-cluster {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .alert-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: var(--accent);
+    font-size: 11px;
+    padding: 2px 8px;
+    border: 1px solid rgba(245,183,61,0.35);
+    border-radius: 4px;
+    background: rgba(245,183,61,0.06);
+    animation: alertGlow 2.4s ease-in-out infinite;
+    cursor: pointer;
+  }
+  @keyframes alertGlow {
+    0%, 100% { box-shadow: 0 0 0 rgba(245,183,61,0); }
+    50% { box-shadow: 0 0 10px rgba(245,183,61,0.35); }
+  }
+  .alert-badge .bolt { font-size: 10px; }
+
+  .mini-bars {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .mini-bar {
+    position: relative;
+    width: 20px; height: 4px;
+    background: #1a1d27;
+    border-radius: 1px;
+    overflow: visible;
+    cursor: help;
+  }
+  .mini-bar .fill {
+    position: absolute; inset: 0;
+    width: 50%;
+    background: var(--ink-1);
+    border-radius: 1px;
+    transition: width 0.6s ease;
+  }
+  .mini-bar.warn .fill { background: var(--accent); box-shadow: 0 0 4px var(--accent-glow); }
+  .mini-bar.crit .fill { background: var(--danger); }
+
+  /* tooltip on mini-bars */
+  .mini-bar .tip {
+    position: absolute;
+    top: calc(100% + 8px); right: 0;
+    background: rgba(9,11,18,0.98);
+    border: 1px solid var(--line);
+    padding: 5px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 10px;
+    color: var(--ink-1);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.15s, transform 0.15s;
+    z-index: 40;
+  }
+  .mini-bar:hover .tip { opacity: 1; transform: translateY(0); }
+  .mini-bar .tip strong { color: var(--ink-0); font-weight: 500; }
+
+  /* Agent tooltip near a clicked agent dot */
+  .agent-tip {
+    position: fixed;
+    background: rgba(9,11,18,0.98);
+    border: 1px solid var(--line);
+    padding: 5px 9px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--ink-1);
+    pointer-events: none;
+    z-index: 25;
+    transform: translate(-50%, -120%);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .agent-tip.show { opacity: 1; }
+  .agent-tip strong { color: var(--ink-0); font-weight: 500; }
+  .agent-tip .label {
+    color: var(--ink-2); font-size: 9px;
+    margin-top: 2px; display: block;
+    letter-spacing: 0.08em;
+  }
+
+  /* Zoom display + buttons */
+  .zoom-meta {
+    position: fixed;
+    bottom: 14px; right: 14px;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    z-index: 20;
+    font-size: 10px;
+    color: var(--ink-2);
+    letter-spacing: 0.06em;
+  }
+  .zoom-meta.strip-open { bottom: 100px; }
+  .zoom-buttons {
+    display: flex; gap: 4px;
+  }
+  .zoom-btn {
+    width: 24px; height: 24px;
+    background: rgba(4,5,10,0.8);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--ink-1);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .zoom-btn:hover { border-color: var(--ink-3); color: var(--ink-0); }
+  .zoom-label {
+    padding: 2px 8px;
+    background: rgba(4,5,10,0.6);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+  }
+
+  /* Command strip — slides up from the bottom when an entity is selected */
+  .cmd-strip {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: rgba(4,5,10,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    padding: 0 20px;
+    display: flex; align-items: center; gap: 18px;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 28;
+  }
+  .cmd-strip.open { transform: translateY(0); }
+  .cmd-title {
+    display: flex; flex-direction: column; gap: 4px;
+    min-width: 150px;
+  }
+  .cmd-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-0);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .cmd-type {
+    font-size: 9px;
+    color: var(--ink-2);
+    border: 1px solid var(--ink-3);
+    padding: 1px 6px;
+    border-radius: 3px;
+    align-self: flex-start;
+    letter-spacing: 0.08em;
+  }
+  .cmd-actions {
+    display: flex; gap: 6px;
+  }
+  .cmd-btn {
+    background: rgba(13,16,26,0.9);
+    border: 1px solid var(--line);
+    color: var(--ink-1);
+    font-family: inherit;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s ease;
+  }
+  .cmd-btn:hover {
+    border-color: var(--ink-3);
+    color: var(--ink-0);
+  }
+  .cmd-btn.primary {
+    background: var(--accent);
+    color: #1a1306;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .cmd-btn.primary:hover {
+    background: #ffd672;
+    box-shadow: 0 0 14px var(--accent-glow);
+  }
+
+  .cmd-res {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .cmd-res-item {
+    display: flex; flex-direction: column; gap: 4px;
+    min-width: 80px;
+  }
+  .cmd-res-label {
+    font-size: 9px;
+    color: var(--ink-2);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .cmd-res-value {
+    font-size: 11px;
+    color: var(--ink-1);
+  }
+  .cmd-res-bar {
+    height: 2px; width: 100%;
+    background: #1a1d27;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .cmd-res-bar .fill {
+    height: 100%; width: 50%;
+    background: var(--ink-1);
+    transition: width 0.5s ease;
+  }
+  .cmd-res-bar.warn .fill { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+  .cmd-res-bar.crit .fill { background: var(--danger); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 52px; left: 50%;
+    transform: translate(-50%, -10px);
+    background: rgba(9,11,18,0.98);
+    border: 1px solid var(--line);
+    color: var(--ink-1);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 40;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast .acc { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage"></div>
+<canvas class="stars" id="stars"></canvas>
+<canvas id="world"></canvas>
+
+<div class="top-bar">
+  <div class="brand">
+    <div class="pulse-dot"></div>
+    <span>sutra</span>
+  </div>
+
+  <div class="mode-toggle" id="modeToggle">
+    <button class="on" data-mode="map">map</button>
+    <span class="sep"></span>
+    <button data-mode="timeline">timeline</button>
+  </div>
+
+  <div class="right-cluster">
+    <div class="alert-badge" id="alertBadge" title="1 blocker: toll-free verify">
+      <span class="bolt">&#9889;</span><span id="alertCount">1</span>
+    </div>
+    <div class="mini-bars">
+      <div class="mini-bar" id="ctxBar">
+        <div class="fill"></div>
+        <div class="tip"><strong>context</strong> <span id="ctxTip">70k / 200k</span></div>
+      </div>
+      <div class="mini-bar warn" id="spendBar">
+        <div class="fill"></div>
+        <div class="tip"><strong>spend</strong> <span id="spendTip">$1.84 today</span></div>
+      </div>
+      <div class="mini-bar" id="memBar">
+        <div class="fill"></div>
+        <div class="tip"><strong>memory</strong> <span id="memTip">54%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="agent-tip" id="agentTip">
+  <strong id="agentTipName">Kit</strong>
+  <span class="label" id="agentTipLabel">working</span>
+</div>
+
+<div class="zoom-meta" id="zoomMeta">
+  <div class="zoom-buttons">
+    <button class="zoom-btn" id="zoomOut" title="zoom out">&#8722;</button>
+    <button class="zoom-btn" id="zoomIn" title="zoom in">+</button>
+  </div>
+  <div class="zoom-label" id="zoomLabel">100%</div>
+</div>
+
+<div class="cmd-strip" id="cmdStrip">
+  <div class="cmd-title">
+    <div class="cmd-name" id="cmdName">&mdash;</div>
+    <div class="cmd-type" id="cmdType">&mdash;</div>
+  </div>
+  <div class="cmd-actions">
+    <button class="cmd-btn primary" data-cmd="dispatch">Dispatch &#8599;</button>
+    <button class="cmd-btn" data-cmd="brief">Brief</button>
+    <button class="cmd-btn" data-cmd="fresh">Fresh</button>
+  </div>
+  <div class="cmd-res">
+    <div class="cmd-res-item">
+      <div class="cmd-res-label">Focus</div>
+      <div class="cmd-res-value" id="resFocus">62%</div>
+      <div class="cmd-res-bar"><div class="fill" id="resFocusFill" style="width:62%"></div></div>
+    </div>
+    <div class="cmd-res-item">
+      <div class="cmd-res-label">Heat</div>
+      <div class="cmd-res-value" id="resHeat">warm</div>
+      <div class="cmd-res-bar warn"><div class="fill" id="resHeatFill" style="width:74%"></div></div>
+    </div>
+    <div class="cmd-res-item">
+      <div class="cmd-res-label">Queue</div>
+      <div class="cmd-res-value" id="resQueue">3 tasks</div>
+      <div class="cmd-res-bar"><div class="fill" id="resQueueFill" style="width:40%"></div></div>
+    </div>
+    <div class="cmd-res-item">
+      <div class="cmd-res-label">Updated</div>
+      <div class="cmd-res-value" id="resUpdated">just now</div>
+      <div class="cmd-res-bar"><div class="fill" id="resUpdatedFill" style="width:92%"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="acc">&rarr;</span> dispatched</div>
+
+<script>
+/* =====================================================================
+   19-canvas — one HTML5 canvas, a camera transform, and the same six
+   constellations from 18. Pinch/zoom/pan. Nothing else.
+   ===================================================================== */
+
+// ---------- Constants & Entities (from 18/ATLAS) ----------
+// Placed in world space so they spread wide — default view sees ~2-3.
+// Units are world pixels; camera starts centered on LoveNotes.
+const ENTITIES = [
+  { id: 'lovenotes',  name: 'LoveNotes',  type: 'product',  form: 'hub',       status: 'active',  hue: 335, wx:     0, wy:     0, radius: 220 },
+  { id: 'prototypes', name: 'Prototypes', type: 'lab',      form: 'branching', status: 'active',  hue: 205, wx:  1450, wy:  -280, radius: 240 },
+  { id: 'content',    name: 'Content',    type: 'creative', form: 'stream',    status: 'active',  hue: 48,  wx:  1700, wy:   950, radius: 230 },
+  { id: 'brandywine', name: 'Brandywine', type: 'client',   form: 'pair',      status: 'warm',    hue: 148, wx:   250, wy:  1350, radius: 210 },
+  { id: 'biosync',    name: 'BioSync',    type: 'client',   form: 'pair',      status: 'warm',    hue: 178, wx: -1350, wy:  1000, radius: 200 },
+  { id: 'contrarian', name: 'Contrarian', type: 'brand',    form: 'seal',      status: 'dormant', hue: 265, wx: -1550, wy:  -400, radius: 150 },
+];
+
+const SEED_NODES = {
+  lovenotes: [
+    ['core', 'core'],
+    ['sms-webhook.ts', 'code'],
+    ['schema.sql', 'code'],
+    ['prompts.md', 'doc'],
+    ['toll-free-verif', 'decision'],
+    ['pricing.md', 'doc'],
+    ['onboarding.tsx', 'code'],
+    ['retention.md', 'doc'],
+    ['rate-audit.json', 'code'],
+  ],
+  prototypes: [
+    ['scratch', 'core'],
+    ['sutra-spec.md', 'doc'],
+    ['dispatch-ui-15', 'code'],
+    ['dispatch-ui-17', 'code'],
+    ['dispatch-ui-18', 'note'],
+    ['bases-notes.md', 'note'],
+  ],
+  content: [
+    ['essay-personal-os.md', 'doc'],
+    ['prototype-hour-03.md', 'note'],
+    ['thread-agents', 'note'],
+    ['newsletter-014.md', 'doc'],
+    ['voice-guide.md', 'doc'],
+  ],
+  brandywine: [
+    ['client-anchor', 'core'],
+    ['delivery-anchor', 'core'],
+    ['intake-notes.md', 'doc'],
+    ['appraisal-draft', 'note'],
+    ['comps-worksheet', 'code'],
+  ],
+  biosync: [
+    ['client-anchor', 'core'],
+    ['delivery-anchor', 'core'],
+    ['kickoff-notes.md', 'doc'],
+    ['scope-draft.md', 'note'],
+  ],
+  contrarian: [
+    ['core', 'core'],
+    ['voice.md', 'doc'],
+    ['palette.md', 'doc'],
+    ['positioning.md', 'doc'],
+    ['archive.md', 'note'],
+  ],
+};
+
+const AGENT_NAMES = ['Kit','Nova','Axel','Pax','Mira','Oren','Vex','Ilo'];
+const AGENT_LABELS = {
+  lovenotes: ['tune prompt', 'audit rate-limit', 'retention draft', 'webhook profile'],
+  prototypes: ['sketch 19', 'benchmark canvas', 'iterate onboarding'],
+  content: ['draft newsletter', 'outline thread', 'essay pass'],
+  brandywine: ['finalize comps', 'appraisal narrative'],
+  biosync: ['follow-up email'],
+  contrarian: ['archive prior'],
+};
+
+// Status -> visual multiplier
+const STATUS_BRIGHT = { active: 1.0, warm: 0.68, dormant: 0.4 };
+const STATUS_ALPHA  = { active: 0.95, warm: 0.72, dormant: 0.45 };
+
+// ---------- State ----------
+const state = {
+  entities: {},      // by id: { ...meta, cx, cy, nodes: [], edges: [] }
+  nodes: {},         // by nid: { x, y, kind, label, entity }
+  agents: [],        // { id, name, label, state, entity, x, y, targetNode, t }
+  selected: null,    // entity id
+  hoverEntity: null,
+  hoverAgent: null,
+  mode: 'map',
+  // Camera
+  cam: { x: 0, y: 0, scale: 1, targetX: 0, targetY: 0, targetScale: 1 },
+  // Interaction
+  pointerDown: false,
+  dragStart: null,
+  dragMoved: false,
+  lastPoint: null,
+  // Resource mocks
+  ctxUsed: 70000, ctxMax: 200000,
+  spend: 1.84,
+  memPct: 54,
+  tick: 0,
+};
+
+// ---------- Canvas setup ----------
+const world = document.getElementById('world');
+const wctx = world.getContext('2d');
+const stars = document.getElementById('stars');
+const sctx = stars.getContext('2d');
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+
+function sizeCanvases() {
+  DPR = Math.max(1, window.devicePixelRatio || 1);
+  const w = window.innerWidth, h = window.innerHeight;
+  [world, stars].forEach(c => {
+    c.width = Math.floor(w * DPR);
+    c.height = Math.floor(h * DPR);
+    c.style.width = w + 'px';
+    c.style.height = h + 'px';
+  });
+  drawStars();
+}
+
+// ---------- PRNG (stable seed) ----------
+function prng(seed) {
+  let s = seed || 1;
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+
+// ---------- Star field (fixed CSS-layer canvas) ----------
+function drawStars() {
+  const w = window.innerWidth, h = window.innerHeight;
+  sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  sctx.clearRect(0, 0, w, h);
+  const rand = prng(11);
+  for (let i = 0; i < 260; i++) {
+    const x = rand() * w;
+    const y = rand() * h;
+    const r = rand() * 0.85 + 0.2;
+    const a = rand() * 0.32 + 0.06;
+    sctx.fillStyle = `rgba(200,210,240,${a})`;
+    sctx.beginPath();
+    sctx.arc(x, y, r, 0, Math.PI * 2);
+    sctx.fill();
+  }
+}
+
+// ---------- Constellation builders (same semantics as 18) ----------
+function buildHub(entity, seeds) {
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const spokes = 8;
+  const ringR = entity.radius * 0.62;
+  out.nodes.push({ id: entity.id + ':core', entity: entity.id, label: seeds[0][0], kind: seeds[0][1], x: cx, y: cy, isCore: true });
+  for (let i = 0; i < spokes; i++) {
+    const angle = -Math.PI / 2 + (i / spokes) * Math.PI * 2;
+    const seed = seeds[1 + i];
+    const lbl = seed ? seed[0] : 'spoke-' + i;
+    const kind = seed ? seed[1] : 'note';
+    const nid = entity.id + ':spoke-' + i;
+    out.nodes.push({
+      id: nid, entity: entity.id, label: lbl, kind,
+      x: cx + Math.cos(angle) * ringR,
+      y: cy + Math.sin(angle) * ringR,
+    });
+    out.edges.push({ a: entity.id + ':core', b: nid });
+  }
+  return out;
+}
+
+function buildBranching(entity, seeds) {
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const rootY = cy + entity.radius * 0.55;
+  out.nodes.push({ id: entity.id + ':root', entity: entity.id, label: seeds[0][0], kind: seeds[0][1], x: cx, y: rootY, isCore: true });
+  const branchSeeds = seeds.slice(1);
+  const layout = [
+    { parent: 'root', ang: -Math.PI / 2 - 0.4, len: 0.34 },
+    { parent: 'root', ang: -Math.PI / 2 + 0.4, len: 0.34 },
+    { parent: 'b0',   ang: -Math.PI / 2 - 0.75, len: 0.28 },
+    { parent: 'b0',   ang: -Math.PI / 2 - 0.15, len: 0.28 },
+    { parent: 'b1',   ang: -Math.PI / 2 + 0.15, len: 0.26 },
+    { parent: 'b1',   ang: -Math.PI / 2 + 0.75, len: 0.26 },
+  ];
+  const coords = { root: { x: cx, y: rootY } };
+  layout.forEach((l, i) => {
+    const seed = branchSeeds[i]; if (!seed) return;
+    const parentKey = l.parent;
+    const pp = coords[parentKey]; if (!pp) return;
+    const len = entity.radius * l.len;
+    const x = pp.x + Math.cos(l.ang) * len;
+    const y = pp.y + Math.sin(l.ang) * len;
+    const lid = 'b' + i;
+    coords[lid] = { x, y };
+    const nid = entity.id + ':' + lid;
+    out.nodes.push({ id: nid, entity: entity.id, label: seed[0], kind: seed[1], x, y });
+    out.edges.push({ a: entity.id + ':' + (parentKey === 'root' ? 'root' : parentKey), b: nid });
+  });
+  return out;
+}
+
+function buildPair(entity, seeds) {
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const span = entity.radius * 0.55;
+  out.nodes.push({ id: entity.id + ':anchor-a', entity: entity.id, label: seeds[0][0], kind: seeds[0][1], x: cx - span, y: cy, isCore: true });
+  out.nodes.push({ id: entity.id + ':anchor-b', entity: entity.id, label: seeds[1][0], kind: seeds[1][1], x: cx + span, y: cy, isCore: true });
+  out.edges.push({ a: entity.id + ':anchor-a', b: entity.id + ':anchor-b', isBridge: true });
+  const sats = seeds.slice(2);
+  sats.forEach((s, i) => {
+    const side = i % 2 === 0 ? 'a' : 'b';
+    const anchorX = side === 'a' ? cx - span : cx + span;
+    const baseAngle = side === 'a' ? Math.PI : 0;
+    const idxInSide = Math.floor(i / 2);
+    const ang = baseAngle + (idxInSide - 0.5) * 0.7 + (i * 0.13);
+    const r = entity.radius * 0.42;
+    const nid = entity.id + ':sat-' + i;
+    out.nodes.push({
+      id: nid, entity: entity.id, label: s[0], kind: s[1],
+      x: anchorX + Math.cos(ang) * r,
+      y: cy + Math.sin(ang) * r,
+    });
+    out.edges.push({ a: entity.id + (side === 'a' ? ':anchor-a' : ':anchor-b'), b: nid });
+  });
+  return out;
+}
+
+function buildSeal(entity, seeds) {
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const r = entity.radius * 0.48;
+  out.nodes.push({ id: entity.id + ':core', entity: entity.id, label: seeds[0][0], kind: seeds[0][1], x: cx, y: cy, isCore: true });
+  const companions = seeds.slice(1, 6);
+  const n = Math.max(4, companions.length);
+  companions.forEach((s, i) => {
+    const angle = -Math.PI / 2 + (i / n) * Math.PI * 2;
+    const nid = entity.id + ':comp-' + i;
+    out.nodes.push({
+      id: nid, entity: entity.id, label: s[0], kind: s[1],
+      x: cx + Math.cos(angle) * r,
+      y: cy + Math.sin(angle) * r,
+    });
+    out.edges.push({ a: entity.id + ':core', b: nid });
+    if (i > 0) out.edges.push({ a: entity.id + ':comp-' + (i - 1), b: nid });
+  });
+  if (companions.length >= 3) {
+    out.edges.push({ a: entity.id + ':comp-0', b: entity.id + ':comp-' + (companions.length - 1) });
+  }
+  return out;
+}
+
+function buildStream(entity, seeds) {
+  const out = { nodes: [], edges: [] };
+  const cx = entity.cx, cy = entity.cy;
+  const n = seeds.length;
+  const startX = cx - entity.radius * 0.72;
+  const startY = cy - entity.radius * 0.5;
+  const endX   = cx + entity.radius * 0.72;
+  const endY   = cy + entity.radius * 0.5;
+  const dx = endX - startX, dy = endY - startY;
+  const len = Math.hypot(dx, dy) || 1;
+  const px = -dy / len, py = dx / len;
+  seeds.forEach((s, i) => {
+    const t = n <= 1 ? 0.5 : i / (n - 1);
+    const wave = Math.sin(i * 1.3) * entity.radius * 0.08;
+    const x = startX + dx * t + px * wave;
+    const y = startY + dy * t + py * wave;
+    const nid = entity.id + ':link-' + i;
+    out.nodes.push({ id: nid, entity: entity.id, label: s[0], kind: s[1], x, y, isCore: i === 0 });
+    if (i > 0) out.edges.push({ a: entity.id + ':link-' + (i - 1), b: nid });
+  });
+  return out;
+}
+
+const BUILDERS = { hub: buildHub, branching: buildBranching, pair: buildPair, seal: buildSeal, stream: buildStream };
+
+// ---------- Seed constellations ----------
+function seedConstellations() {
+  ENTITIES.forEach(e => {
+    state.entities[e.id] = { ...e, cx: e.wx, cy: e.wy, nodeIds: [], edges: [] };
+  });
+  Object.entries(SEED_NODES).forEach(([eid, seeds]) => {
+    const entity = state.entities[eid];
+    const built = BUILDERS[entity.form](entity, seeds);
+    built.nodes.forEach(n => {
+      state.nodes[n.id] = n;
+      entity.nodeIds.push(n.id);
+    });
+    entity.edges = built.edges;
+  });
+}
+
+// ---------- Seed agents ----------
+function seedAgents() {
+  const picks = [
+    { entity: 'lovenotes', name: 'Nova',  label: 'toll-free verify', state: 'needs-input' },
+    { entity: 'lovenotes', name: 'Kit',   label: 'tune prompt',      state: 'working' },
+    { entity: 'prototypes',name: 'Mira',  label: 'sketch 19',         state: 'working' },
+    { entity: 'prototypes',name: 'Axel',  label: 'benchmark canvas',  state: 'working' },
+    { entity: 'content',   name: 'Pax',   label: 'draft newsletter',  state: 'working' },
+    { entity: 'brandywine',name: 'Oren',  label: 'finalize comps',    state: 'working' },
+    { entity: 'biosync',   name: 'Ilo',   label: 'follow-up email',   state: 'idle' },
+  ];
+  picks.forEach((p, i) => {
+    const ent = state.entities[p.entity];
+    const nodeIds = ent.nodeIds;
+    const target = nodeIds[(i + 1) % nodeIds.length];
+    const tnode = state.nodes[target];
+    state.agents.push({
+      id: 'ag-' + i,
+      name: p.name,
+      label: p.label,
+      state: p.state,
+      entity: p.entity,
+      x: tnode.x, y: tnode.y,
+      targetNode: target,
+      prevNode: target,
+      t: Math.random(),
+      speed: 0.004 + Math.random() * 0.003,
+    });
+  });
+}
+
+// ---------- Camera transform helpers ----------
+function screenToWorld(sx, sy) {
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  return {
+    x: (sx - cx) / state.cam.scale + state.cam.x,
+    y: (sy - cy) / state.cam.scale + state.cam.y,
+  };
+}
+function worldToScreen(wx, wy) {
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  return {
+    x: (wx - state.cam.x) * state.cam.scale + cx,
+    y: (wy - state.cam.y) * state.cam.scale + cy,
+  };
+}
+
+// ---------- Zoom utilities ----------
+const MIN_Z = 0.3, MAX_Z = 2.5;
+function clampZoom(z) { return Math.max(MIN_Z, Math.min(MAX_Z, z)); }
+
+function zoomAtPoint(worldX, worldY, newScale) {
+  // Keep (worldX, worldY) pinned under the same screen pos after zooming.
+  // screenX = (worldX - camX)*scale + cx  -->  camX = worldX - (screenX - cx)/scale
+  // We want the world point under the same screen point. Work from current screen pos:
+  const screen = worldToScreen(worldX, worldY);
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  state.cam.targetScale = clampZoom(newScale);
+  state.cam.targetX = worldX - (screen.x - cx) / state.cam.targetScale;
+  state.cam.targetY = worldY - (screen.y - cy) / state.cam.targetScale;
+}
+
+function focusEntity(eid, scale) {
+  const e = state.entities[eid];
+  if (!e) return;
+  state.cam.targetX = e.cx;
+  state.cam.targetY = e.cy;
+  state.cam.targetScale = clampZoom(scale || 1.3);
+}
+
+// ---------- Hit testing ----------
+function pickEntityAt(worldX, worldY) {
+  // Return entity whose node cluster bounding circle contains the point
+  for (const e of Object.values(state.entities)) {
+    const dx = worldX - e.cx, dy = worldY - e.cy;
+    if (dx * dx + dy * dy <= (e.radius * 1.1) * (e.radius * 1.1)) {
+      return e.id;
+    }
+  }
+  return null;
+}
+
+function pickAgentAt(worldX, worldY) {
+  // Agent hit radius scaled by zoom — convert 10px screen to world
+  const rWorld = 10 / state.cam.scale;
+  for (const a of state.agents) {
+    const dx = worldX - a.x, dy = worldY - a.y;
+    if (dx * dx + dy * dy <= rWorld * rWorld) return a;
+  }
+  return null;
+}
+
+// ---------- Drawing ----------
+function drawBg() {
+  // Dot-grid in world space, very low opacity
+  const w = window.innerWidth, h = window.innerHeight;
+  const spacing = 60;
+  const s = state.cam.scale;
+  const effSpacing = spacing * s;
+  if (effSpacing < 12) return; // skip if too dense
+  const offsetX = (-state.cam.x * s) % effSpacing;
+  const offsetY = (-state.cam.y * s) % effSpacing;
+  const cx = w / 2, cy = h / 2;
+  // shift origin such that world (0,0) lands where camera projects
+  const baseX = cx + offsetX;
+  const baseY = cy + offsetY;
+  wctx.fillStyle = 'rgba(120,130,170,0.06)';
+  for (let x = baseX - Math.ceil(w / effSpacing + 2) * effSpacing; x < w + effSpacing; x += effSpacing) {
+    for (let y = baseY - Math.ceil(h / effSpacing + 2) * effSpacing; y < h + effSpacing; y += effSpacing) {
+      wctx.beginPath();
+      wctx.arc(x, y, 1, 0, Math.PI * 2);
+      wctx.fill();
+    }
+  }
+}
+
+function drawEntityHalo(e) {
+  const s = state.cam.scale;
+  const pos = worldToScreen(e.cx, e.cy);
+  const r = e.radius * s;
+  const bright = STATUS_BRIGHT[e.status];
+  const alpha = 0.05 * bright;
+  const grad = wctx.createRadialGradient(pos.x, pos.y, r * 0.2, pos.x, pos.y, r * 1.3);
+  grad.addColorStop(0, `hsla(${e.hue}, 60%, 60%, ${alpha})`);
+  grad.addColorStop(1, 'hsla(0,0%,0%,0)');
+  wctx.fillStyle = grad;
+  wctx.beginPath();
+  wctx.arc(pos.x, pos.y, r * 1.3, 0, Math.PI * 2);
+  wctx.fill();
+}
+
+function drawSelectionRing(e) {
+  const s = state.cam.scale;
+  const pos = worldToScreen(e.cx, e.cy);
+  const r = e.radius * s * 1.05;
+  wctx.strokeStyle = 'rgba(245,183,61,0.9)';
+  wctx.lineWidth = 1.2;
+  wctx.setLineDash([4, 4]);
+  wctx.beginPath();
+  wctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+  wctx.stroke();
+  wctx.setLineDash([]);
+}
+
+function drawEdges(e) {
+  const bright = STATUS_BRIGHT[e.status];
+  const alpha = STATUS_ALPHA[e.status];
+  wctx.lineWidth = 0.8;
+  e.edges.forEach(ed => {
+    const na = state.nodes[ed.a], nb = state.nodes[ed.b];
+    if (!na || !nb) return;
+    const a = worldToScreen(na.x, na.y), b = worldToScreen(nb.x, nb.y);
+    const isBridge = ed.isBridge;
+    wctx.strokeStyle = isBridge
+      ? `hsla(${e.hue}, 45%, 70%, ${0.28 * alpha})`
+      : `hsla(${e.hue}, 28%, 60%, ${0.22 * alpha})`;
+    wctx.lineWidth = isBridge ? 1.1 : 0.8;
+    wctx.beginPath();
+    wctx.moveTo(a.x, a.y);
+    wctx.lineTo(b.x, b.y);
+    wctx.stroke();
+  });
+}
+
+function drawNodes(e) {
+  const bright = STATUS_BRIGHT[e.status];
+  const alpha = STATUS_ALPHA[e.status];
+  e.nodeIds.forEach(nid => {
+    const n = state.nodes[nid];
+    if (!n) return;
+    const pos = worldToScreen(n.x, n.y);
+    const isCore = n.isCore;
+    const rPx = isCore ? 4.5 : 2.8;
+    const glow = isCore ? 16 : 6;
+    // glow
+    const g = wctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glow);
+    g.addColorStop(0, `hsla(${e.hue}, 70%, 70%, ${0.6 * bright})`);
+    g.addColorStop(1, 'hsla(0,0%,0%,0)');
+    wctx.fillStyle = g;
+    wctx.beginPath();
+    wctx.arc(pos.x, pos.y, glow, 0, Math.PI * 2);
+    wctx.fill();
+    // core dot
+    wctx.fillStyle = isCore
+      ? `hsla(${e.hue}, 85%, 78%, ${alpha})`
+      : `hsla(${e.hue}, 55%, 72%, ${alpha * 0.9})`;
+    wctx.beginPath();
+    wctx.arc(pos.x, pos.y, rPx, 0, Math.PI * 2);
+    wctx.fill();
+  });
+}
+
+function drawEntityLabel(e) {
+  const pos = worldToScreen(e.cx, e.cy);
+  const below = pos.y + e.radius * state.cam.scale + 18;
+  const isSel = state.selected === e.id;
+  const isHover = state.hoverEntity === e.id;
+  const sharp = isSel || isHover;
+  wctx.save();
+  wctx.textAlign = 'center';
+  wctx.textBaseline = 'top';
+  wctx.font = '600 11px "JetBrains Mono", monospace';
+  wctx.fillStyle = sharp ? '#e7e9f2' : (e.status === 'dormant' ? '#6a6f85' : '#b8bccf');
+  // Letterspacing-ish effect: write upper case with tracking
+  const nameUp = e.name.toUpperCase();
+  wctx.fillText(spaced(nameUp), pos.x, below);
+
+  // Form tag under the name
+  wctx.font = '400 9px "JetBrains Mono", monospace';
+  wctx.fillStyle = sharp ? '#8a8fa5' : '#4a4e63';
+  wctx.fillText(e.form + '  ·  ' + e.status, pos.x, below + 14);
+  wctx.restore();
+}
+
+function spaced(str) {
+  return str.split('').join(' ');
+}
+
+function drawAgent(a) {
+  const pos = worldToScreen(a.x, a.y);
+  const isNeedsInput = a.state === 'needs-input';
+  const isHover = state.hoverAgent && state.hoverAgent.id === a.id;
+  const baseR = isHover ? 4.5 : 3.2;
+  const glowR = isNeedsInput ? 14 : 9;
+  const color = isNeedsInput ? [245, 183, 61] : [111, 225, 177];
+  const pulse = isNeedsInput ? (0.5 + 0.5 * Math.sin(state.tick * 0.08)) : 1;
+  const g = wctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowR);
+  g.addColorStop(0, `rgba(${color.join(',')}, ${0.65 * pulse})`);
+  g.addColorStop(1, `rgba(${color.join(',')}, 0)`);
+  wctx.fillStyle = g;
+  wctx.beginPath();
+  wctx.arc(pos.x, pos.y, glowR, 0, Math.PI * 2);
+  wctx.fill();
+  wctx.fillStyle = `rgba(${color.join(',')}, 0.95)`;
+  wctx.beginPath();
+  wctx.arc(pos.x, pos.y, baseR, 0, Math.PI * 2);
+  wctx.fill();
+  // inner bright
+  wctx.fillStyle = 'rgba(255,255,255,0.9)';
+  wctx.beginPath();
+  wctx.arc(pos.x, pos.y, baseR * 0.4, 0, Math.PI * 2);
+  wctx.fill();
+}
+
+function draw() {
+  const W = world.width, H = world.height;
+  // Reset transform -> draw in CSS pixels
+  wctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  wctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  drawBg();
+
+  const entList = Object.values(state.entities);
+  // halos first
+  entList.forEach(drawEntityHalo);
+  // edges
+  entList.forEach(drawEdges);
+  // nodes
+  entList.forEach(drawNodes);
+  // selection ring
+  if (state.selected) drawSelectionRing(state.entities[state.selected]);
+  // agents
+  state.agents.forEach(drawAgent);
+  // entity labels last
+  entList.forEach(drawEntityLabel);
+}
+
+// ---------- Animation loop ----------
+function tick() {
+  state.tick++;
+  // Ease camera toward target
+  const k = 0.14;
+  state.cam.x   += (state.cam.targetX   - state.cam.x)   * k;
+  state.cam.y   += (state.cam.targetY   - state.cam.y)   * k;
+  state.cam.scale += (state.cam.targetScale - state.cam.scale) * k;
+  // Update zoom label
+  updateZoomLabel();
+
+  // Agents drift between nodes within their entity
+  state.agents.forEach(a => {
+    if (a.state === 'needs-input') return; // stays on node
+    a.t += a.speed;
+    if (a.t >= 1) {
+      // pick next target
+      const ent = state.entities[a.entity];
+      const opts = ent.nodeIds.filter(n => n !== a.targetNode);
+      const nextId = opts[Math.floor(Math.random() * opts.length)] || a.targetNode;
+      a.prevNode = a.targetNode;
+      a.targetNode = nextId;
+      a.t = 0;
+    }
+    const pn = state.nodes[a.prevNode];
+    const tn = state.nodes[a.targetNode];
+    // smooth ease
+    const e = a.t;
+    const et = e * e * (3 - 2 * e);
+    a.x = pn.x + (tn.x - pn.x) * et;
+    a.y = pn.y + (tn.y - pn.y) * et;
+  });
+
+  draw();
+  requestAnimationFrame(tick);
+}
+
+// ---------- Zoom UI ----------
+function updateZoomLabel() {
+  document.getElementById('zoomLabel').textContent = Math.round(state.cam.scale * 100) + '%';
+}
+
+// ---------- Events: zoom, pan, drag, click ----------
+world.addEventListener('wheel', (ev) => {
+  ev.preventDefault();
+  if (ev.ctrlKey) {
+    // pinch-zoom on trackpad (Mac emits ctrlKey during pinch)
+    const pt = screenToWorld(ev.clientX, ev.clientY);
+    const factor = Math.exp(-ev.deltaY * 0.01);
+    const newScale = clampZoom(state.cam.targetScale * factor);
+    zoomAtPoint(pt.x, pt.y, newScale);
+  } else {
+    // two-finger trackpad pan
+    const s = state.cam.targetScale;
+    state.cam.targetX += ev.deltaX / s;
+    state.cam.targetY += ev.deltaY / s;
+  }
+}, { passive: false });
+
+// Pointer drag to pan
+world.addEventListener('pointerdown', (ev) => {
+  state.pointerDown = true;
+  state.dragStart = { x: ev.clientX, y: ev.clientY, camX: state.cam.targetX, camY: state.cam.targetY, t: Date.now() };
+  state.dragMoved = false;
+  world.setPointerCapture(ev.pointerId);
+  world.classList.add('grabbing');
+});
+
+world.addEventListener('pointermove', (ev) => {
+  // hover detection (when not dragging)
+  if (!state.pointerDown) {
+    const w = screenToWorld(ev.clientX, ev.clientY);
+    const ag = pickAgentAt(w.x, w.y);
+    state.hoverAgent = ag;
+    state.hoverEntity = ag ? null : pickEntityAt(w.x, w.y);
+    updateAgentTip(ag, ev.clientX, ev.clientY);
+    world.style.cursor = (ag || state.hoverEntity) ? 'pointer' : 'grab';
+    return;
+  }
+  const dx = ev.clientX - state.dragStart.x;
+  const dy = ev.clientY - state.dragStart.y;
+  if (Math.abs(dx) + Math.abs(dy) > 3) state.dragMoved = true;
+  state.cam.targetX = state.dragStart.camX - dx / state.cam.targetScale;
+  state.cam.targetY = state.dragStart.camY - dy / state.cam.targetScale;
+});
+
+world.addEventListener('pointerup', (ev) => {
+  const wasDown = state.pointerDown;
+  state.pointerDown = false;
+  world.classList.remove('grabbing');
+  world.style.cursor = 'grab';
+  if (!wasDown) return;
+  if (state.dragMoved) return;
+  // treat as click
+  const w = screenToWorld(ev.clientX, ev.clientY);
+  const agent = pickAgentAt(w.x, w.y);
+  if (agent) {
+    // lock agent tip (pulse it)
+    flashToast('agent · ' + agent.name + ' · ' + agent.label);
+    return;
+  }
+  const eid = pickEntityAt(w.x, w.y);
+  selectEntity(eid);
+});
+
+world.addEventListener('pointercancel', () => {
+  state.pointerDown = false;
+  world.classList.remove('grabbing');
+});
+
+// Double-click: zoom-to-fit the entity
+world.addEventListener('dblclick', (ev) => {
+  const w = screenToWorld(ev.clientX, ev.clientY);
+  const eid = pickEntityAt(w.x, w.y);
+  if (eid) {
+    const e = state.entities[eid];
+    // fit: pick scale so diameter fits in 70% of smallest viewport dim
+    const minDim = Math.min(window.innerWidth, window.innerHeight);
+    const target = clampZoom((minDim * 0.7) / (e.radius * 2));
+    state.cam.targetX = e.cx;
+    state.cam.targetY = e.cy;
+    state.cam.targetScale = target;
+    selectEntity(eid);
+  }
+});
+
+// Keyboard: +/- zoom, arrows pan
+window.addEventListener('keydown', (ev) => {
+  if (ev.target && ['INPUT','TEXTAREA'].includes(ev.target.tagName)) return;
+  const panStep = 80 / state.cam.targetScale;
+  if (ev.key === '+' || ev.key === '=') {
+    const pt = { x: state.cam.x, y: state.cam.y };
+    zoomAtPoint(pt.x, pt.y, state.cam.targetScale * 1.15);
+    ev.preventDefault();
+  } else if (ev.key === '-' || ev.key === '_') {
+    const pt = { x: state.cam.x, y: state.cam.y };
+    zoomAtPoint(pt.x, pt.y, state.cam.targetScale / 1.15);
+    ev.preventDefault();
+  } else if (ev.key === 'ArrowLeft')  { state.cam.targetX -= panStep; ev.preventDefault(); }
+    else if (ev.key === 'ArrowRight') { state.cam.targetX += panStep; ev.preventDefault(); }
+    else if (ev.key === 'ArrowUp')    { state.cam.targetY -= panStep; ev.preventDefault(); }
+    else if (ev.key === 'ArrowDown')  { state.cam.targetY += panStep; ev.preventDefault(); }
+    else if (ev.key === 'Escape')     { selectEntity(null); }
+});
+
+// Zoom buttons
+document.getElementById('zoomIn').addEventListener('click', () => {
+  zoomAtPoint(state.cam.x, state.cam.y, state.cam.targetScale * 1.2);
+});
+document.getElementById('zoomOut').addEventListener('click', () => {
+  zoomAtPoint(state.cam.x, state.cam.y, state.cam.targetScale / 1.2);
+});
+
+// Touch pinch (mobile)
+let touchPinch = null;
+world.addEventListener('touchstart', (ev) => {
+  if (ev.touches.length === 2) {
+    const [a, b] = ev.touches;
+    touchPinch = {
+      d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+      midX: (a.clientX + b.clientX) / 2,
+      midY: (a.clientY + b.clientY) / 2,
+      scale: state.cam.targetScale,
+    };
+  }
+}, { passive: true });
+world.addEventListener('touchmove', (ev) => {
+  if (ev.touches.length === 2 && touchPinch) {
+    const [a, b] = ev.touches;
+    const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    const pt = screenToWorld(touchPinch.midX, touchPinch.midY);
+    const factor = d / touchPinch.d;
+    zoomAtPoint(pt.x, pt.y, touchPinch.scale * factor);
+    ev.preventDefault();
+  }
+}, { passive: false });
+world.addEventListener('touchend', () => { touchPinch = null; }, { passive: true });
+
+// ---------- Selection / command strip ----------
+function selectEntity(eid) {
+  state.selected = eid;
+  const strip = document.getElementById('cmdStrip');
+  const zm = document.getElementById('zoomMeta');
+  if (eid) {
+    const e = state.entities[eid];
+    document.getElementById('cmdName').textContent = e.name;
+    document.getElementById('cmdType').textContent = e.type + ' · ' + e.form;
+    // stubbed per-entity resources
+    const snap = entitySnapshot(e);
+    document.getElementById('resFocus').textContent  = snap.focus + '%';
+    document.getElementById('resFocusFill').style.width = snap.focus + '%';
+    document.getElementById('resHeat').textContent   = snap.heat.label;
+    document.getElementById('resHeatFill').style.width = snap.heat.pct + '%';
+    document.getElementById('resQueue').textContent  = snap.queue + ' tasks';
+    document.getElementById('resQueueFill').style.width = Math.min(100, snap.queue * 15) + '%';
+    document.getElementById('resUpdated').textContent = snap.updated;
+    strip.classList.add('open');
+    zm.classList.add('strip-open');
+  } else {
+    strip.classList.remove('open');
+    zm.classList.remove('strip-open');
+  }
+}
+
+function entitySnapshot(e) {
+  // Simple deterministic mocks derived from status/type
+  const statusPct = { active: 80, warm: 50, dormant: 20 }[e.status];
+  const heat = { active: { label: 'hot',    pct: 88 }, warm: { label: 'warm', pct: 62 }, dormant: { label: 'cool', pct: 22 } }[e.status];
+  const q = e.status === 'active' ? 4 : e.status === 'warm' ? 2 : 0;
+  const updated = e.status === 'active' ? 'just now' : e.status === 'warm' ? '2d ago' : '3w ago';
+  return { focus: statusPct, heat, queue: q, updated };
+}
+
+document.querySelectorAll('.cmd-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cmd = btn.dataset.cmd;
+    const eid = state.selected;
+    if (!eid) return;
+    flashToast(cmd + ' · ' + state.entities[eid].name);
+  });
+});
+
+// Mode toggle
+document.getElementById('modeToggle').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('button');
+  if (!btn) return;
+  document.querySelectorAll('#modeToggle button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  state.mode = btn.dataset.mode;
+  if (state.mode === 'timeline') flashToast('timeline · wip');
+});
+
+// Alert badge -> jump to LoveNotes
+document.getElementById('alertBadge').addEventListener('click', () => {
+  focusEntity('lovenotes', 1.3);
+  selectEntity('lovenotes');
+  flashToast('blocker · toll-free verify');
+});
+
+// ---------- Agent tooltip ----------
+function updateAgentTip(agent, clientX, clientY) {
+  const tip = document.getElementById('agentTip');
+  if (!agent) { tip.classList.remove('show'); return; }
+  document.getElementById('agentTipName').textContent = agent.name;
+  const lbl = agent.state === 'needs-input' ? agent.label + ' · needs input' : agent.label;
+  document.getElementById('agentTipLabel').textContent = lbl;
+  tip.style.left = clientX + 'px';
+  tip.style.top  = clientY + 'px';
+  tip.classList.add('show');
+}
+
+// ---------- Toast ----------
+let toastT = null;
+function flashToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = '<span class="acc">&rarr;</span> ' + msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+// ---------- Resource mocks (mini bars) ----------
+function updateMiniBars() {
+  const ctxPct = Math.min(100, (state.ctxUsed / state.ctxMax) * 100);
+  const cb = document.getElementById('ctxBar');
+  cb.querySelector('.fill').style.width = ctxPct + '%';
+  cb.classList.toggle('warn', ctxPct > 70);
+  cb.classList.toggle('crit', ctxPct > 90);
+  document.getElementById('ctxTip').textContent = Math.round(state.ctxUsed / 1000) + 'k / ' + (state.ctxMax / 1000) + 'k';
+
+  const spendPct = Math.min(100, (state.spend / 5) * 100);
+  const sb = document.getElementById('spendBar');
+  sb.querySelector('.fill').style.width = spendPct + '%';
+  sb.classList.toggle('warn', state.spend > 1.5);
+  sb.classList.toggle('crit', state.spend > 3.5);
+  document.getElementById('spendTip').textContent = '$' + state.spend.toFixed(2) + ' today';
+
+  const mb = document.getElementById('memBar');
+  mb.querySelector('.fill').style.width = state.memPct + '%';
+  mb.classList.toggle('warn', state.memPct > 70);
+  mb.classList.toggle('crit', state.memPct > 90);
+  document.getElementById('memTip').textContent = state.memPct + '% of working set';
+}
+
+// Periodically drift resources
+setInterval(() => {
+  state.ctxUsed = Math.max(10000, Math.min(195000, state.ctxUsed + (Math.random() - 0.4) * 3000));
+  state.spend  += Math.random() * 0.04;
+  state.memPct = Math.max(20, Math.min(92, state.memPct + (Math.random() - 0.5) * 2));
+  updateMiniBars();
+}, 2400);
+
+// ---------- Init ----------
+function init() {
+  sizeCanvases();
+  seedConstellations();
+  seedAgents();
+  // Default view: LoveNotes centered, scale 1
+  state.cam.x = 0; state.cam.y = 0; state.cam.scale = 1;
+  state.cam.targetX = 0; state.cam.targetY = 0; state.cam.targetScale = 1;
+  updateMiniBars();
+  updateZoomLabel();
+  requestAnimationFrame(tick);
+}
+
+window.addEventListener('resize', () => {
+  sizeCanvases();
+});
+
+init();
+</script>
+
+</body>
+</html>
