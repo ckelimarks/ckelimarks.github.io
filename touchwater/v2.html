@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Stillwater · v2</title>
+<style>
+  :root {
+    --void: #0a0e14;
+    --deep: #111a26;
+    --glow: #4a7a8c;
+    --bloom: #c9a96a;
+    --mist: #8fb8c4;
+    --ink: #d8e4e8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: var(--void);
+    font-family: ui-serif, Georgia, 'Times New Roman', serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  #stage { position: fixed; inset: 0; display: block; }
+  #veil {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 45%, rgba(17,26,38,0.4), rgba(10,14,20,0.95));
+    z-index: 10; transition: opacity 2.2s ease;
+    text-align: center; padding: 2rem;
+  }
+  #veil.gone { opacity: 0; pointer-events: none; }
+  #veil h1 {
+    font-weight: 400; font-size: clamp(2.4rem, 9vw, 4.5rem);
+    letter-spacing: 0.18em; color: var(--ink);
+    text-transform: uppercase;
+    text-shadow: 0 0 40px rgba(143,184,196,0.35);
+  }
+  #veil p {
+    margin-top: 1.6rem; font-size: clamp(0.85rem, 3.5vw, 1rem);
+    letter-spacing: 0.32em; color: var(--mist);
+    text-transform: uppercase; opacity: 0.7;
+    animation: breathe 5s ease-in-out infinite;
+  }
+  @keyframes breathe { 0%,100%{opacity:0.3} 50%{opacity:0.8} }
+  #hint {
+    position: fixed; bottom: 1.4rem; left: 0; right: 0;
+    text-align: center; color: var(--mist);
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    opacity: 0; transition: opacity 2s ease 1s; pointer-events: none; z-index: 5;
+  }
+  #hint.show { opacity: 0.35; }
+  #ver { position: fixed; top: 1rem; right: 1.1rem; z-index: 6;
+    color: var(--mist); font-size: 0.62rem; letter-spacing: 0.3em;
+    text-transform: uppercase; opacity: 0.3; pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) {
+    #veil p { animation: none; opacity: 0.6; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="veil">
+  <h1>Stillwater</h1>
+  <p>touch to begin</p>
+</div>
+<div id="hint">touch the water</div>
+<div id="ver">v2</div>
+
+<script>
+const cv = document.getElementById('stage');
+const ctx = cv.getContext('2d');
+let W, H, DPR;
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W+'px'; cv.style.height = H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* ---------- AUDIO ---------- */
+let AC, master, reverbBus, started=false;
+// D minor pentatonic across octaves: D F G A C
+const SCALE = [];
+const roots = [146.83, 174.61, 196.00, 220.00, 261.63]; // D3 F3 G3 A3 C4
+[0.5, 1, 2, 3].forEach(mult => roots.forEach(f => SCALE.push(f*mult)));
+SCALE.sort((a,b)=>a-b);
+
+function makeReverb(ac){
+  const len = ac.sampleRate * 4.5;
+  const buf = ac.createBuffer(2, len, ac.sampleRate);
+  for(let c=0;c<2;c++){
+    const d = buf.getChannelData(c);
+    for(let i=0;i<len;i++){
+      d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 3.2);
+    }
+  }
+  const cv = ac.createConvolver(); cv.buffer = buf; return cv;
+}
+
+function unlock(){
+  if(!AC) return;
+  if(AC.state === 'suspended') AC.resume();
+  // play a silent buffer — required to unlock audio on iOS Safari
+  const b = AC.createBuffer(1, 1, 22050);
+  const s = AC.createBufferSource();
+  s.buffer = b; s.connect(AC.destination); s.start(0);
+}
+
+function initAudio(){
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  unlock();
+  master = AC.createGain(); master.gain.value = 0;
+  master.gain.linearRampToValueAtTime(0.85, AC.currentTime + 4);
+  master.connect(AC.destination);
+
+  reverbBus = makeReverb(AC);
+  const wet = AC.createGain(); wet.gain.value = 0.9;
+  reverbBus.connect(wet); wet.connect(master);
+
+  // dry path lightly mixed
+  startDrones(wet);
+  scheduleBloom();
+}
+
+// Evolving drone bed
+function startDrones(reverbWet){
+  const bedRoots = [73.42, 110.00, 146.83]; // D2 A2 D3
+  bedRoots.forEach((f, i) => {
+    const o1 = AC.createOscillator(); o1.type='sine'; o1.frequency.value=f;
+    const o2 = AC.createOscillator(); o2.type='triangle'; o2.frequency.value=f*1.003;
+    const g = AC.createGain(); g.gain.value = 0;
+    const filt = AC.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=600;
+
+    // slow LFO on amplitude — the bed breathes
+    const lfo = AC.createOscillator(); lfo.type='sine';
+    lfo.frequency.value = 0.03 + i*0.017;
+    const lfoG = AC.createGain(); lfoG.gain.value = 0.06;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+
+    // slow filter sweep
+    const flfo = AC.createOscillator(); flfo.type='sine';
+    flfo.frequency.value = 0.012 + i*0.009;
+    const flfoG = AC.createGain(); flfoG.gain.value = 280;
+    flfo.connect(flfoG); flfoG.connect(filt.frequency);
+
+    o1.connect(filt); o2.connect(filt); filt.connect(g);
+    g.connect(reverbWet); g.connect(master);
+    g.gain.setValueAtTime(0, AC.currentTime);
+    g.gain.linearRampToValueAtTime(0.10, AC.currentTime + 6 + i*2);
+
+    [o1,o2,lfo,flfo].forEach(n=>n.start());
+  });
+}
+
+// A pluck/bell tone in key
+function voice(freq, vel=0.5, x=0.5){
+  if(!AC) return;
+  const t = AC.currentTime;
+  const o1 = AC.createOscillator(); o1.type='sine'; o1.frequency.value=freq;
+  const o2 = AC.createOscillator(); o2.type='sine'; o2.frequency.value=freq*2.001;
+  const o2g = AC.createGain(); o2g.gain.value=0.25;
+  const g = AC.createGain(); g.gain.value=0;
+  const filt = AC.createBiquadFilter(); filt.type='lowpass';
+  filt.frequency.value = 900 + vel*2400; filt.Q.value=1.5;
+  const pan = AC.createStereoPanner(); pan.pan.value = (x-0.5)*1.4;
+
+  const peak = 0.10 + vel*0.22;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(peak, t + 0.04);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2 + vel*2);
+
+  o1.connect(filt); o2.connect(o2g); o2g.connect(filt);
+  filt.connect(g); g.connect(pan);
+  pan.connect(reverbBus); pan.connect(master);
+  o1.start(t); o2.start(t);
+  o1.stop(t+6); o2.stop(t+6);
+}
+
+// Sparse self-playing melody so it evolves on its own
+function scheduleBloom(){
+  if(!AC) return;
+  const note = SCALE[Math.floor(Math.random()*SCALE.length)];
+  const x = Math.random();
+  voice(note, 0.25 + Math.random()*0.3, x);
+  spawnBloom(x*W, (0.2+Math.random()*0.6)*H, note);
+  const next = 3500 + Math.random()*6000;
+  setTimeout(scheduleBloom, next);
+}
+
+function nearestNote(y){
+  // higher on screen = higher pitch
+  const idx = Math.floor((1 - y/H) * SCALE.length);
+  return SCALE[Math.max(0, Math.min(SCALE.length-1, idx))];
+}
+
+/* ---------- VISUALS ---------- */
+const ripples = [];
+const motes = [];
+for(let i=0;i<70;i++){
+  motes.push({
+    x: Math.random()*W, y: Math.random()*H,
+    r: 0.4 + Math.random()*1.6,
+    a: 0.05 + Math.random()*0.25,
+    vx: (Math.random()-0.5)*0.12,
+    vy: -0.05 - Math.random()*0.18,
+    ph: Math.random()*Math.PI*2
+  });
+}
+
+function spawnBloom(x, y, freq){
+  const hueT = (freq - SCALE[0]) / (SCALE[SCALE.length-1]-SCALE[0]);
+  ripples.push({ x, y, r: 4, max: 120 + 240*(1-hueT), life: 1, t: hueT });
+}
+
+let tGlobal = 0;
+function frame(){
+  tGlobal += 0.016;
+  // deep gradient that drifts
+  const g = ctx.createRadialGradient(
+    W*(0.5 + 0.12*Math.sin(tGlobal*0.07)), H*(0.45 + 0.1*Math.cos(tGlobal*0.05)),
+    0, W*0.5, H*0.5, Math.max(W,H)*0.85);
+  g.addColorStop(0, 'rgba(17,26,38,0.18)');
+  g.addColorStop(1, 'rgba(10,14,20,0.30)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  // motes
+  for(const m of motes){
+    m.x += m.vx; m.y += m.vy; m.ph += 0.02;
+    if(m.y < -10){ m.y = H+10; m.x = Math.random()*W; }
+    if(m.x < -10) m.x = W+10; if(m.x > W+10) m.x = -10;
+    const tw = m.a * (0.5 + 0.5*Math.sin(m.ph));
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(143,184,196,${tw})`;
+    ctx.fill();
+  }
+
+  // ripples
+  for(let i=ripples.length-1;i>=0;i--){
+    const r = ripples[i];
+    r.r += (r.max - r.r) * 0.035;
+    r.life -= 0.009;
+    if(r.life <= 0){ ripples.splice(i,1); continue; }
+    const warm = `rgba(201,169,106,`;   // bloom gold
+    const cool = `rgba(143,184,196,`;   // mist
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+    ctx.strokeStyle = (r.t>0.55?warm:cool) + (r.life*0.5) + ')';
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r*0.6, 0, Math.PI*2);
+    ctx.strokeStyle = cool + (r.life*0.28) + ')';
+    ctx.stroke();
+    // soft center glow
+    const cg = ctx.createRadialGradient(r.x,r.y,0,r.x,r.y,r.r*0.5);
+    cg.addColorStop(0, (r.t>0.55?warm:cool) + (r.life*0.18) + ')');
+    cg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cg;
+    ctx.beginPath(); ctx.arc(r.x,r.y,r.r*0.5,0,Math.PI*2); ctx.fill();
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+
+/* ---------- INTERACTION ---------- */
+const veil = document.getElementById('veil');
+const hint = document.getElementById('hint');
+let lastTouch = 0;
+
+function begin(){
+  if(!started){
+    started = true;
+    initAudio();
+    veil.classList.add('gone');
+    setTimeout(()=>hint.classList.add('show'), 1500);
+    setTimeout(()=>hint.classList.remove('show'), 9000);
+  }
+}
+
+function touch(x, y){
+  if(AC && AC.state !== 'running') unlock();
+  const now = performance.now();
+  const vel = Math.min(1, (now-lastTouch < 90) ? 0.8 : 0.45 + Math.random()*0.25);
+  lastTouch = now;
+  const freq = nearestNote(y);
+  voice(freq, vel, x/W);
+  spawnBloom(x, y, freq);
+}
+
+function onDown(e){
+  e.preventDefault();
+  begin();
+  const pts = e.touches ? e.touches : [e];
+  for(const p of pts) touch(p.clientX, p.clientY);
+}
+function onMove(e){
+  if(!started) return;
+  e.preventDefault();
+  // throttle drags into gentle notes
+  if(performance.now() - lastTouch < 140) return;
+  const p = e.touches ? e.touches[0] : e;
+  if(p) touch(p.clientX, p.clientY);
+}
+
+cv.addEventListener('mousedown', onDown);
+cv.addEventListener('mousemove', e=>{ if(e.buttons) onMove(e); });
+cv.addEventListener('touchstart', onDown, {passive:false});
+cv.addEventListener('touchmove', onMove, {passive:false});
+cv.addEventListener('touchend', e=>{ begin(); unlock&&unlock(); }, {passive:true});
+veil.addEventListener('mousedown', onDown);
+veil.addEventListener('touchstart', onDown, {passive:false});
+veil.addEventListener('touchend', e=>{ begin(); }, {passive:true});
+</script>
+</body>
+</html>
