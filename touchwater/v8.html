@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- standalone / fullscreen when added to the home screen (iOS + Android) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chladni">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#03060a">
+<title>Stillwater · v8</title>
+<style>
+  :root{ --void:#03060a; --ink:#d7ecee; --mist:#7fb8c4; --cyan:#46e6e0; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:100%;height:100%;overflow:hidden;background:var(--void);
+    font-family:ui-serif,Georgia,'Times New Roman',serif;
+    -webkit-tap-highlight-color:transparent;touch-action:none;cursor:crosshair;
+  }
+  #stage{position:fixed;inset:0;display:block;}
+  #veil{
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:2rem;
+    background:radial-gradient(circle at 50% 45%,rgba(12,30,34,0.35),rgba(3,6,10,0.96));
+    z-index:10;transition:opacity 2.2s ease;
+  }
+  #veil.gone{opacity:0;pointer-events:none;}
+  #veil h1{
+    font-weight:400;font-size:clamp(2.2rem,8vw,4rem);letter-spacing:0.2em;
+    color:var(--ink);text-transform:uppercase;text-shadow:0 0 44px rgba(70,230,224,0.35);
+  }
+  #veil p{
+    margin-top:1.5rem;font-size:clamp(0.8rem,3.4vw,0.95rem);letter-spacing:0.3em;
+    color:var(--mist);text-transform:uppercase;opacity:0.7;
+    animation:breathe 5s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{opacity:0.3}50%{opacity:0.8}}
+  #hint{
+    position:fixed;bottom:1.3rem;left:0;right:0;text-align:center;color:var(--mist);
+    font-size:0.66rem;letter-spacing:0.26em;text-transform:uppercase;opacity:0;
+    transition:opacity 2s ease 1s;pointer-events:none;z-index:5;padding:0 1rem;
+  }
+  #hint.show{opacity:0.34;}
+  #ver{position:fixed;top:1rem;right:1.1rem;z-index:6;color:var(--mist);
+    font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;opacity:0.3;pointer-events:none;}
+  #fs{position:fixed;top:0.8rem;left:0.9rem;z-index:9;
+    width:2rem;height:2rem;border-radius:50%;
+    border:1px solid rgba(127,184,196,0.25);background:rgba(8,20,24,0.4);
+    color:var(--mist);font-size:1rem;line-height:1;cursor:pointer;
+    display:none;align-items:center;justify-content:center;
+    opacity:0.4;transition:opacity 0.4s ease,border-color 0.4s ease;
+    -webkit-tap-highlight-color:transparent;padding:0;}
+  #fs.show{display:flex;}
+  #fs:active{opacity:0.85;border-color:rgba(127,184,196,0.6);}
+  #mode{
+    position:fixed;bottom:2.9rem;left:50%;transform:translateX(-50%);z-index:8;
+    padding:0.5rem 1.1rem;border:1px solid rgba(70,230,224,0.22);border-radius:999px;
+    background:rgba(8,20,24,0.5);color:var(--ink);
+    font-size:0.64rem;letter-spacing:0.28em;text-transform:uppercase;
+    opacity:0;pointer-events:none;transition:opacity 1.6s ease,border-color 0.5s ease,box-shadow 0.6s ease;
+    user-select:none;-webkit-user-select:none;cursor:pointer;white-space:nowrap;
+  }
+  #mode.show{opacity:0.6;pointer-events:auto;}
+  #mode:active{border-color:rgba(70,230,224,0.6);}
+  #mode .label{opacity:0.45;}
+  #mode .name{color:var(--cyan);}
+  #mode .arrow{opacity:0.4;margin-left:0.5em;}
+  #mode.flash{opacity:0.95;box-shadow:0 0 28px rgba(70,230,224,0.32);}
+  @media (prefers-reduced-motion:reduce){#veil p{animation:none;opacity:0.6;}}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="veil">
+  <h1>Chladni</h1>
+  <p>touch for fullscreen</p>
+</div>
+<div id="hint">tap to ripple · hold &amp; slide to morph · two fingers interfere</div>
+<div id="mode"><span class="label">mode</span> <span class="name">pentatonic</span><span class="arrow">›</span></div>
+<div id="ver">v8</div>
+<button id="fs" aria-label="Toggle fullscreen">⤢</button>
+
+<script>
+const cv=document.getElementById('stage');
+const ctx=cv.getContext('2d');
+let W,H,DPR,PLATE,PX,PY,CXp,CYp,RAD;
+function layout(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  W=window.innerWidth;H=window.innerHeight;
+  cv.width=W*DPR;cv.height=H*DPR;
+  cv.style.width=W+'px';cv.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  PLATE=Math.min(W,H)*0.94;
+  PX=(W-PLATE)/2; PY=(H-PLATE)/2;
+  CXp=PX+PLATE/2; CYp=PY+PLATE/2; RAD=PLATE/2;
+}
+layout();
+window.addEventListener('resize',()=>{layout();seedParticles();});
+
+/* ---------------- SCALES / MODES ---------------- */
+// mode.tonic = drone-bed low root (Hz); scale spans 4 octaves from that root.
+// each mode carries its own palette: lo = low-pitch grain color, hi = high-pitch / ripple accent
+const MODES=[
+  {name:'pentatonic',tonic:73.42, deg:[0,3,5,7,10],     lo:[70,224,220], hi:[120,240,150]}, // cyan→green
+  {name:'dorian',    tonic:73.42, deg:[0,2,3,5,7,9,10], lo:[80,180,235], hi:[150,140,240]}, // sky→violet
+  {name:'lydian',    tonic:87.31, deg:[0,2,4,6,7,9,11], lo:[180,160,245],hi:[240,150,200]}, // lavender→pink
+  {name:'major pent',tonic:97.999,deg:[0,2,4,7,9],      lo:[245,200,120],hi:[250,140,120]}, // amber→coral
+  {name:'aeolian',   tonic:110.00,deg:[0,2,3,5,7,8,10], lo:[90,150,240], hi:[205,115,220]}, // blue→magenta
+  {name:'hirajoshi', tonic:73.42, deg:[0,2,3,7,8],      lo:[120,225,185],hi:[225,215,150]}, // jade→pale gold
+];
+let modeIdx=0;
+function buildScale(tonic,deg){
+  const root=tonic*2, out=[];
+  for(let o=0;o<4;o++)for(const s of deg)out.push(root*Math.pow(2,o-1+s/12));
+  return out.sort((a,b)=>a-b);
+}
+function bedFor(tonic){ return [tonic, tonic*Math.pow(2,7/12)]; }  // root + fifth
+let SCALE=buildScale(MODES[0].tonic,MODES[0].deg);
+
+/* ---------------- AUDIO ---------------- */
+let AC,master,reverbBus,started=false;
+const droneRefs=[];
+
+// vertical position -> continuous 0..1 (1 at top of plate)
+function tFromY(y){
+  const v=(y-PY)/PLATE;
+  return Math.max(0,Math.min(1,1-v));
+}
+// continuous position -> figure: symmetry order S (stepped) + fineness K (smooth)
+function figureFromT(t){
+  const S=2+Math.round(t*5);          // 2..7 fold, gains petals as you rise
+  const K=6+t*34;                      // rings get finer as you rise
+  return {S,K};
+}
+function nearestNote(y){
+  const v=(y-PY)/PLATE;
+  const idx=Math.floor((1-Math.max(0,Math.min(1,v)))*SCALE.length);
+  return SCALE[Math.max(0,Math.min(SCALE.length-1,idx))];
+}
+// inverse of nearestNote — plate-y that lands on a given scale index
+function yForIndex(i){
+  const v=1-(i+0.5)/SCALE.length;
+  return PY+v*PLATE;
+}
+
+function makeReverb(ac){
+  const len=ac.sampleRate*4;
+  const buf=ac.createBuffer(2,len,ac.sampleRate);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}
+  const r=ac.createConvolver();r.buffer=buf;return r;
+}
+function unlock(){
+  if(!AC)return; if(AC.state==='suspended')AC.resume();
+  const b=AC.createBuffer(1,1,22050),s=AC.createBufferSource();
+  s.buffer=b;s.connect(AC.destination);s.start(0);
+}
+function initAudio(){
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  unlock();
+  master=AC.createGain();master.gain.value=0;
+  master.gain.linearRampToValueAtTime(0.9,AC.currentTime+3);
+  master.connect(AC.destination);
+  reverbBus=makeReverb(AC);
+  const wet=AC.createGain();wet.gain.value=0.55;
+  reverbBus.connect(wet);wet.connect(master);
+  bedFor(MODES[modeIdx].tonic).forEach((f,i)=>{
+    const o=AC.createOscillator();o.type='sine';o.frequency.value=f;
+    const g=AC.createGain();g.gain.value=0;
+    const lfo=AC.createOscillator();lfo.type='sine';lfo.frequency.value=0.03+i*0.02;
+    const lg=AC.createGain();lg.gain.value=0.05;lfo.connect(lg);lg.connect(g.gain);
+    o.connect(g);g.connect(wet);g.connect(master);
+    g.gain.setValueAtTime(0,AC.currentTime);
+    g.gain.linearRampToValueAtTime(0.07,AC.currentTime+7+i*2);
+    o.start();lfo.start();
+    droneRefs.push(o);
+  });
+  scheduleGhost();   // the plate sings to itself when left alone
+}
+function retuneBed(tonic){
+  const t=AC.currentTime, b=bedFor(tonic);
+  droneRefs.forEach((o,i)=>o.frequency.linearRampToValueAtTime(b[i%b.length],t+2.5));
+}
+function startVoice(freq,x,peak){
+  const t=AC.currentTime;
+  const o1=AC.createOscillator();o1.type='sine';o1.frequency.value=freq;
+  const o2=AC.createOscillator();o2.type='sine';o2.frequency.value=freq*2.001;
+  const o2g=AC.createGain();o2g.gain.value=0.18;
+  const o3=AC.createOscillator();o3.type='sine';o3.frequency.value=freq*1.5;
+  const o3g=AC.createGain();o3g.gain.value=0.07;
+  const filt=AC.createBiquadFilter();filt.type='lowpass';filt.frequency.value=1600;filt.Q.value=0.8;
+  const g=AC.createGain();g.gain.value=0;
+  const pan=AC.createStereoPanner();pan.pan.value=(x-0.5)*1.2;
+  const vib=AC.createOscillator();vib.type='sine';vib.frequency.value=4.5;
+  const vibg=AC.createGain();vibg.gain.value=freq*0.004;
+  vib.connect(vibg);vibg.connect(o1.frequency);
+  o1.connect(filt);o2.connect(o2g);o2g.connect(filt);o3.connect(o3g);o3g.connect(filt);
+  filt.connect(g);g.connect(pan);pan.connect(reverbBus);pan.connect(master);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak||0.16,t+0.35);
+  [o1,o2,o3,vib].forEach(n=>n.start());
+  return {o1,o2,o3,vib,g};
+}
+function retuneVoice(v,freq){
+  const t=AC.currentTime;
+  v.o1.frequency.linearRampToValueAtTime(freq,t+0.12);
+  v.o2.frequency.linearRampToValueAtTime(freq*2.001,t+0.12);
+  v.o3.frequency.linearRampToValueAtTime(freq*1.5,t+0.12);
+}
+function releaseVoice(v){
+  const t=AC.currentTime;
+  v.g.gain.cancelScheduledValues(t);v.g.gain.setValueAtTime(v.g.gain.value,t);
+  v.g.gain.linearRampToValueAtTime(0,t+1.1);
+  [v.o1,v.o2,v.o3,v.vib].forEach(n=>n.stop(t+1.3));
+}
+
+/* ---------------- PARTICLES ---------------- */
+let px,py,N=0;
+function seedParticles(){
+  N=Math.floor(Math.max(2600,Math.min(5200,(PLATE*PLATE)/58)));
+  px=new Float32Array(N);py=new Float32Array(N);
+  for(let i=0;i<N;i++){px[i]=PX+Math.random()*PLATE;py[i]=PY+Math.random()*PLATE;}
+}
+seedParticles();
+
+// expanding tap rings that light up grains as they sweep past
+const ripples=[];
+function spawnRipple(x,y,strength){
+  ripples.push({x,y,r:PLATE*0.02,life:1,band:PLATE*0.05,str:strength||1});
+}
+
+// id -> {S, K, tK, phase, tphase, env, held, voice, freq, dirs:[{c,s}]}
+const touches=new Map();
+function buildDirs(tch){
+  tch.dirs=[];
+  for(let s=0;s<tch.S;s++){const th=Math.PI*s/tch.S;tch.dirs.push({c:Math.cos(th),s:Math.sin(th)});}
+}
+
+let tg=0;
+function frame(){
+  tg+=0.016;
+  // fade prior glow toward black (source-over), then draw grains additively
+  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle='rgba(3,6,10,0.34)';
+  ctx.fillRect(0,0,W,H);
+
+  let avgFreq=0,fcount=0;
+  for(const[id,tch] of touches){
+    const target=tch.held?1:0;
+    tch.env+=(target-tch.env)*0.05;
+    tch.K+=(tch.tK-tch.K)*0.16;
+    tch.phase+=(tch.tphase-tch.phase)*0.16;
+    if(!tch.held&&tch.env<0.012){touches.delete(id);continue;}
+    avgFreq+=tch.freq*tch.env;fcount+=tch.env;
+  }
+  if(fcount>0)avgFreq/=fcount;
+
+  const trem=0.82+0.18*Math.sin(tg*7.5);
+  const STEP=PLATE*0.020;       // how fast grains flow toward a node
+  const THERMAL=PLATE*0.013;    // dispersal when idle
+  const invR=1/RAD;
+
+  for(let i=0;i<N;i++){
+    const X=(px[i]-CXp)*invR, Y=(py[i]-CYp)*invR;   // centered, ~[-1.4,1.4]
+    // combined field value Fa and gradient (Fgx,Fgy), env-weighted across touches
+    let Fa=0,Fgx=0,Fgy=0,norm=0;
+    for(const[,tch] of touches){
+      if(tch.env<0.012)continue;
+      const K=tch.K,ph=tch.phase,dirs=tch.dirs,L=dirs.length;
+      let a=0,gx=0,gy=0;
+      for(let s=0;s<L;s++){
+        const c=dirs[s].c, sN=dirs[s].s;
+        const arg=K*(X*c+Y*sN)+ph;
+        a+=Math.cos(arg);
+        const ks=-Math.sin(arg)*K;    // d/d(proj) of cos
+        gx+=ks*c; gy+=ks*sN;          // chain rule -> gradient in X,Y
+      }
+      const w=tch.env/L;
+      Fa+=w*a; Fgx+=w*gx; Fgy+=w*gy; norm+=tch.env;
+    }
+
+    let nx=px[i], ny=py[i];
+    if(norm>1e-3){
+      Fa/=norm; Fgx/=norm; Fgy/=norm;
+      const amp=Math.abs(Fa);
+      const drive=Math.min(1,norm);
+      const gmag=Math.hypot(Fgx,Fgy);
+      if(gmag>1e-5){
+        // flow DOWN the |field| gradient -> toward the nearest nodal line
+        const sgn=Fa>=0?1:-1;
+        const ux=-sgn*Fgx/gmag, uy=-sgn*Fgy/gmag;
+        const step=drive*STEP*trem*(0.12+amp);   // far from node -> big step, on node -> tiny
+        nx+=ux*step; ny+=uy*step;
+      }
+      // light jitter: lets grains spread ALONG the line and gives it body
+      const jit=PLATE*(0.0028+0.0045*amp)*drive;
+      nx+=(Math.random()-0.5)*2*jit;
+      ny+=(Math.random()-0.5)*2*jit;
+      // a touch of idle dispersal so released figures melt
+      if(drive<1){
+        const th=(1-drive)*THERMAL, ang=Math.random()*6.2831853;
+        nx+=Math.cos(ang)*th; ny+=Math.sin(ang)*th;
+      }
+    } else {
+      // nothing held: gently disperse
+      const ang=Math.random()*6.2831853;
+      nx+=Math.cos(ang)*THERMAL; ny+=Math.sin(ang)*THERMAL;
+    }
+
+    if(nx<PX)nx=PX+(PX-nx);else if(nx>PX+PLATE)nx=PX+PLATE-(nx-(PX+PLATE));
+    if(ny<PY)ny=PY+(PY-ny);else if(ny>PY+PLATE)ny=PY+PLATE-(ny-(PY+PLATE));
+    px[i]=nx;py[i]=ny;
+  }
+
+  // luminous additive grains — base color is this scale's palette, shifting lo->hi with pitch
+  ctx.globalCompositeOperation='lighter';
+  const pal=MODES[modeIdx];
+  let R=pal.lo[0],G=pal.lo[1],B=pal.lo[2];
+  if(fcount>0){
+    const t=Math.max(0,Math.min(1,(avgFreq-SCALE[0])/(SCALE[SCALE.length-1]-SCALE[0])));
+    R=pal.lo[0]+(pal.hi[0]-pal.lo[0])*t;
+    G=pal.lo[1]+(pal.hi[1]-pal.lo[1])*t;
+    B=pal.lo[2]+(pal.hi[2]-pal.lo[2])*t;
+  }
+  ctx.fillStyle=`rgba(${R|0},${G|0},${B|0},0.5)`;
+  for(let i=0;i<N;i++) ctx.fillRect(px[i],py[i],1.5,1.5);
+
+  // ripples: expand, fade, and re-light any grain inside the ring band (additive, accent color)
+  for(let k=ripples.length-1;k>=0;k--){
+    const rp=ripples[k];
+    rp.r+=PLATE*0.018; rp.life-=0.014;
+    if(rp.life<=0){ ripples.splice(k,1); continue; }
+    const inner=Math.max(0,rp.r-rp.band), outer=rp.r+rp.band;
+    const in2=inner*inner, out2=outer*outer;
+    ctx.fillStyle=`rgba(${pal.hi[0]},${pal.hi[1]},${pal.hi[2]},${(rp.life*0.6*rp.str).toFixed(3)})`;
+    for(let i=0;i<N;i++){
+      const dx=px[i]-rp.x, dy=py[i]-rp.y, d2=dx*dx+dy*dy;
+      if(d2<in2||d2>out2) continue;
+      ctx.fillRect(px[i]-0.5,py[i]-0.5,2.6,2.6);   // brighter, fatter grain where the ring passes
+    }
+  }
+
+  ctx.globalCompositeOperation='source-over';
+  ctx.strokeStyle='rgba(70,230,224,0.07)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(PX+0.5,PY+0.5,PLATE,PLATE);
+
+  requestAnimationFrame(frame);
+}
+frame();
+
+/* ---------------- INTERACTION ---------------- */
+const veil=document.getElementById('veil'),hint=document.getElementById('hint');
+const modeEl=document.getElementById('mode'),modeNameEl=modeEl.querySelector('.name');
+const fsBtn=document.getElementById('fs');
+const PI2=Math.PI*2;
+
+/* ---- fullscreen ---- */
+const fsEl=document.documentElement;
+const inStandalone = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;   // iOS home-screen launch
+function fsActive(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function enterFS(){
+  const fn=fsEl.requestFullscreen||fsEl.webkitRequestFullscreen;
+  if(fn){ try{ const p=fn.call(fsEl); if(p&&p.catch)p.catch(()=>{}); }catch(e){} }
+}
+function exitFS(){
+  const fn=document.exitFullscreen||document.webkitExitFullscreen;
+  if(fn){ try{ fn.call(document); }catch(e){} }
+}
+function toggleFS(){ fsActive()?exitFS():enterFS(); }
+// the ⤢ button only matters where the API exists and we're not already standalone
+if((fsEl.requestFullscreen||fsEl.webkitRequestFullscreen) && !inStandalone){
+  fsBtn.addEventListener('click', e=>{ e.stopPropagation(); toggleFS(); });
+}
+
+function begin(){
+  if(started)return;started=true;initAudio();
+  enterFS();                                   // first touch is a user gesture — go fullscreen
+  if(!inStandalone) setTimeout(()=>fsBtn.classList.add('show'),1400);
+  veil.classList.add('gone');
+  setTimeout(()=>{hint.classList.add('show');modeEl.classList.add('show');},1400);
+  setTimeout(()=>hint.classList.remove('show'),11000);
+}
+function clampToPlate(x,y){
+  return [Math.max(PX,Math.min(PX+PLATE,x)),Math.max(PY,Math.min(PY+PLATE,y))];
+}
+function press(id,x,y,peak){
+  if(AC&&AC.state!=='running')unlock();
+  [x,y]=clampToPlate(x,y);
+  spawnRipple(x,y, peak?peak/0.16:1);   // every touch sends a ring across the plate
+  const freq=nearestNote(y);
+  const {S,K}=figureFromT(tFromY(y));
+  const phase=((x-PX)/PLATE)*PI2;
+  const voice=AC?startVoice(freq,(x-PX)/PLATE,peak):null;
+  const tch={S,K,tK:K,phase,tphase:phase,env:0,held:true,voice,freq,dirs:[]};
+  buildDirs(tch);
+  touches.set(id,tch);
+}
+function move(id,x,y){
+  const tch=touches.get(id);if(!tch)return;
+  [x,y]=clampToPlate(x,y);
+  // figure follows finger continuously
+  const {S,K}=figureFromT(tFromY(y));
+  tch.tK=K;
+  tch.tphase=((x-PX)/PLATE)*PI2;
+  if(S!==tch.S){tch.S=S;buildDirs(tch);}        // add/remove petals at thresholds
+  // audio snaps to nearest in-key note
+  const freq=nearestNote(y);
+  if(Math.abs(freq-tch.freq)>0.5){
+    tch.freq=freq;
+    if(tch.voice)retuneVoice(tch.voice,freq);
+  }
+}
+function lift(id){
+  const tch=touches.get(id);if(!tch)return;
+  tch.held=false; if(tch.voice)releaseVoice(tch.voice);
+}
+
+/* ---- self-player: melodic memory + dynamics, drawn as ghost figures ---- */
+let melIdx=Math.floor(SCALE.length/2), center=melIdx, tidePhase=0, ghostN=0;
+function pick(a){return a[(Math.random()*a.length)|0];}
+function spawnGhost(i,holdMs,peak){
+  const id='g'+(ghostN++);
+  const y=yForIndex(i), x=PX+(0.2+Math.random()*0.6)*PLATE;
+  press(id,x,y,peak);
+  setTimeout(()=>lift(id),holdMs);
+}
+function scheduleGhost(){
+  if(!AC)return;
+  tidePhase+=0.12;
+  const density=0.5+0.5*Math.sin(tidePhase);
+  const rest=Math.random()>(0.5+density*0.45);
+  let active=0;
+  for(const[k,t] of touches){ if(t.held && String(k)[0]==='g') active++; }
+  if(!rest && active<1){
+    center+=(Math.random()-0.5)*0.7;
+    center=Math.max(2,Math.min(SCALE.length-3,center));
+    let next;
+    if(Math.random()<0.28) next=Math.round(center+(Math.random()-0.5)*2);
+    else next=melIdx+pick([-2,-1,-1,-1,1,1,1,2]);
+    next=Math.max(0,Math.min(SCALE.length-1,next));
+    if(next===melIdx) next+=(Math.random()<0.5?-1:1);
+    next=Math.max(0,Math.min(SCALE.length-1,next));
+    melIdx=next;
+    spawnGhost(melIdx, 1600+Math.random()*2200, 0.11);
+  }
+  const wait=(rest?5000:3200)+(1-density)*6000+Math.random()*3000;
+  setTimeout(scheduleGhost,wait);
+}
+
+/* ---- mode switching ---- */
+let flashTO=null;
+function cycleMode(){
+  if(!AC)return;
+  modeIdx=(modeIdx+1)%MODES.length;
+  const m=MODES[modeIdx];
+  SCALE=buildScale(m.tonic,m.deg);
+  melIdx=Math.max(0,Math.min(SCALE.length-1,melIdx));
+  center=Math.max(2,Math.min(SCALE.length-3,center));
+  retuneBed(m.tonic);
+  modeNameEl.textContent=m.name;
+  modeNameEl.style.color=`rgb(${m.hi[0]},${m.hi[1]},${m.hi[2]})`;          // chip echoes the scale color
+  modeEl.style.borderColor=`rgba(${m.hi[0]},${m.hi[1]},${m.hi[2]},0.4)`;
+  modeEl.classList.add('flash');clearTimeout(flashTO);
+  flashTO=setTimeout(()=>modeEl.classList.remove('flash'),700);
+  spawnGhost(Math.floor(SCALE.length*0.4), 2400, 0.13);  // bloom a figure in the new mode
+}
+
+cv.addEventListener('touchstart',e=>{e.preventDefault();begin();
+  for(const t of e.changedTouches)press(t.identifier,t.clientX,t.clientY);},{passive:false});
+cv.addEventListener('touchmove',e=>{e.preventDefault();
+  for(const t of e.changedTouches)move(t.identifier,t.clientX,t.clientY);},{passive:false});
+cv.addEventListener('touchend',e=>{e.preventDefault();
+  for(const t of e.changedTouches)lift(t.identifier);},{passive:false});
+cv.addEventListener('touchcancel',e=>{for(const t of e.changedTouches)lift(t.identifier);},{passive:false});
+
+let mouseDown=false;
+cv.addEventListener('mousedown',e=>{begin();mouseDown=true;press('m',e.clientX,e.clientY);});
+cv.addEventListener('mousemove',e=>{if(mouseDown)move('m',e.clientX,e.clientY);});
+window.addEventListener('mouseup',()=>{if(mouseDown){mouseDown=false;lift('m');}});
+veil.addEventListener('mousedown',e=>{begin();mouseDown=true;press('m',e.clientX,e.clientY);});
+veil.addEventListener('touchstart',e=>{e.preventDefault();begin();
+  for(const t of e.changedTouches)press(t.identifier,t.clientX,t.clientY);},{passive:false});
+
+// mode chip — taps cycle the scale, never seed a figure on the plate
+modeEl.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();cycleMode();});
+
+// duck audio when the tab is backgrounded
+document.addEventListener('visibilitychange',()=>{
+  if(!AC||!master)return;
+  const now=AC.currentTime;
+  master.gain.cancelScheduledValues(now);
+  master.gain.setValueAtTime(master.gain.value,now);
+  master.gain.linearRampToValueAtTime(document.hidden?0.0:0.9,now+(document.hidden?0.4:1.5));
+});
+</script>
+</body>
+</html>
